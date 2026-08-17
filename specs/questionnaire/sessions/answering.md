@@ -108,7 +108,7 @@ Using the public answer token, a caller can PUT all answers as JSON in one reque
 
 ### B25 — Questions may accept files 🟢
 
-A question may allow file attachments. The public answer token can upload a file for that question (same unguessable-link model as the page). Uploaded files are stored and returned with the answers. A question that does not allow files refuses uploads.
+A question may allow file attachments. The human can choose files, drop them on a compact attach control next to the answer (not on the evidence rail), or take a photo. A question accepts at most five files, 4 MB each. The list shows each name and size after upload. There is no delete. The public answer token can upload a file for that question (same unguessable-link model as the page). Uploaded files are stored and returned with the answers. A question that does not allow files refuses uploads. If file storage is not configured, upload fails and the page says so.
 
 ### B26 — A question may carry extra material 🟢
 
@@ -139,6 +139,10 @@ A question may name extra material for the rail: links, and files the agent atta
 A question may be a list of rows to label (`items`) or a few named boxes (`fields`), instead of a choice or a single text box. The human answers each row or field in place. A required question of this kind needs every row or field filled. The agent receives those values keyed by id. A question cannot mix options, items, and fields. Optional comment and files still work on top.
 
 A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the row or the question. A known figure belongs in `amount` (canonical decimal), not jammed into the label. The human sees a formatted amount and a currency-prefixed input. Stored answers are canonical decimals in that currency. The service does not convert. Mixed currencies are per-row.
+
+### B33 — A question may ask for device capture 🔵 future
+
+A question may ask for something the device can capture besides a file: the person’s location, a live camera shot that is not just “pick an image”, and similar. File questions already cover choose, drop, and take a photo (B25). This is for typed capture that is not “here is a file”.
 
 ## Rules (Invariants)
 
@@ -319,11 +323,14 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 - **Blocks B30:** Welcome screen, or keep title always visible and show context in the rail / on the first question?
 - **Blocks B31:** Are sources first-class (`label` + `url`, optional agent-attached files), or is markdown in `detail` enough?
 - **Settled:** “I will label them in the comment” is a weak answer type. Rows (`items`) and named boxes (`fields`) are in. Money uses `input`, ISO `currency`, and optional `amount`. No conversion. Recorded as B32.
+- **Settled:** File questions use a compact attach control: choose, drop, or take a photo. Multiple files are allowed, up to five. The evidence rail is not the drop zone. Recorded as B25.
+- **Blocks B33:** Which capture types are first-class (location, live camera, …), and is location a coordinate the agent can read, or a place the human confirms?
 
 ## Future Considerations
 
 - Agent-attached source files on create, distinct from the human’s answer uploads.
 - Branching or scoring — still out of scope. The calling agent interprets answers.
+- Richer device capture on a question (location, live camera), distinct from attaching a file.
 
 ## Out of Scope
 
