@@ -16,6 +16,7 @@ import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import type { Mailer } from "./mailer";
 import { createResendMailer } from "./mailer";
+import { parseMoney, resolveEntryCurrency } from "./money";
 import {
   entriesAreComplete,
   questionEntries,
@@ -796,7 +797,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         parsed.data.selectedOptionIds ?? previous?.selectedOptionIds ?? [];
       const text =
         parsed.data.text !== undefined ? parsed.data.text : previous?.text;
-      const entries =
+      let entries =
         parsed.data.entries !== undefined ? parsed.data.entries : previous?.entries;
 
       let files = previous?.files;
@@ -836,6 +837,7 @@ export function createSessionService(deps: SessionServiceDeps) {
           for (const row of questionEntries(question)) {
             allowed.add(row.id);
           }
+          const normalised: Record<string, string> = {};
           for (const entryId of Object.keys(parsed.data.entries)) {
             if (!allowed.has(entryId)) {
               return {
@@ -844,7 +846,33 @@ export function createSessionService(deps: SessionServiceDeps) {
                 status: 400,
               };
             }
+            const raw = parsed.data.entries[entryId] ?? "";
+            let row: ReturnType<typeof questionEntries>[number] | undefined;
+            for (const candidate of questionEntries(question)) {
+              if (candidate.id === entryId) {
+                row = candidate;
+                break;
+              }
+            }
+            if (row?.input === "money") {
+              if (raw.trim().length === 0) {
+                continue;
+              }
+              const currency = resolveEntryCurrency(row, question);
+              const money = currency ? parseMoney(raw, currency) : null;
+              if (!money) {
+                return {
+                  code: "invalid_answer",
+                  message: "Money value is not usable",
+                  status: 400,
+                };
+              }
+              normalised[entryId] = money.canonical;
+              continue;
+            }
+            normalised[entryId] = raw;
           }
+          entries = normalised;
         }
       } else if (isTextQuestion(question)) {
         if (parsed.data.selectedOptionIds !== undefined) {

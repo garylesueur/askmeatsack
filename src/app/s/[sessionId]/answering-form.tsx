@@ -10,6 +10,12 @@ import {
 import type { PublicSessionView, SessionProgress } from "@/lib/sessions";
 import type { SessionAnswer, SessionFile } from "@/lib/session-store";
 import { MarkdownBody } from "@/components/markdown-body";
+import { MoneyInput } from "@/components/money-input";
+import {
+  formatEntryValue,
+  formatKnownAmount,
+  resolveEntryCurrency,
+} from "@/lib/money";
 import {
   entriesAreComplete,
   isShortPrompt,
@@ -153,7 +159,7 @@ function answerSummary(
     for (const row of questionEntries(question)) {
       const value = answer.entries[row.id];
       if (value) {
-        labelled.push(`${row.label}: ${value}`);
+        labelled.push(`${row.label}: ${formatEntryValue(row, question, value)}`);
       }
     }
     if (labelled.length > 0) {
@@ -819,25 +825,56 @@ export function AnsweringForm({
                 ) : questionKind(question) === "items" ||
                   questionKind(question) === "fields" ? (
                   <div className="flex flex-col gap-3">
-                    {questionEntries(question).map((row) => (
-                      <label key={row.id} className="flex flex-col gap-1.5">
-                        <span className="text-sm font-medium text-foreground">
-                          {row.label}
-                        </span>
-                        {row.hint ? (
-                          <span className="text-xs text-muted-foreground">
-                            {row.hint}
+                    {questionEntries(question).map((row) => {
+                      const currency = resolveEntryCurrency(row, question);
+                      const shownAmount = formatKnownAmount(row, question);
+                      return (
+                        <label key={row.id} className="flex flex-col gap-1.5">
+                          <span className="flex flex-wrap items-baseline justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground">
+                              {row.label}
+                            </span>
+                            {shownAmount ? (
+                              <span className="font-mono text-sm tabular-nums text-foreground">
+                                {shownAmount}
+                              </span>
+                            ) : null}
                           </span>
-                        ) : null}
-                        <Input
-                          value={answers[question.id]?.entries?.[row.id] ?? ""}
-                          maxLength={ENTRY_ANSWER_MAX_CHARS}
-                          onChange={(event) => {
-                            onEntryChange(question, row.id, event.target.value);
-                          }}
-                        />
-                      </label>
-                    ))}
+                          {row.hint ? (
+                            <span className="text-xs text-muted-foreground">
+                              {row.hint}
+                            </span>
+                          ) : null}
+                          {row.input === "money" && currency ? (
+                            <MoneyInput
+                              currency={currency}
+                              disabled={submitting}
+                              value={
+                                answers[question.id]?.entries?.[row.id] ?? ""
+                              }
+                              onChange={(canonical) => {
+                                onEntryChange(question, row.id, canonical);
+                              }}
+                            />
+                          ) : (
+                            <Input
+                              disabled={submitting}
+                              value={
+                                answers[question.id]?.entries?.[row.id] ?? ""
+                              }
+                              maxLength={ENTRY_ANSWER_MAX_CHARS}
+                              onChange={(event) => {
+                                onEntryChange(
+                                  question,
+                                  row.id,
+                                  event.target.value,
+                                );
+                              }}
+                            />
+                          )}
+                        </label>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">

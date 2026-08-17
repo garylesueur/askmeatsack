@@ -1,4 +1,5 @@
 import { answersJsonSchema } from "./answers-json-schema";
+import { entryRowCaption } from "./money";
 import { questionEntries, questionKind } from "./question-presentation";
 import type { Question } from "./schema";
 
@@ -64,11 +65,20 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
       lines.push("", "Free text (max 2000 characters).");
     } else if (kind === "items" || kind === "fields") {
       lines.push("", kind === "items" ? "Rows:" : "Fields:");
-      for (const row of questionEntries(question)) {
-        const hint = row.hint ? ` — ${row.hint}` : "";
-        lines.push(`- \`${row.id}\`: ${row.label}${hint}`);
+      const rows = questionEntries(question);
+      let hasMoney = false;
+      for (const row of rows) {
+        if (row.input === "money") {
+          hasMoney = true;
+        }
+        lines.push(`- \`${row.id}\`: ${entryRowCaption(row, question)}`);
       }
       lines.push("", "Answer with `entries` keyed by those ids.");
+      if (hasMoney) {
+        lines.push(
+          "Money values are canonical decimals in that currency — do not convert.",
+        );
+      }
     } else {
       lines.push("", "Options:");
       for (const option of question.options) {

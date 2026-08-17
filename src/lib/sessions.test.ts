@@ -1634,5 +1634,67 @@ describe("B32 — labelled rows and named fields", () => {
     });
     expect(submitted).toMatchObject({ status: "submitted" });
   });
+
+  it("normalises money entries and refuses junk", async () => {
+    const { sessions } = serviceWithStore();
+    const created = await sessions.create({
+      questions: [
+        {
+          id: "hmrc",
+          prompt: "How much is still owed?",
+          currency: "GBP",
+          fields: [
+            { id: "vat", label: "VAT", input: "money" },
+            { id: "paye", label: "PAYE", input: "money" },
+          ],
+        },
+      ],
+    });
+    expect(created).not.toHaveProperty("code");
+
+    const saved = await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "hmrc",
+      publicToken,
+      body: { entries: { vat: "£1,200.5", paye: "80" } },
+    });
+    expect(saved).toMatchObject({
+      progress: { answeredCount: 1, requiredAnsweredCount: 1 },
+    });
+    const view = await sessions.getForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(view).toMatchObject({
+      answers: {
+        hmrc: { entries: { vat: "1200.50", paye: "80.00" } },
+      },
+    });
+
+    const refused = await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "hmrc",
+      publicToken,
+      body: { entries: { vat: "about a grand", paye: "80" } },
+    });
+    expect(refused).toMatchObject({ code: "invalid_answer", status: 400 });
+  });
+
+  it("refuses money rows without a currency", async () => {
+    const { sessions } = serviceWithStore();
+    const created = await sessions.create({
+      questions: [
+        {
+          id: "hmrc",
+          prompt: "How much is still owed?",
+          fields: [
+            { id: "vat", label: "VAT", input: "money" },
+            { id: "paye", label: "PAYE", input: "money" },
+          ],
+        },
+      ],
+    });
+    expect(created).toMatchObject({ code: "invalid_questions", status: 400 });
+  });
 });
 

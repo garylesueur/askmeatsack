@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isIsoCurrency, parseMoney } from "./money";
 
 export const SESSION_DEFAULT_TTL_SECONDS = 86_400;
 export const SESSION_MAX_TTL_SECONDS = 7 * 86_400;
@@ -17,10 +18,22 @@ export const questionOptionSchema = z.object({
   label: z.string().min(1),
 });
 
+const isoCurrencySchema = z
+  .string()
+  .length(3)
+  .refine((code) => isIsoCurrency(code), "Currency must be a three-letter ISO code");
+
 export const questionEntrySchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   hint: z.string().min(1).max(200).optional(),
+  input: z.enum(["text", "money"]).optional(),
+  currency: isoCurrencySchema.optional(),
+  amount: z
+    .string()
+    .min(1)
+    .max(40)
+    .optional(),
 });
 
 export const appearanceThemeSchema = z.enum(["ask", "paper", "grove", "ember"]);
@@ -52,6 +65,7 @@ export const questionSchema = z.object({
   allowComment: z.boolean().optional().default(false),
   allowFiles: z.boolean().optional().default(false),
   recommendedOptionId: z.string().min(1).optional(),
+  currency: isoCurrencySchema.optional(),
 });
 
 function refineQuestionList(
@@ -147,6 +161,33 @@ function refineQuestionList(
           return;
         }
         rowIds.add(row.id);
+        const currency = row.currency ?? question.currency;
+        if (row.input === "money" && !currency) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Money rows need a currency",
+            path: ["questions"],
+          });
+          return;
+        }
+        if (row.amount) {
+          if (!currency) {
+            ctx.addIssue({
+              code: "custom",
+              message: "An amount needs a currency",
+              path: ["questions"],
+            });
+            return;
+          }
+          if (!parseMoney(row.amount, currency)) {
+            ctx.addIssue({
+              code: "custom",
+              message: "Amount is not a usable money value",
+              path: ["questions"],
+            });
+            return;
+          }
+        }
       }
       continue;
     }

@@ -1,3 +1,4 @@
+import { entryRowCaption, formatEntryValue } from "./money";
 import { questionEntries, questionKind } from "./question-presentation";
 import type { Question } from "./schema";
 import type { Session, SessionAnswer } from "./session-store";
@@ -82,8 +83,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
     if (rows.length > 0) {
       lines.push("", manageQuestionKind(question) === "items" ? "Rows:" : "Fields:");
       for (const row of rows) {
-        const hint = row.hint ? ` — ${row.hint}` : "";
-        lines.push(`- \`${row.id}\`: ${row.label}${hint}`);
+        lines.push(`- \`${row.id}\`: ${entryRowCaption(row, question)}`);
       }
     }
     if (answer) {
@@ -96,7 +96,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
         for (const row of rows) {
           const value = answer.entries[row.id];
           if (value) {
-            labelled.push(`${row.label}: ${value}`);
+            labelled.push(`${row.label}: ${formatEntryValue(row, question, value)}`);
           }
         }
         if (labelled.length > 0) {

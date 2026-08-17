@@ -1,3 +1,4 @@
+import { parseMoney, resolveEntryCurrency } from "./money";
 import type { Question } from "./schema";
 
 const SHORT_PROMPT_MAX_CHARS = 90;
@@ -40,6 +41,7 @@ export function entriesAreComplete(
     items?: Question["items"];
     fields?: Question["fields"];
     options: { id: string }[];
+    currency?: string;
   },
   entries: Record<string, string> | undefined,
 ): boolean {
@@ -48,7 +50,15 @@ export function entriesAreComplete(
     return false;
   }
   for (const row of rows) {
-    if (!(entries?.[row.id] ?? "").trim()) {
+    const raw = (entries?.[row.id] ?? "").trim();
+    if (row.input === "money") {
+      const currency = resolveEntryCurrency(row, question);
+      if (!currency || !parseMoney(raw, currency)) {
+        return false;
+      }
+      continue;
+    }
+    if (!raw) {
       return false;
     }
   }

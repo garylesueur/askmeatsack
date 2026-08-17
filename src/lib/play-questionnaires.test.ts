@@ -13,10 +13,15 @@ describe("kerry playground pack", () => {
       (question) => question.id === "bucks",
     );
     expect(bucks?.items.length).toBe(6);
+    expect(bucks?.currency).toBe("GBP");
+    expect(bucks?.items[0]?.amount).toBe("2476.80");
+    expect(bucks?.items[0]?.label.includes("2,476")).toBe(false);
     expect(bucks?.detail).toContain("mermaid");
     const hmrc = kerryPlayQuestionnaire.questions.find(
       (question) => question.id === "hmrc",
     );
     expect(hmrc?.fields.length).toBe(3);
+    expect(hmrc?.currency).toBe("GBP");
+    expect(hmrc?.fields[0]?.input).toBe("money");
   });
 });
