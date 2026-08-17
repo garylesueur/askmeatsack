@@ -3,6 +3,10 @@
 .reports/
 .active/
 
+# Third-party agent skills stay local
+.agents/skills/
+skills-lock.json
+
 # dependencies
 /node_modules
 /.pnp
