@@ -74,7 +74,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
 
   return (
     <div
-      className="overflow-x-auto py-1 [&_svg]:mx-auto [&_svg]:max-w-full"
+      className="mt-3 overflow-x-auto rounded-lg bg-background/80 p-3 [&_svg]:mx-auto [&_svg]:max-w-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

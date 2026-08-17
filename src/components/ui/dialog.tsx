@@ -67,7 +67,7 @@ function DialogContent({
           size === "default" &&
             "top-1/2 left-1/2 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-xl sm:max-w-sm",
           size === "large" &&
-            "inset-0 flex h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-[min(90dvh,56rem)] sm:max-h-[90dvh] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6",
+            "inset-0 flex h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none sm:inset-auto sm:top-1/2 sm:left-1/2 sm:h-auto sm:max-h-[90dvh] sm:w-[min(96vw,40rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6",
           className
         )}
         {...props}

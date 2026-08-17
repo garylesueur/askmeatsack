@@ -127,7 +127,7 @@ export function HomeDemo() {
   return (
     <AppearanceShell
       appearance={session.appearance}
-      className="min-h-0 h-full"
+      className="min-h-0 rounded-xl border border-border/70 p-4 sm:p-5"
       showModeToggle={false}
     >
       <AnsweringForm
