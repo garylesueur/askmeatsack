@@ -696,10 +696,10 @@ export function AnsweringForm({
     <main
       className={
         layout === "embed"
-          ? "w-full"
+          ? "@container w-full"
           : hasEvidence
-            ? "mx-auto w-full max-w-5xl py-6"
-            : "mx-auto w-full max-w-xl py-6"
+            ? "@container mx-auto w-full max-w-5xl py-6"
+            : "@container mx-auto w-full max-w-xl py-6"
       }
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -715,18 +715,18 @@ export function AnsweringForm({
       </div>
 
       <div
-        className="mt-4 h-px w-full overflow-hidden bg-border/70"
+        className="mt-3 h-1 w-full overflow-hidden rounded-full bg-border/70"
         aria-hidden="true"
         title={`${progress.answeredCount} answered`}
       >
         <div
-          className="h-full bg-foreground/40 transition-[width]"
+          className="h-full rounded-full bg-foreground/40 transition-[width]"
           style={{ width: `${percent}%` }}
         />
       </div>
 
       {questions.length > 1 ? (
-        <nav aria-label="Questions" className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
+        <nav aria-label="Questions" className="mt-3 flex flex-wrap gap-1.5">
           {questions.map((item, index) => {
             const current = !reviewing && index === stepIndex;
             const done = hasUsableAnswer(item, answers[item.id]);
@@ -740,12 +740,12 @@ export function AnsweringForm({
                 onClick={() => {
                   goToStep(index);
                 }}
-                className={`text-sm ${
+                className={`flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors ${
                   current
-                    ? "text-foreground underline decoration-foreground/50 underline-offset-4"
+                    ? "bg-foreground text-background"
                     : done
-                      ? "text-foreground"
-                      : "text-muted-foreground"
+                      ? "bg-muted text-foreground"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {index + 1}
@@ -755,7 +755,7 @@ export function AnsweringForm({
         </nav>
       ) : null}
 
-      {stepIndex === 0 && !reviewing && context ? (
+      {layout === "page" && stepIndex === 0 && !reviewing && context ? (
         <MarkdownBody source={context} className="mt-4" />
       ) : null}
 
@@ -808,7 +808,7 @@ export function AnsweringForm({
             <div
               className={
                 hasEvidence
-                  ? "grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,28rem)_minmax(16rem,1fr)] lg:items-start lg:gap-10"
+                  ? "grid grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,28rem)_minmax(16rem,1fr)] @4xl:items-start @4xl:gap-6"
                   : "flex flex-col gap-3"
               }
             >
@@ -825,11 +825,11 @@ export function AnsweringForm({
                 )}
               </div>
               {hasEvidence && question.detail ? (
-                <aside className="lg:col-start-2 lg:row-span-2 lg:sticky lg:top-6 lg:border-l lg:border-border/60 lg:pl-8">
+                <aside className="rounded-xl border border-border/70 bg-muted/40 p-4 @4xl:col-start-2 @4xl:row-span-2 @4xl:sticky @4xl:top-6">
                   <MarkdownBody source={question.detail} />
                 </aside>
               ) : null}
-              <div className="flex flex-col gap-4 lg:col-start-1">
+              <div className="flex flex-col gap-4 @4xl:col-start-1">
                 {questionKind(question) === "text" ? (
                   <Textarea
                     value={answers[question.id]?.text ?? ""}
@@ -894,7 +894,7 @@ export function AnsweringForm({
                     })}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2.5">
                     {question.options.map((option) => {
                       const isSelected = selected.includes(option.id);
                       const isRecommended =
@@ -909,13 +909,13 @@ export function AnsweringForm({
                           onClick={() => {
                             void chooseOption(question, option.id);
                           }}
-                          className="h-auto min-h-11 w-full justify-start whitespace-normal px-3 py-2.5 text-left"
+                          className="h-auto min-h-11 w-full justify-between gap-3 whitespace-normal px-3.5 py-3 text-left"
                         >
-                          <span>{option.label}</span>
+                          <span className="min-w-0 flex-1">{option.label}</span>
                           {isRecommended ? (
                             <Badge
                               variant={isSelected ? "secondary" : "outline"}
-                              className="ml-2"
+                              className="shrink-0"
                             >
                               Recommended
                             </Badge>
