@@ -1,0 +1,145 @@
+import { createSessionSchema, type CreateSessionInput } from "./schema";
+
+export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.parse({
+  title: "Kickstart Learning leftover questions",
+  context:
+    "Kerry, leftover items after Sunday 16 August. Working list, not an audit. Short answers are fine. Chris is welcome on the HMRC question.\n\nThis is a **playground** copy on the preview. It is not the live link.",
+  expiresInSeconds: 86_400,
+  metadata: { play: "kerry-leftovers" },
+  appearance: { theme: "ask" },
+  questions: [
+    {
+      id: "invoices_14d",
+      prompt: "Which invoices do you expect to clear in the next 14 days?",
+      detail:
+        "Include anything Bucks asked you to hold until September. A short list in the comment is enough.",
+      options: [
+        { id: "will_list", label: "I will list them in the comment" },
+        { id: "none", label: "None that I know of" },
+        { id: "unsure", label: "Not sure" },
+      ],
+      allowComment: true,
+      allowFiles: true,
+    },
+    {
+      id: "equals",
+      prompt: "What are the Equals cards generally used for?",
+      detail:
+        "A statement would help. Note anything leaving them before **31 August**.",
+      options: [
+        { id: "mix", label: "A mix (fuel, Amazon, materials, expenses)" },
+        { id: "staff", label: "Mostly staff expenses" },
+        { id: "ops", label: "Mostly day-to-day operating spend" },
+        { id: "unsure", label: "Not sure" },
+      ],
+      allowComment: true,
+      allowFiles: true,
+    },
+    {
+      id: "flexipay",
+      prompt: "Which FlexiPay figure should I use?",
+      detail:
+        "You said **6,500** is left. The three dated repayments add to **6,758.50**.\n\n```mermaid\nflowchart LR\n  said[You said 6500] --> pick{Which figure}\n  repay[Three repayments 6758.50] --> pick\n```",
+      options: [
+        { id: "6500", label: "6,500 outstanding" },
+        { id: "6758", label: "The three repayments (6,758.50)" },
+        { id: "unsure", label: "Not sure, I will check" },
+      ],
+      allowComment: true,
+    },
+    {
+      id: "rebecca",
+      prompt: "Is Rebecca Kathryn on the 31 August payroll?",
+      detail: "If yes, roughly what net? Put the figure in the comment.",
+      options: [
+        { id: "yes", label: "Yes, she is on that run" },
+        { id: "no", label: "No, she is not" },
+        { id: "unsure", label: "Not sure" },
+      ],
+      allowComment: true,
+    },
+    {
+      id: "hmrc",
+      prompt: "What is the HMRC position after the letter?",
+      detail:
+        "Chris can take this one.\n\nI need:\n\n- VAT on Time to Pay\n- VAT that is unplanned\n- PAYE / NIC balance after the letter\n\nA screenshot or the letter itself is welcome.",
+      options: [
+        { id: "will_answer", label: "I will answer in the comment" },
+        { id: "chris", label: "Chris will answer" },
+        { id: "unsure", label: "Not sure yet" },
+      ],
+      allowComment: true,
+      allowFiles: true,
+    },
+    {
+      id: "bucks",
+      prompt: "Please label these Buckinghamshire lines.",
+      detail:
+        "Say what each line is in the comment.\n\n| Date | Amount | How |\n| --- | ---: | --- |\n| Feb / Mar 2025 | 2,476.80 | Direct debit |\n| Feb / Mar 2025 | 2,477.00 | Card |\n| Dec 2025 | 840.00 | |\n| Jan 2026 | 660.00 | |\n| 18 Feb 2026 | 81.00 | Credit |\n| 18 Feb 2026 | 588.00 | Credit |\n\n```mermaid\nflowchart LR\n  bucks[buckinghamshire.gov] --> dd[Monthly DD]\n  bucks --> card[Monthly card]\n  bucks --> credits[Feb credits]\n```",
+      options: [
+        { id: "will_label", label: "I will label them in the comment" },
+        { id: "unsure", label: "Not sure" },
+      ],
+      allowComment: true,
+    },
+    {
+      id: "wenshi",
+      prompt: "Was the Wenshi payment an Access to Work kit claim?",
+      detail:
+        "| Date | Amount | Direction |\n| --- | ---: | --- |\n| 5 May | 547.40 | Wenshi payment |\n| 23 June | 547.40 | DWP credit |",
+      options: [
+        { id: "yes_atw", label: "Yes, Access to Work kit" },
+        { id: "no", label: "No, something else" },
+        { id: "unsure", label: "Not sure" },
+      ],
+      allowComment: true,
+    },
+    {
+      id: "paypal",
+      prompt: "Can you upload a PayPal activity export?",
+      detail:
+        "January 2025 to January 2026, for the older Express Checkout direct debits. Not urgent if the mandate is now quiet.",
+      options: [
+        { id: "will_upload", label: "I will upload it" },
+        { id: "later", label: "Not now" },
+        { id: "quiet", label: "Mandate is quiet, skip for now" },
+      ],
+      required: false,
+      allowComment: true,
+      allowFiles: true,
+    },
+    {
+      id: "dad_loan",
+      prompt: "Is there anything in writing for the 20,000 from your dad?",
+      detail: "The payment was on **27 July**. A text is enough.",
+      options: [
+        { id: "nothing", label: "Nothing in writing" },
+        { id: "will_send", label: "I will send a note or screenshot" },
+      ],
+      allowComment: true,
+      allowFiles: true,
+    },
+    {
+      id: "shire",
+      prompt: "Can we treat the Shire Leasing agreement as closed?",
+      detail: "Nothing in 2026. Last cash was **19 July 2025**.",
+      options: [
+        { id: "closed", label: "Yes, paid off / closed" },
+        { id: "still", label: "No, something is still on it" },
+        { id: "unsure", label: "Not sure" },
+      ],
+      allowComment: true,
+    },
+    {
+      id: "guarantor",
+      prompt: "Who is the named guarantor on the Beaconsfield lease?",
+      detail: "Skip if you do not know. A name in the comment is enough.",
+      options: [
+        { id: "will_name", label: "I will name them in the comment" },
+        { id: "unknown", label: "I do not know" },
+      ],
+      required: false,
+      allowComment: true,
+    },
+  ],
+});
