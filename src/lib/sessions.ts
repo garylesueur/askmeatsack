@@ -407,6 +407,10 @@ export function createSessionService(deps: SessionServiceDeps) {
     };
   }
 
+  function fileUrlFor(session: Session, fileId: string): string {
+    return `${baseUrl}/api/v1/sessions/${session.id}/files/${encodeURIComponent(fileId)}?t=${encodeURIComponent(session.publicToken)}`;
+  }
+
   async function hydrate(session: Session): Promise<Session | SessionServiceError> {
     const nowMs = deps.now().getTime();
     let status = session.status;
@@ -987,7 +991,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       filename: string;
       contentType: string;
       size: number;
-      url: string;
+      storageKey: string;
     }): Promise<AttachFileResult | SessionServiceError> {
       const session = await loadForPublic(input.sessionId, input.publicToken);
       if (isServiceError(session)) {
@@ -1021,13 +1025,15 @@ export function createSessionService(deps: SessionServiceDeps) {
           status: 400,
         };
       }
+      const fileId = deps.createToken();
       const file: SessionFile = {
-        id: deps.createToken(),
+        id: fileId,
         questionId: input.questionId,
         filename: input.filename,
         contentType: input.contentType,
         size: input.size,
-        url: input.url,
+        key: input.storageKey,
+        url: fileUrlFor(session, fileId),
       };
       const previous = session.answers[input.questionId];
       const nextAnswer: SessionAnswer = {
@@ -1037,6 +1043,9 @@ export function createSessionService(deps: SessionServiceDeps) {
       };
       if (previous?.text) {
         nextAnswer.text = previous.text;
+      }
+      if (previous?.entries) {
+        nextAnswer.entries = previous.entries;
       }
       const next: Session = {
         ...session,
@@ -1049,6 +1058,29 @@ export function createSessionService(deps: SessionServiceDeps) {
       };
       await deps.store.save(next);
       return { file, progress: progressFor(next) };
+    },
+
+    async readPublicFile(input: {
+      sessionId: string;
+      publicToken?: string;
+      fileId: string;
+    }): Promise<SessionFile | SessionServiceError> {
+      const session = await loadForPublic(input.sessionId, input.publicToken);
+      if (isServiceError(session)) {
+        return session;
+      }
+      const file = session.uploads?.[input.fileId];
+      if (!file) {
+        return {
+          code: "not_found",
+          message: "File was not found",
+          status: 404,
+        };
+      }
+      return {
+        ...file,
+        url: fileUrlFor(session, file.id),
+      };
     },
 
     async submit(input: {

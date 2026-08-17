@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  bytesFromUploadBody,
+  contentDispositionFilename,
   createAnswerFileStore,
   fileObjectKey,
   fileStoreAvailable,
   publicFileUrl,
   r2ObjectUrl,
   readR2Config,
+  storageKeyFromFile,
 } from "./answer-files";
 
 const usableEnv = {
@@ -17,10 +20,10 @@ const usableEnv = {
 };
 
 describe("R2 file store config", () => {
-  it("is missing until account, keys, bucket, and public URL are all set", () => {
+  it("is missing until account, keys, and bucket are all set", () => {
     expect(fileStoreAvailable({})).toBe(false);
     expect(fileStoreAvailable({ ...usableEnv, R2_PUBLIC_BASE_URL: "" })).toBe(
-      false,
+      true,
     );
     expect(fileStoreAvailable(usableEnv)).toBe(true);
   });
@@ -115,5 +118,32 @@ describe("answer file store", () => {
       pathname: "askmeatsack/sess/photo/ab12cd34-desk.jpg",
       url: "https://files.example.com/askmeatsack/sess/photo/ab12cd34-desk.jpg",
     });
+  });
+});
+
+describe("upload body bytes", () => {
+  it("reads a Blob so retries can send the same payload", async () => {
+    const body = new Blob(["pdf-bytes"]);
+    const bytes = await bytesFromUploadBody(body);
+    expect(Array.from(bytes)).toEqual(Array.from(new TextEncoder().encode("pdf-bytes")));
+  });
+});
+
+describe("stored file keys", () => {
+  it("prefers the saved key, then the path on a legacy R2 URL", () => {
+    expect(
+      storageKeyFromFile({
+        key: "askmeatsack/sess/photo/ab12-desk.jpg",
+        url: "https://askmeatsack.com/api/v1/sessions/sess/files/file-1?t=tok",
+      }),
+    ).toBe("askmeatsack/sess/photo/ab12-desk.jpg");
+    expect(
+      storageKeyFromFile({
+        url: "https://acct123.r2.cloudflarestorage.com/askmeatsack/sess/photo/ab12-desk.jpg",
+      }),
+    ).toBe("askmeatsack/sess/photo/ab12-desk.jpg");
+    expect(
+      contentDispositionFilename('nasty"name.pdf'),
+    ).toBe('attachment; filename="nasty_name.pdf"');
   });
 });

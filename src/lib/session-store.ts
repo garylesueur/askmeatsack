@@ -8,6 +8,7 @@ export type SessionFile = {
   contentType: string;
   size: number;
   url: string;
+  key?: string;
 };
 
 export type SessionAnswer = {

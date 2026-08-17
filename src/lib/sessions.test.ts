@@ -287,10 +287,23 @@ describe("B25 — Questions may accept files", () => {
       filename: "notes.txt",
       contentType: "text/plain",
       size: 12,
-      url: "https://example.com/notes.txt",
+      storageKey: "askmeatsack/session-1/Q1/ab12-notes.txt",
     });
     expect(result).toMatchObject({
-      file: { filename: "notes.txt" },
+      file: {
+        filename: "notes.txt",
+        key: "askmeatsack/session-1/Q1/ab12-notes.txt",
+        url: "https://askmeatsack.com/api/v1/sessions/session-1/files/agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      },
+    });
+    const fetched = await sessions.readPublicFile({
+      sessionId: "session-1",
+      publicToken: "public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      fileId: "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    });
+    expect(fetched).toMatchObject({
+      filename: "notes.txt",
+      key: "askmeatsack/session-1/Q1/ab12-notes.txt",
     });
   });
 
@@ -304,7 +317,7 @@ describe("B25 — Questions may accept files", () => {
       filename: "notes.txt",
       contentType: "text/plain",
       size: 12,
-      url: "https://example.com/notes.txt",
+      storageKey: "askmeatsack/session-1/Q1/ab12-notes.txt",
     });
     expect(result).toMatchObject({
       code: "invalid_answer",
