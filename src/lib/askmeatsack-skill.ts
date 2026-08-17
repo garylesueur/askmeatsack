@@ -25,6 +25,8 @@ Use that when you need more than a tap: leftover invoices, a sketch of a situati
 
 Do not use “I will answer in the comment” when the human should fill in known rows or named amounts. Use \`items\` (two to sixteen rows, each with \`id\`, \`label\`, optional \`hint\`) or \`fields\` (two to eight named boxes). The human types beside each row. Answers come back as \`entries\` keyed by those ids. A question cannot mix options, items, and fields.
 
+For money, set \`input: "money"\` and an ISO 4217 \`currency\` on the row or the question (\`GBP\`, \`USD\`, \`EUR\`). Put a known figure in \`amount\` as a canonical decimal (\`2476.80\`), not in the label. The human sees a formatted amount, and a currency-prefixed box when they type money. Answers stay canonical decimals in that currency. Do not convert. Mixed currencies are per-row. If a choice option is an amount, put the symbol in the label (\`£6,500\`).
+
 If you were sent an askmeatsack.com \`/s/…\` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
 
 ## Someone who is not in this conversation

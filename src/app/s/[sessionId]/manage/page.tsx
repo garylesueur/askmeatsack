@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { MarkdownBody } from "@/components/markdown-body";
+import { entryRowCaption, formatEntryValue } from "@/lib/money";
 import { isShortPrompt, questionEntries, questionKind } from "@/lib/question-presentation";
+import type { Question } from "@/lib/schema";
+import type { SessionAnswer } from "@/lib/session-store";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -28,6 +31,35 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: false,
     },
   };
+}
+
+function manageAnswerSummary(
+  question: Question,
+  answer: SessionAnswer,
+): string {
+  const bits: string[] = [];
+  if (answer.selectedOptionIds.length > 0) {
+    bits.push(answer.selectedOptionIds.join(", "));
+  }
+  if (answer.entries) {
+    const labelled: string[] = [];
+    for (const row of questionEntries(question)) {
+      const value = answer.entries[row.id];
+      if (value) {
+        labelled.push(`${row.label}: ${formatEntryValue(row, question, value)}`);
+      }
+    }
+    if (labelled.length > 0) {
+      bits.push(labelled.join("; "));
+    }
+  }
+  if (answer.text) {
+    bits.push(answer.text);
+  }
+  if (bits.length === 0) {
+    return "Answered";
+  }
+  return `Answered: ${bits.join(" — ")}`;
 }
 
 function manageKindLabel(question: {
@@ -159,20 +191,13 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
                   {questionEntries(question).length > 0 ? (
                     <ul className="list-disc pl-5 text-sm text-muted-foreground">
                       {questionEntries(question).map((row) => (
-                        <li key={row.id}>
-                          {row.label}
-                          {row.hint ? ` — ${row.hint}` : ""}
-                        </li>
+                        <li key={row.id}>{entryRowCaption(row, question)}</li>
                       ))}
                     </ul>
                   ) : null}
                   {answer ? (
                     <p className="text-sm text-muted-foreground">
-                      Answered
-                      {answer.selectedOptionIds.length > 0
-                        ? `: ${answer.selectedOptionIds.join(", ")}`
-                        : ""}
-                      {answer.text ? ` — ${answer.text}` : ""}
+                      {manageAnswerSummary(question, answer)}
                     </p>
                   ) : null}
                 </div>

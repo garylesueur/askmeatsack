@@ -54,6 +54,23 @@ describe("questionKind", () => {
     expect(entriesAreComplete(question, { a: "rent" })).toBe(false);
     expect(entriesAreComplete(question, { a: "rent", b: "card" })).toBe(true);
   });
+
+  it("needs a usable money value on money rows", () => {
+    const question = {
+      options: [] as { id: string }[],
+      currency: "GBP",
+      fields: [
+        { id: "vat", label: "VAT", input: "money" as const },
+        { id: "paye", label: "PAYE", input: "money" as const },
+      ],
+    };
+    expect(entriesAreComplete(question, { vat: "100", paye: "not money" })).toBe(
+      false,
+    );
+    expect(entriesAreComplete(question, { vat: "£100", paye: "1,200.5" })).toBe(
+      true,
+    );
+  });
 });
 
 describe("questionHasEvidence", () => {

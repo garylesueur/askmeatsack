@@ -24,13 +24,20 @@ export function answersJsonSchema(questions: Question[]): Record<string, unknown
           };
     }
     if (kind === "items" || kind === "fields") {
-      const entryIds = questionEntries(question).map((row) => row.id);
       const entryProperties: Record<string, unknown> = {};
-      for (const entryId of entryIds) {
-        entryProperties[entryId] = {
+      const rows = questionEntries(question);
+      for (const row of rows) {
+        const property: Record<string, unknown> = {
           type: "string",
           maxLength: ENTRY_ANSWER_MAX_CHARS,
         };
+        if (row.input === "money") {
+          const currency = row.currency ?? question.currency;
+          property.description = currency
+            ? `Canonical decimal in ${currency}, for example 2476.80`
+            : "Canonical decimal in the row currency";
+        }
+        entryProperties[row.id] = property;
       }
       answerProperties.entries = {
         type: "object",
