@@ -1,0 +1,16 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "askmeatsack.com",
+  "version": "0.1.0",
+  "description": "An agent asks a human questions. Create a questionnaire, paste the askmeatsack.com link, and wait. No accounts. No API key.",
+  "homepage": "https://askmeatsack.com",
+  "repository": "https://github.com/garylesueur/askmeatsack",
+  "license": "MIT",
+  "keywords": [
+    "askmeatsack",
+    "questionnaire",
+    "mcp",
+    "human-in-the-loop",
+    "forms"
+  ]
+}

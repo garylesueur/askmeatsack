@@ -1,0 +1,54 @@
+%% Generated from answering.flow.yaml. Do not edit directly.
+flowchart TD
+  subgraph F1["F1: Human answers"]
+    F1_load{{"Open the answer link"}}
+    F1_answering["Current question"]
+    F1_review["Review answers"]
+    F1_thank_you(["Done"])
+    F1_submitted_view(["Already finished"])
+    F1_expired_view(["Link expired"])
+    F1_cancelled_view(["Cancelled"])
+    F1_unknown_link(["Unknown link"])
+    F1_load -->|"F1.T1: Open [The link is valid and the questionnaire is still open.]"| F1_answering
+    F1_load -->|"F1.T2: Open [The questionnaire is unknown or the token does not match.]"| F1_unknown_link
+    F1_load -->|"F1.T3: Open [The expiry time has passed and it was never submitted or cancelled.]"| F1_expired_view
+    F1_load -->|"F1.T4: Open [The questionnaire is already submitted.]"| F1_submitted_view
+    F1_answering -->|"F1.T5: Choose an option [The option belongs to the question and respects single- or multi-choice.]"| F1_answering
+    F1_answering -->|"F1.T6: Choose an option [The option is not valid for that question.]"| F1_answering
+    F1_review -->|"F1.T7: Submit [Every required question has a valid answer.]"| F1_thank_you
+    F1_review -->|"F1.T8: Submit [A required question has no valid answer.]"| F1_review
+    F1_answering -->|"F1.T9: Time runs out"| F1_expired_view
+    F1_answering -->|"F1.T10: Leave and return [The same valid link is opened again while the questionnaire is still open.]"| F1_answering
+    F1_load -->|"F1.T11: Open [The questionnaire is already cancelled.]"| F1_cancelled_view
+    F1_answering -->|"F1.T12: Page is showing"| F1_answering
+    F1_answering -->|"F1.T13: Type an answer [The question accepts text and the text is within the limit.]"| F1_answering
+    F1_answering -->|"F1.T14: Type an answer [The question does not accept text, or the text is over the limit.]"| F1_answering
+    F1_answering -->|"F1.T15: Cancel"| F1_cancelled_view
+    F1_answering -->|"F1.T16: Finish [This is the last question, or every required question already has an answer.]"| F1_review
+    F1_review -->|"F1.T17: Change"| F1_answering
+    F1_answering -->|"F1.T18: Jump"| F1_answering
+    F1_review -->|"F1.T19: Time runs out"| F1_expired_view
+    F1_review -->|"F1.T20: Cancel"| F1_cancelled_view
+  end
+  subgraph F2["F2: Agent waits"]
+    F2_request{{"Start a questionnaire"}}
+    F2_waiting{{"Waiting for answers"}}
+    F2_complete(["Submitted"])
+    F2_expired(["Expired"])
+    F2_cancelled(["Cancelled"])
+    F2_rejected(["Refused"])
+    F2_request -->|"F2.T1: Create [The questions are usable.]"| F2_waiting
+    F2_request -->|"F2.T2: Create [The questions are not usable.]"| F2_rejected
+    F2_waiting -->|"F2.T3: Check status [The human has submitted.]"| F2_complete
+    F2_waiting -->|"F2.T4: Check status [The expiry time has passed without a submit or cancel.]"| F2_expired
+    F2_waiting -->|"F2.T5: Check status [The questionnaire is still open (pending or in progress).]"| F2_waiting
+    F2_waiting -->|"F2.T6: Check status [The questionnaire was cancelled.]"| F2_cancelled
+    F2_waiting -->|"F2.T7: Wait [It becomes submitted within the bound.]"| F2_complete
+    F2_waiting -->|"F2.T8: Wait [It expires within the bound.]"| F2_expired
+    F2_waiting -->|"F2.T9: Wait [It is cancelled within the bound.]"| F2_cancelled
+    F2_waiting -->|"F2.T10: Wait [Still open when the bound ends.]"| F2_waiting
+    F2_waiting -->|"F2.T11: Cancel [The questionnaire is still open.]"| F2_cancelled
+    F2_waiting -->|"F2.T12: Cancel [The questionnaire is already submitted or expired.]"| F2_waiting
+    F2_waiting -->|"F2.T13: Send email [The address is valid and the questionnaire is still open.]"| F2_waiting
+    F2_waiting -->|"F2.T14: Send email [The address is invalid, the provider fails, or the questionnaire is no longer open.]"| F2_waiting
+  end

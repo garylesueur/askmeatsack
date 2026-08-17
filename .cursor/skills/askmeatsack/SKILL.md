@@ -1,0 +1,38 @@
+# askmeatsack.com
+
+Create a questionnaire, put the answer link where the human will see it, then wait. Do not invent another form, a Slack bot, or a mailer of your own.
+
+The product is **askmeatsack.com**. The tool is named `askmeatsack.com`. HTTP and the tool are the same questionnaire. Answer links look like `https://askmeatsack.com/s/…`.
+
+There is no API key and no account. Create is open. After create, keep `pollUrl` (or its `token`) for status, wait, cancel, and email.
+
+## In this conversation
+
+1. Call `askmeatsack.com` with action `create` (or `POST /api/v1/sessions`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or `appearance` (`theme`: `ask`, `paper`, `grove`, or `ember`). Omit `appearance` for the product theme. Set `allowFiles` on a question if they should attach files. The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
+2. You always get `answerUrl`, `machineUrl`, and `pollUrl` immediately. Paste **`answerUrl` into this conversation** so the person here can open it. If they are an agent, they can fetch that same link with `Accept: text/markdown`, or the `.md` URL (`machineUrl`), for the questions, options, submit URL, and JSON Schema, then PUT answers as JSON. Do not wait for them to ask for the link.
+3. Wait with action `wait` (pass `sessionId` and `agentToken` from `pollUrl`; at most 60 seconds per call; loop if you need longer), poll `status` the same way, or use `callbackUrl` if you set one. On a terminal status the service POSTs `{ sessionId, status, answers }` to that URL once. A failed POST does not undo the status.
+4. When status is `submitted`, continue with the answers. `expired` and `cancelled` are finished too — do not keep asking.
+
+No email is required for this path.
+
+## What a question can carry
+
+Prompts and optional `detail` are markdown. Use `detail` for a guide, links, lists, or a mermaid code fence (language mermaid). Option labels stay plain text. Raw HTML is not rendered.
+
+Use that when you need more than a tap: HR forms, a sketch of a situation, a policy link, a diagram. Keep tap-only questions short when you want speed — a single choice with no comment or files advances as soon as they pick.
+
+If you were sent an askmeatsack.com `/s/…` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
+
+## Someone who is not in this conversation
+
+Email the same askmeatsack.com link to **one** person — on create, or again while the questionnaire is still open. Mail comes from askmeatsack.com, names the title, and includes the link. Then wait the same way as above.
+
+One questionnaire, one inbox. Another person means another questionnaire. A failed send does not destroy the session: `answerUrl` still works, and status shows that mail failed.
+
+If mail send is not available, still create: you already have `answerUrl`. Giving that URL to them (in chat, mail, or anywhere you can already post) is **your** job. This service does not post to Slack or other chats.
+
+## Do not
+
+- Name extra tools. There is one tool, `askmeatsack.com`, with actions `create`, `status`, `wait`, `cancel`, and `email`.
+- Put the agent status secret in the conversation or on the answering page.
+- Treat Slack (or any other chat) posting as a feature of this product.

@@ -1,0 +1,24 @@
+version: 1
+languages: [typescript]
+package_manager: pnpm
+
+paths:
+  specs: specs/
+  plans: .plans/
+  reports: .reports/
+  conventions: .engineering/conventions.yaml
+
+commands:
+  types: pnpm typecheck
+  lint: pnpm lint
+  test: pnpm test
+  test_file: "pnpm exec vitest run {file}"
+
+gates: [types, lint]
+
+vcs:
+  default_branch: main
+  pr_cli: gh
+
+tickets:
+  provider: none

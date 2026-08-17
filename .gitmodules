@@ -1,0 +1,3 @@
+[submodule ".agents/plugins/calm-craft"]
+	path = .agents/plugins/calm-craft
+	url = https://github.com/calmtechltd/calm-craft.git

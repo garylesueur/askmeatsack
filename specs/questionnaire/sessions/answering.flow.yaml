@@ -1,0 +1,268 @@
+version: 1
+flows:
+  - id: F1
+    name: Human answers
+    start: load
+    states:
+      - id: load
+        kind: action
+        label: Open the answer link
+      - id: answering
+        kind: screen
+        label: Current question
+      - id: review
+        kind: screen
+        label: Review answers
+      - id: thank_you
+        kind: terminal
+        label: Done
+        outcome: The human is told they can close the tab and can download the answers as JSON. Answers are frozen.
+      - id: submitted_view
+        kind: terminal
+        label: Already finished
+        outcome: The human sees that this questionnaire is already submitted. They cannot change answers. They can download the JSON.
+      - id: expired_view
+        kind: terminal
+        label: Link expired
+        outcome: The human is told the link has expired. They cannot change or submit answers.
+      - id: cancelled_view
+        kind: terminal
+        label: Cancelled
+        outcome: The human is told this questionnaire was cancelled. They cannot change or submit answers.
+      - id: unknown_link
+        kind: terminal
+        label: Unknown link
+        outcome: No questions are shown. No answers are accepted.
+    transitions:
+      - id: F1.T1
+        from: load
+        event: Open
+        to: answering
+        guard: The link is valid and the questionnaire is still open.
+        covers: [B2, B10]
+      - id: F1.T2
+        from: load
+        event: Open
+        to: unknown_link
+        guard: The questionnaire is unknown or the token does not match.
+        covers: [B12]
+      - id: F1.T3
+        from: load
+        event: Open
+        to: expired_view
+        guard: The expiry time has passed and it was never submitted or cancelled.
+        covers: [B8]
+      - id: F1.T4
+        from: load
+        event: Open
+        to: submitted_view
+        guard: The questionnaire is already submitted.
+        covers: [B11, B19]
+      - id: F1.T5
+        from: answering
+        event: Choose an option
+        to: answering
+        outcome: The choice is saved. For a single choice without a comment or files, the next question is shown.
+        guard: The option belongs to the question and respects single- or multi-choice.
+        covers: [B2, B3, B9, B15, B16]
+      - id: F1.T6
+        from: answering
+        event: Choose an option
+        to: answering
+        outcome: The choice is refused. Any previous answer on that question is unchanged. The human can try again.
+        guard: The option is not valid for that question.
+        covers: [B9]
+      - id: F1.T7
+        from: review
+        event: Submit
+        to: thank_you
+        guard: Every required question has a valid answer.
+        covers: [B5, B6, B19]
+      - id: F1.T8
+        from: review
+        event: Submit
+        to: review
+        outcome: Submit is refused. The human is told what is missing.
+        guard: A required question has no valid answer.
+        covers: [B6]
+      - id: F1.T9
+        from: answering
+        event: Time runs out
+        to: expired_view
+        covers: [B8]
+      - id: F1.T10
+        from: answering
+        event: Leave and return
+        to: answering
+        guard: The same valid link is opened again while the questionnaire is still open.
+        covers: [B3]
+      - id: F1.T11
+        from: load
+        event: Open
+        to: cancelled_view
+        guard: The questionnaire is already cancelled.
+        covers: [B17]
+      - id: F1.T12
+        from: answering
+        event: Page is showing
+        to: answering
+        outcome: The service records that the page is actually open. Status stays pending until an answer is saved.
+        covers: [B14]
+      - id: F1.T13
+        from: answering
+        event: Type an answer
+        to: answering
+        guard: The question accepts text and the text is within the limit.
+        covers: [B3, B16]
+      - id: F1.T14
+        from: answering
+        event: Type an answer
+        to: answering
+        outcome: The text is refused. Any previous answer on that question is unchanged.
+        guard: The question does not accept text, or the text is over the limit.
+        covers: [B9]
+      - id: F1.T15
+        from: answering
+        event: Cancel
+        to: cancelled_view
+        covers: [B17]
+      - id: F1.T16
+        from: answering
+        event: Finish
+        to: review
+        guard: This is the last question, or every required question already has an answer.
+        covers: [B2, B5]
+      - id: F1.T17
+        from: review
+        event: Change
+        to: answering
+        covers: [B2, B5]
+      - id: F1.T18
+        from: answering
+        event: Jump
+        to: answering
+        outcome: The chosen question is shown. Saved answers are still there.
+        covers: [B2, B3]
+      - id: F1.T19
+        from: review
+        event: Time runs out
+        to: expired_view
+        covers: [B8]
+      - id: F1.T20
+        from: review
+        event: Cancel
+        to: cancelled_view
+        covers: [B17]
+  - id: F2
+    name: Agent waits
+    start: request
+    states:
+      - id: request
+        kind: action
+        label: Start a questionnaire
+      - id: waiting
+        kind: action
+        label: Waiting for answers
+      - id: complete
+        kind: terminal
+        label: Submitted
+        outcome: The agent can read the finished answers and stop waiting. The callback fires if one was set.
+      - id: expired
+        kind: terminal
+        label: Expired
+        outcome: The agent learns the link expired without a submit, and can still read any answers that were saved. The callback fires if one was set.
+      - id: cancelled
+        kind: terminal
+        label: Cancelled
+        outcome: The agent learns it was cancelled, and can still read any answers that were saved. The callback fires if one was set.
+      - id: rejected
+        kind: terminal
+        label: Refused
+        outcome: No questionnaire is created. The agent does not receive an answer link.
+    transitions:
+      - id: F2.T1
+        from: request
+        event: Create
+        to: waiting
+        guard: The questions are usable.
+        covers: [B1, B18, B20, B21]
+      - id: F2.T2
+        from: request
+        event: Create
+        to: rejected
+        guard: The questions are not usable.
+        covers: [B10]
+      - id: F2.T3
+        from: waiting
+        event: Check status
+        to: complete
+        guard: The human has submitted.
+        covers: [B7]
+      - id: F2.T4
+        from: waiting
+        event: Check status
+        to: expired
+        guard: The expiry time has passed without a submit or cancel.
+        covers: [B8]
+      - id: F2.T5
+        from: waiting
+        event: Check status
+        to: waiting
+        guard: The questionnaire is still open (pending or in progress).
+        covers: [B4, B14]
+      - id: F2.T6
+        from: waiting
+        event: Check status
+        to: cancelled
+        guard: The questionnaire was cancelled.
+        covers: [B17]
+      - id: F2.T7
+        from: waiting
+        event: Wait
+        to: complete
+        guard: It becomes submitted within the bound.
+        covers: [B13, B7]
+      - id: F2.T8
+        from: waiting
+        event: Wait
+        to: expired
+        guard: It expires within the bound.
+        covers: [B13, B8]
+      - id: F2.T9
+        from: waiting
+        event: Wait
+        to: cancelled
+        guard: It is cancelled within the bound.
+        covers: [B13, B17]
+      - id: F2.T10
+        from: waiting
+        event: Wait
+        to: waiting
+        guard: Still open when the bound ends.
+        covers: [B13, B4]
+      - id: F2.T11
+        from: waiting
+        event: Cancel
+        to: cancelled
+        guard: The questionnaire is still open.
+        covers: [B17]
+      - id: F2.T12
+        from: waiting
+        event: Cancel
+        to: waiting
+        outcome: Cancel is refused. The questionnaire stays as it is.
+        guard: The questionnaire is already submitted or expired.
+        covers: [B17]
+      - id: F2.T13
+        from: waiting
+        event: Send email
+        to: waiting
+        guard: The address is valid and the questionnaire is still open.
+        covers: [B21]
+      - id: F2.T14
+        from: waiting
+        event: Send email
+        to: waiting
+        outcome: Mail is not delivered. The answer link still works. The agent can see that mail failed.
+        guard: The address is invalid, the provider fails, or the questionnaire is no longer open.
+        covers: [B21]

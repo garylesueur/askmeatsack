@@ -1,0 +1,31 @@
+import {
+  getDefaultSessionService,
+  jsonError,
+  readCreateCredential,
+} from "@/lib/app-sessions";
+import { isSessionServiceError } from "@/lib/sessions";
+
+type RouteContext = {
+  params: Promise<{ sessionId: string }>;
+};
+
+export async function GET(
+  request: Request,
+  context: RouteContext,
+): Promise<Response> {
+  const { sessionId } = await context.params;
+  const credential = readCreateCredential(request);
+  const token = new URL(request.url).searchParams.get("token") ?? undefined;
+
+  const result = await getDefaultSessionService().getForAgent({
+    sessionId,
+    agentToken: token,
+    hasCreateCredential: credential.hasCreateCredential,
+  });
+
+  if (isSessionServiceError(result)) {
+    return jsonError(result.status, result.code, result.message);
+  }
+
+  return Response.json(result);
+}
