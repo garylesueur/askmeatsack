@@ -319,4 +319,8 @@ export const sendEmailSchema = z.object({
   email: z.string().email().optional(),
 });
 
+export const sendAnswersCopySchema = z.object({
+  email: z.string().email(),
+});
+
 export type BulkAnswersInput = z.infer<typeof bulkAnswersSchema>;

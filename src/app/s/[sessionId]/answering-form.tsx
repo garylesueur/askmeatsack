@@ -617,7 +617,14 @@ export function AnsweringForm({
   }
 
   if (submitted && layout === "page") {
-    return <ThankYouScreen downloadHref={downloadHref} appearance={appearance} />;
+    return (
+      <ThankYouScreen
+        downloadHref={downloadHref}
+        appearance={appearance}
+        sessionId={sessionId}
+        publicToken={publicToken}
+      />
+    );
   }
 
   if (submitted && layout === "embed") {
