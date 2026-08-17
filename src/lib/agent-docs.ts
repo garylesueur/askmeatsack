@@ -1,5 +1,8 @@
 import { ASKMEATSACK_SKILL_MARKDOWN } from "@/lib/askmeatsack-skill";
-import { cursorInstallPageHref } from "@/lib/cursor-install";
+import {
+  CURSOR_PLUGIN_HREF,
+  cursorInstallPageHref,
+} from "@/lib/cursor-install";
 import { publicOrigin } from "@/lib/public-origin";
 
 export const SITE_TITLE = "askmeatsack.com";
@@ -44,6 +47,7 @@ askmeatsack.com is how an agent asks a human a set of questions. Create returns 
 
 - [Skill](${origin}/skill.md): How to use the askmeatsack.com tool
 - [MCP and HTTP](${origin}/mcp.md): Connect, actions, curl, machine answering
+- [Cursor plugin](${CURSOR_PLUGIN_HREF}): MCP plus the skill
 - [Home](${origin}/): Human landing page
 
 ## Optional
@@ -69,6 +73,7 @@ This URL is the MCP server. Browsers get a short page. Agents should fetch \`${o
 - This guide: [${origin}/mcp.md](${origin}/mcp.md)
 - HTTP create: \`POST ${createUrl}\`
 - Cursor install: ${cursorHref}
+- Cursor plugin: [${CURSOR_PLUGIN_HREF}](${CURSOR_PLUGIN_HREF}) — MCP plus the skill
 - Grok: [grok.com/connectors](https://grok.com/connectors) — Custom, paste the MCP URL. There is no one-click badge yet.
 
 There is no API key and no account. Create is open.
@@ -146,10 +151,21 @@ export function mcpGuideHtml(origin = publicOrigin()): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${title} MCP</title>
-  <meta name="description" content="${description}">
+  <meta name="description" content="${tagline} ${description}">
   <link rel="canonical" href="${mcpEscaped}">
   <link rel="alternate" type="text/markdown" href="${originEscaped}/mcp.md">
   <link rel="alternate" type="text/plain" href="${originEscaped}/llms.txt">
+  <meta property="og:title" content="${title}">
+  <meta property="og:description" content="${tagline} ${description}">
+  <meta property="og:url" content="${mcpEscaped}">
+  <meta property="og:site_name" content="${title}">
+  <meta property="og:locale" content="en_GB">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="${originEscaped}/opengraph-image">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${title}">
+  <meta name="twitter:description" content="${tagline} ${description}">
+  <meta name="twitter:image" content="${originEscaped}/opengraph-image">
   <style>
     :root { color-scheme: dark; }
     body {
@@ -186,6 +202,7 @@ export function mcpGuideHtml(origin = publicOrigin()): string {
     <ul>
       <li><a href="${originEscaped}/mcp.md">API guide (markdown)</a></li>
       <li><a href="${originEscaped}/skill.md">Skill</a></li>
+      <li><a href="${CURSOR_PLUGIN_HREF}">Cursor plugin</a></li>
       <li><a href="${originEscaped}/llms.txt">llms.txt</a></li>
       <li><a href="${originEscaped}/">${title}</a></li>
     </ul>
@@ -233,6 +250,7 @@ export function siteJsonLd(origin = publicOrigin()) {
         name: SITE_TITLE,
         url: origin,
         description: SITE_DESCRIPTION,
+        inLanguage: "en-GB",
       },
       {
         "@type": "SoftwareApplication",
@@ -241,6 +259,7 @@ export function siteJsonLd(origin = publicOrigin()) {
         applicationCategory: "DeveloperApplication",
         operatingSystem: "Web",
         description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
+        sameAs: [CURSOR_PLUGIN_HREF],
         offers: {
           "@type": "Offer",
           price: "0",
