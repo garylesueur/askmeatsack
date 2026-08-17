@@ -678,9 +678,9 @@ export function AnsweringForm({
       }
     >
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {layout === "page" ? "askmeatsack.com" : title ?? "Questions"}
-        </p>
+        <h1 className="text-sm text-muted-foreground">
+          {title ?? (layout === "page" ? "askmeatsack.com" : "Questions")}
+        </h1>
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {reviewing ? "Review" : `${stepIndex + 1} of ${questions.length}`}
           {saveState === "saved" ? " · Saved" : null}
@@ -688,25 +688,20 @@ export function AnsweringForm({
           {saveState === "error" ? " · Could not save" : null}
         </p>
       </div>
-      {layout === "page" ? (
-        <h1 className="mt-2 font-heading text-lg font-medium tracking-tight text-foreground">
-          {title ?? "Questions"}
-        </h1>
-      ) : null}
 
       <div
-        className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted"
+        className="mt-4 h-px w-full overflow-hidden bg-border/70"
         aria-hidden="true"
         title={`${progress.answeredCount} answered`}
       >
         <div
-          className="h-full bg-primary transition-[width]"
+          className="h-full bg-foreground/40 transition-[width]"
           style={{ width: `${percent}%` }}
         />
       </div>
 
       {questions.length > 1 ? (
-        <nav aria-label="Questions" className="mt-3 flex flex-wrap gap-1.5">
+        <nav aria-label="Questions" className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
           {questions.map((item, index) => {
             const current = !reviewing && index === stepIndex;
             const done = hasUsableAnswer(item, answers[item.id]);
@@ -720,12 +715,12 @@ export function AnsweringForm({
                 onClick={() => {
                   goToStep(index);
                 }}
-                className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm ${
+                className={`text-sm ${
                   current
-                    ? "bg-primary text-primary-foreground"
+                    ? "text-foreground underline decoration-foreground/50 underline-offset-4"
                     : done
-                      ? "bg-muted text-foreground"
-                      : "bg-muted/60 text-muted-foreground"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
                 }`}
               >
                 {index + 1}
@@ -805,10 +800,8 @@ export function AnsweringForm({
                 )}
               </div>
               {hasEvidence && question.detail ? (
-                <aside className="rounded-xl border border-border bg-card/60 p-4 lg:col-start-2 lg:row-span-2 lg:sticky lg:top-6">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Situation
-                  </p>
+                <aside className="lg:col-start-2 lg:row-span-2 lg:sticky lg:top-6 lg:border-l lg:border-border/60 lg:pl-8">
+                  <p className="mb-2 text-sm text-muted-foreground">Situation</p>
                   <MarkdownBody source={question.detail} />
                 </aside>
               ) : null}

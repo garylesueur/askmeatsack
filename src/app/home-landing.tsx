@@ -85,6 +85,7 @@ export function HomeLanding({
           width={126}
           height={28}
           unoptimized
+          className="dark:invert"
         />
       </a>
 

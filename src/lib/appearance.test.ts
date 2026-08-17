@@ -3,24 +3,33 @@ import {
   appearanceClassName,
   appearanceStyle,
   contrastingForeground,
+  resolveMode,
   resolveTheme,
 } from "./appearance";
 
 describe("questionnaire appearance", () => {
-  it("defaults to the ask theme", () => {
+  it("defaults to the ask theme and the system light or dark", () => {
     expect(resolveTheme()).toBe("ask");
-    expect(appearanceClassName()).toBe("dark theme-ask");
+    expect(resolveMode()).toBe("system");
+    expect(appearanceClassName()).toBe("theme-ask");
     expect(appearanceStyle()).toBeUndefined();
   });
 
-  it("maps light mode to paper", () => {
-    expect(resolveTheme({ mode: "light" })).toBe("paper");
-    expect(appearanceClassName({ mode: "light" })).toBe("theme-paper");
+  it("keeps mode as a light or dark override, not a different theme", () => {
+    expect(resolveTheme({ mode: "light" })).toBe("ask");
+    expect(resolveMode({ mode: "light" })).toBe("light");
+    expect(appearanceClassName({ mode: "light" })).toBe("light theme-ask");
+    expect(appearanceClassName({ mode: "dark", theme: "grove" })).toBe(
+      "dark theme-grove",
+    );
   });
 
-  it("uses a named theme", () => {
+  it("uses a named theme in both modes", () => {
     expect(resolveTheme({ theme: "grove" })).toBe("grove");
-    expect(appearanceClassName({ theme: "ember" })).toBe("dark theme-ember");
+    expect(appearanceClassName({ theme: "ember" })).toBe("theme-ember");
+    expect(appearanceClassName({ theme: "paper", mode: "dark" })).toBe(
+      "dark theme-paper",
+    );
   });
 
   it("still tints primary from a hex accent", () => {

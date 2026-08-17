@@ -5,26 +5,29 @@ export const APPEARANCE_THEMES = ["ask", "paper", "grove", "ember"] as const;
 
 export type AppearanceTheme = (typeof APPEARANCE_THEMES)[number];
 
+export type AppearanceMode = "system" | "light" | "dark";
+
 export function resolveTheme(appearance?: Appearance): AppearanceTheme {
   if (appearance?.theme) {
     return appearance.theme;
   }
-  if (appearance?.mode === "light") {
-    return "paper";
-  }
   return "ask";
 }
 
-export function themeIsDark(theme: AppearanceTheme): boolean {
-  return theme !== "paper";
+export function resolveMode(appearance?: Appearance): AppearanceMode {
+  if (appearance?.mode === "light" || appearance?.mode === "dark") {
+    return appearance.mode;
+  }
+  return "system";
 }
 
 export function appearanceClassName(appearance?: Appearance): string {
   const theme = resolveTheme(appearance);
-  if (theme === "paper") {
-    return "theme-paper";
+  const mode = resolveMode(appearance);
+  if (mode === "system") {
+    return `theme-${theme}`;
   }
-  return `dark theme-${theme}`;
+  return `${mode} theme-${theme}`;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {

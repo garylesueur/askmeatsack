@@ -6,7 +6,6 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
     "Kerry, leftover items after Sunday 16 August. Working list, not an audit. Short answers are fine. Chris is welcome on the HMRC question.\n\nThis is a **playground** copy on the preview. It is not the live link.",
   expiresInSeconds: 86_400,
   metadata: { play: "kerry-leftovers" },
-  appearance: { theme: "ask" },
   questions: [
     {
       id: "invoices_14d",
