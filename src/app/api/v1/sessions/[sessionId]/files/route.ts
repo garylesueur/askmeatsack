@@ -4,10 +4,11 @@ import {
   readPublicToken,
 } from "@/lib/app-sessions";
 import {
-  blobStoreAvailable,
+  fileStoreAvailable,
   fileTooLarge,
-  storeAnswerBlob,
-} from "@/lib/answer-blob";
+  storeAnswerFile,
+  type StoredFile,
+} from "@/lib/answer-files";
 import { FILE_MAX_BYTES } from "@/lib/schema";
 import { isSessionServiceError } from "@/lib/sessions";
 
@@ -19,7 +20,7 @@ export async function POST(
   request: Request,
   context: RouteContext,
 ): Promise<Response> {
-  if (!blobStoreAvailable()) {
+  if (!fileStoreAvailable()) {
     return jsonError(
       503,
       "files_unavailable",
@@ -46,13 +47,22 @@ export async function POST(
     );
   }
 
-  const stored = await storeAnswerBlob({
-    sessionId,
-    questionId,
-    filename: file.name || "upload",
-    body: file,
-    contentType: file.type || "application/octet-stream",
-  });
+  let stored: StoredFile;
+  try {
+    stored = await storeAnswerFile({
+      sessionId,
+      questionId,
+      filename: file.name || "upload",
+      body: file,
+      contentType: file.type || "application/octet-stream",
+    });
+  } catch {
+    return jsonError(
+      502,
+      "files_unavailable",
+      "File storage refused the upload",
+    );
+  }
 
   const result = await getDefaultSessionService().attachFile({
     sessionId,
