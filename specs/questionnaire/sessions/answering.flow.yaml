@@ -185,7 +185,7 @@ flows:
         event: Create
         to: waiting
         guard: The questions are usable.
-        covers: [B1, B18, B20, B21, B27]
+        covers: [B1, B18, B20, B27]
       - id: F2.T2
         from: request
         event: Create
@@ -253,19 +253,6 @@ flows:
         outcome: Cancel is refused. The questionnaire stays as it is.
         guard: The questionnaire is already submitted or expired.
         covers: [B17]
-      - id: F2.T13
-        from: waiting
-        event: Send email
-        to: waiting
-        guard: The address is valid and the questionnaire is still open.
-        covers: [B21]
-      - id: F2.T14
-        from: waiting
-        event: Send email
-        to: waiting
-        outcome: Mail is not delivered. The answer link still works. The agent can see that mail failed.
-        guard: The address is invalid, the provider fails, or the questionnaire is no longer open.
-        covers: [B21]
   - id: F3
     name: Owner inspects
     start: open_manage
