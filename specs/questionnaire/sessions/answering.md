@@ -96,7 +96,7 @@ The agent can email the same askmeatsack.com link to one person — at create, o
 
 ### B22 — Agent can hint a theme 🟢
 
-When creating a questionnaire, the agent may optionally name a theme: `ask` (the product, dark), `paper` (light), `grove` (dark teal), or `ember` (dark amber). If it sends nothing, the human sees `ask`. `mode` of `light` or `dark`, and a six-digit hex `accent`, are still accepted. An unusable theme is refused and no link is created.
+When creating a questionnaire, the agent may optionally name a theme: `ask` (the product), `paper`, `grove`, or `ember`. Each theme has a light and a dark side. If it sends nothing, the human sees `ask` in whatever light or dark their system is using. `mode` of `light` or `dark` forces that side. A six-digit hex `accent` is still accepted. An unusable theme is refused and no link is created.
 
 ### B23 — A machine can read the questions as markdown 🟢
 
@@ -162,7 +162,7 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 - User-facing copy calls the product **askmeatsack.com**.
 - One questionnaire has at most one email recipient. Inline share of the same link is still allowed.
 - Email send failure never deletes the questionnaire or the answer link.
-- Appearance is optional. Missing appearance is the `ask` theme. Named themes are `ask`, `paper`, `grove`, and `ember`. `mode` may be `dark` or `light`. Accent, when present, is a `#` plus six hex digits.
+- Appearance is optional. Missing appearance is the `ask` theme in the person’s system light or dark. Named themes are `ask`, `paper`, `grove`, and `ember`, each with both modes. `mode` may be `dark` or `light` to force one side. Accent, when present, is a `#` plus six hex digits.
 - The `.md` document is the same questionnaire as the browser page, keyed by the same public token. It never contains the agent status secret.
 - Files use the public answer token. A file is at most 4MB. A question accepts at most five files.
 
@@ -249,9 +249,9 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 
 | Situation | Outcome |
 | --- | --- |
-| No appearance sent | Human sees the `ask` theme |
-| `theme` is `ask`, `paper`, `grove`, or `ember` | Answering page uses that palette |
-| `mode` is `light` | Treated as `paper` |
+| No appearance sent | Human sees `ask` in their system light or dark |
+| `theme` is `ask`, `paper`, `grove`, or `ember` | Answering page uses that palette, still following system light or dark |
+| `mode` is `light` or `dark` | That side is forced; the theme palette stays |
 | `accent` is a six-digit hex colour | Buttons and selected answers use that colour on top of the theme |
 | `theme`, `mode`, or `accent` is unusable | Create refused; no answer link |
 
@@ -299,7 +299,7 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
 - **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Email to one person is also in, same wait. Recorded as B1, B20, and B21.
 - **Settled:** Create is public. There is no shared bearer to hand out. Agent status still needs that questionnaire’s agent token (the `pollUrl`). Recorded as B10.
-- **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`), with optional `mode` and hex accent still accepted. Default is `ask`. Recorded as B22.
+- **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.
 - **Settled:** Create returns a private manage link for inspect. Edit is allowed only while `pending`, so a person mid-answer is not left on vanished questions. Recorded as B27 and B28.

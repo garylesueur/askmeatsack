@@ -6,8 +6,11 @@ import {
   SITE_TITLE,
   siteJsonLd,
 } from "@/lib/agent-docs";
+import { ColorSchemeSync } from "@/components/color-scheme-sync";
 import { publicOrigin } from "@/lib/public-origin";
 import "./globals.css";
+
+const SYSTEM_DARK_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark');}}catch(e){}})();`;
 
 const geist = Geist({
   subsets: ["latin"],
@@ -72,13 +75,18 @@ export default function RootLayout({
   return (
     <html
       lang="en-GB"
-      className={`${geist.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
+        <script
+          dangerouslySetInnerHTML={{ __html: SYSTEM_DARK_SCRIPT }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <ColorSchemeSync />
         {children}
       </body>
     </html>

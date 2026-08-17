@@ -3,28 +3,46 @@
 import mermaid from "mermaid";
 import { useEffect, useId, useState } from "react";
 
-let mermaidReady = false;
-
-function ensureMermaid() {
-  if (mermaidReady) {
-    return;
+function pageIsDark(): boolean {
+  const root = document.documentElement;
+  if (root.classList.contains("light")) {
+    return false;
   }
-  mermaid.initialize({
-    startOnLoad: false,
-    securityLevel: "strict",
-    theme: "neutral",
-  });
-  mermaidReady = true;
+  if (root.classList.contains("dark")) {
+    return true;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
 export function MermaidDiagram({ chart }: { chart: string }) {
   const reactId = useId().replace(/[^a-zA-Z0-9]/g, "");
   const [svg, setSvg] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = () => {
+      setDark(pageIsDark());
+    };
+    update();
+    mq.addEventListener("change", update);
+    const observer = new MutationObserver(update);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => {
+      mq.removeEventListener("change", update);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    ensureMermaid();
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: dark ? "dark" : "neutral",
+    });
     void mermaid
       .render(`mermaid-${reactId}`, chart)
       .then((result) => {
@@ -40,7 +58,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     return () => {
       cancelled = true;
     };
-  }, [chart, reactId]);
+  }, [chart, reactId, dark]);
 
   if (failed) {
     return (
