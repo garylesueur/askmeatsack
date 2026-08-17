@@ -49,8 +49,6 @@ flowchart TD
     F2_waiting -->|"F2.T10: Wait [Still open when the bound ends.]"| F2_waiting
     F2_waiting -->|"F2.T11: Cancel [The questionnaire is still open.]"| F2_cancelled
     F2_waiting -->|"F2.T12: Cancel [The questionnaire is already submitted or expired.]"| F2_waiting
-    F2_waiting -->|"F2.T13: Send email [The address is valid and the questionnaire is still open.]"| F2_waiting
-    F2_waiting -->|"F2.T14: Send email [The address is invalid, the provider fails, or the questionnaire is no longer open.]"| F2_waiting
   end
   subgraph F3["F3: Owner inspects"]
     F3_open_manage{{"Open the manage link"}}
