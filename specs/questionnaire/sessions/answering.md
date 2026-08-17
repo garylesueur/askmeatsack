@@ -96,7 +96,7 @@ The agent can email the same askmeatsack.com link to one person — at create, o
 
 ### B22 — Agent can hint a theme 🟢
 
-When creating a questionnaire, the agent may optionally name a theme: `ask` (the product), `paper`, `grove`, or `ember`. Each theme has a light and a dark side. If it sends nothing, the human sees `ask` in whatever light or dark their system is using. `mode` of `light` or `dark` forces that side. A six-digit hex `accent` is still accepted. An unusable theme is refused and no link is created.
+When creating a questionnaire, the agent may optionally name a theme: `ask` (the product), `paper`, `grove`, or `ember`. Each theme has a light and a dark side. If it sends nothing, the human sees `ask` in whatever light or dark their system is using. `mode` of `light` or `dark` forces that side. The human can still switch light and dark from a control on the page; that choice is kept in the browser. A six-digit hex `accent` is still accepted. An unusable theme is refused and no link is created.
 
 ### B23 — A machine can read the questions as markdown 🟢
 
@@ -112,7 +112,7 @@ A question may allow file attachments. The public answer token can upload a file
 
 ### B26 — A question may carry extra material 🟢
 
-A question may include optional markdown `detail` — the situation, not the ask. Mermaid code fences in that markdown are drawn. Tables, lists, and links are shown as written. On a wide screen the human sees that material in a rail beside the question; on a narrow screen it sits under the prompt, before the choices. A short prompt is shown as the question heading. A long prompt is shown as readable body text, not a giant title. Prompts may also be markdown. Option labels stay plain text. Raw HTML from the creator is not rendered. This product does not score, mark, or branch on answers; the calling agent interprets them.
+A question may include optional markdown `detail` — the situation, not the ask. It is a lump of markdown: prose, lists, tables, links or bare URLs, images, and mermaid code fences. Those are drawn as written. On a wide screen the human sees that material in a rail beside the question; on a narrow screen it sits under the prompt, before the choices. A short prompt is shown as the question heading. A long prompt is shown as readable body text, not a giant title. Prompts may also be markdown. Option labels stay plain text. Raw HTML from the creator is not rendered. This product does not score, mark, or branch on answers; the calling agent interprets them.
 
 ### B27 — Owner can inspect on a private manage link 🟢
 
@@ -299,7 +299,7 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
 - **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Email to one person is also in, same wait. Recorded as B1, B20, and B21.
 - **Settled:** Create is public. There is no shared bearer to hand out. Agent status still needs that questionnaire’s agent token (the `pollUrl`). Recorded as B10.
-- **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. Recorded as B22.
+- **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.
 - **Settled:** Create returns a private manage link for inspect. Edit is allowed only while `pending`, so a person mid-answer is not left on vanished questions. Recorded as B27 and B28.

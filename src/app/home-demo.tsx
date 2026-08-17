@@ -125,7 +125,11 @@ export function HomeDemo() {
   }
 
   return (
-    <AppearanceShell appearance={session.appearance} className="min-h-0">
+    <AppearanceShell
+      appearance={session.appearance}
+      className="min-h-0"
+      showModeToggle={false}
+    >
       <AnsweringForm
       key={session.sessionId}
       sessionId={session.sessionId}

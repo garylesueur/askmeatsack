@@ -11,7 +11,7 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "invoices_14d",
       prompt: "Which invoices do you expect to clear in the next 14 days?",
       detail:
-        "Include anything Bucks asked you to hold until September. A short list in the comment is enough.",
+        "Include anything [Buckinghamshire Council](https://www.buckinghamshire.gov.uk/) asked you to hold until September. A short list in the comment is enough.",
       options: [
         { id: "will_list", label: "I will list them in the comment" },
         { id: "none", label: "None that I know of" },
@@ -24,7 +24,7 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "equals",
       prompt: "What are the Equals cards generally used for?",
       detail:
-        "A statement would help. Note anything leaving them before **31 August**.",
+        "A statement from [Equals](https://equalsmoney.com/) would help. Note anything leaving them before **31 August**.",
       options: [
         { id: "mix", label: "A mix (fuel, Amazon, materials, expenses)" },
         { id: "staff", label: "Mostly staff expenses" },
@@ -61,7 +61,7 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "hmrc",
       prompt: "What is the HMRC position after the letter?",
       detail:
-        "Chris can take this one. A screenshot or the letter itself is welcome. Use the comment if a figure is unknown.",
+        "Chris can take this one. A screenshot or the letter itself is welcome. Use the comment if a figure is unknown.\n\n- [HMRC](https://www.gov.uk/government/organisations/hm-revenue-customs)\n- [Time to Pay](https://www.gov.uk/government/publications/tax-time-to-pay)",
       currency: "GBP",
       fields: [
         { id: "vat_ttp", label: "VAT on Time to Pay", input: "money" },
@@ -75,7 +75,7 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "bucks",
       prompt: "Please label these Buckinghamshire lines.",
       detail:
-        "These are the buckinghamshire.gov amounts on the working list.\n\n```mermaid\nflowchart LR\n  bucks[buckinghamshire.gov] --> dd[Monthly DD]\n  bucks --> card[Monthly card]\n  bucks --> credits[Feb credits]\n```",
+        "These are the [buckinghamshire.gov](https://www.buckinghamshire.gov.uk/) amounts on the working list.\n\n```mermaid\nflowchart LR\n  bucks[buckinghamshire.gov] --> dd[Monthly DD]\n  bucks --> card[Monthly card]\n  bucks --> credits[Feb credits]\n```",
       currency: "GBP",
       items: [
         { id: "feb_dd", label: "Feb / Mar 2025", hint: "Direct debit", amount: "2476.80" },
@@ -103,7 +103,7 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "paypal",
       prompt: "Can you upload a PayPal activity export?",
       detail:
-        "January 2025 to January 2026, for the older Express Checkout direct debits. Not urgent if the mandate is now quiet.",
+        "January 2025 to January 2026, for the older Express Checkout direct debits. Export from [PayPal activity](https://www.paypal.com/myaccount/activities). Not urgent if the mandate is now quiet.",
       options: [
         { id: "will_upload", label: "I will upload it" },
         { id: "later", label: "Not now" },

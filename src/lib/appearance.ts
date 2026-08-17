@@ -14,6 +14,8 @@ export function resolveTheme(appearance?: Appearance): AppearanceTheme {
   return "ask";
 }
 
+export const COLOR_MODE_STORAGE_KEY = "askmeatsack:color-mode";
+
 export function resolveMode(appearance?: Appearance): AppearanceMode {
   if (appearance?.mode === "light" || appearance?.mode === "dark") {
     return appearance.mode;
@@ -21,9 +23,66 @@ export function resolveMode(appearance?: Appearance): AppearanceMode {
   return "system";
 }
 
-export function appearanceClassName(appearance?: Appearance): string {
+const colorModeListeners = new Set<() => void>();
+
+export function readStoredColorMode(): "light" | "dark" | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const value = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+  if (value === "light" || value === "dark") {
+    return value;
+  }
+  return null;
+}
+
+export function subscribeColorMode(listener: () => void): () => void {
+  colorModeListeners.add(listener);
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", listener);
+  }
+  return () => {
+    colorModeListeners.delete(listener);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", listener);
+    }
+  };
+}
+
+export function storeColorMode(mode: "light" | "dark"): void {
+  window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+  for (const listener of colorModeListeners) {
+    listener();
+  }
+}
+
+export function subscribeSystemDark(listener: () => void): () => void {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  mq.addEventListener("change", listener);
+  return () => {
+    mq.removeEventListener("change", listener);
+  };
+}
+
+export function readSystemDark(): boolean {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+export function resolveEffectiveMode(
+  appearance: Appearance | undefined,
+  stored: "light" | "dark" | null,
+): AppearanceMode {
+  if (stored) {
+    return stored;
+  }
+  return resolveMode(appearance);
+}
+
+export function appearanceClassName(
+  appearance?: Appearance,
+  mode: AppearanceMode = resolveMode(appearance),
+): string {
   const theme = resolveTheme(appearance);
-  const mode = resolveMode(appearance);
   if (mode === "system") {
     return `theme-${theme}`;
   }
