@@ -44,7 +44,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
   if (input.canEdit) {
     lines.push(
       "",
-      "Nobody has answered yet. You can still change title, context, questions, appearance, expiry, or email with action `edit` or `PATCH` this session.",
+      "Nobody has answered yet. You can still change title, context, questions, appearance, or expiry with action `edit` or `PATCH` this session.",
     );
   } else {
     lines.push(

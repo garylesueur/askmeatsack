@@ -60,8 +60,6 @@ export default async function AnsweringPage({ params, searchParams }: PageProps)
       <SubmittedScreen
         downloadHref={`/api/v1/sessions/${sessionId}/download?t=${encodeURIComponent(publicToken ?? "")}`}
         appearance={view.appearance}
-        sessionId={sessionId}
-        publicToken={publicToken}
       />
     );
   }

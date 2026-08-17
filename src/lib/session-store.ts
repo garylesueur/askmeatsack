@@ -37,10 +37,6 @@ export type Session = {
   metadata?: Record<string, string>;
   callbackUrl?: string;
   callbackSent?: boolean;
-  emailTo?: string;
-  emailStatus?: "sent" | "failed";
-  emailLastAttemptAt?: string;
-  emailError?: string;
 };
 
 export type SessionStore = {

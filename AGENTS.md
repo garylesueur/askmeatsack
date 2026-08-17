@@ -21,11 +21,11 @@ pnpm build       # Production build
 
 1Password holds three items in the **Agents** vault (`mep374l3cpdtzwibf5fswsimbi`, override with `OP_VAULT`): `askmeatsack.com Development`, `askmeatsack.com Preview`, and `askmeatsack.com Production`. Same field names, different values. Local commands use the Development item only. Preview and Production are pushed to Vercel; they are not for a laptop. Marketplace KV on Vercel can still inject `KV_REST_API_*` for that environment; leave those fields empty in 1Password so sync does not overwrite them. Leave Development Redis empty to stay local. File uploads need R2 on the environment you are using, including `R2_PUBLIC_BASE_URL`. `.env.development.tpl`, `.env.preview.tpl`, and `.env.production.tpl` hold `op://` references only. `.env.example` is the empty placeholder. Never print `.env` contents, never commit secrets.
 
-On Vercel, Preview and Production already have Upstash. `AGENT_API_KEY`, Resend, and R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`) belong in the matching 1Password items and are pushed with `pnpm env:vercel`. Preview and Production should each have their own R2 bucket.
+On Vercel, Preview and Production already have Upstash. `AGENT_API_KEY` and R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`) belong in the matching 1Password items and are pushed with `pnpm env:vercel`. Preview and Production should each have their own R2 bucket.
 
 ## What this is
 
-An agent asks a human questions. Create returns an askmeatsack.com link for the conversation (skill does that inline). The agent can also email the link to someone else and wait. Humans answer in the browser. Posting that same link to Slack or anywhere else is the calling agent’s job.
+An agent asks a human questions. Create returns an askmeatsack.com link for the conversation (skill does that inline). Humans answer in the browser. Posting that same link to Slack, email, or anywhere else is the calling agent’s job.
 
 Always call the product **askmeatsack.com** in user-facing copy. The agent tool is named `askmeatsack.com`. Answer links are `https://askmeatsack.com/…`.
 
@@ -35,7 +35,7 @@ Always call the product **askmeatsack.com** in user-facing copy. The agent tool 
 - Specs live in `specs/`. Format: `specs/README.md`. Start with `specs/questionnaire/sessions/answering.md` for the product.
 - Conventions will live in `.engineering/conventions.yaml` once `conventions-decide` has been run. Do not invent a parallel rule list here.
 - calm-craft is vendored as a submodule at `.agents/plugins/calm-craft`.
-- The askmeatsack skill is `.cursor/skills/askmeatsack/SKILL.md` (create → inspect/edit on manageUrl → paste answerUrl → wait, email → wait, or one unique questionnaire per person from an unattended job). The same instructions ship as the Agent Plugin skill at `skills/askmeatsack/SKILL.md`.
+- The askmeatsack skill is `.cursor/skills/askmeatsack/SKILL.md` (create → inspect/edit on manageUrl → paste answerUrl → wait, or one unique questionnaire per person from an unattended job). The same instructions ship as the Agent Plugin skill at `skills/askmeatsack/SKILL.md`.
 - The repository root is an [Agent Plugin](https://agent-plugins.org/): `plugin.json`, `mcp.json`, and `skills/`. `.mcp.json` is for [cursor.directory](https://cursor.directory/plugins/new) detection.
 - Implementation plans and review reports go in `.plans/` and `.reports/` (gitignored).
 

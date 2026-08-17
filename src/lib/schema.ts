@@ -413,7 +413,6 @@ const sessionFieldsSchema = z.object({
     .optional(),
   metadata: z.record(z.string(), z.string()).optional(),
   callbackUrl: z.string().url().optional(),
-  email: z.string().email().optional(),
   appearance: appearanceSchema.optional(),
 });
 
@@ -436,7 +435,6 @@ export const editSessionSchema = sessionFieldsSchema
       value.expiresInSeconds === undefined &&
       value.metadata === undefined &&
       value.callbackUrl === undefined &&
-      value.email === undefined &&
       value.appearance === undefined &&
       value.questions === undefined
     ) {
@@ -496,14 +494,6 @@ export const bulkAnswersSchema = z.object({
 
 export const waitSchema = z.object({
   seconds: z.number().int().positive().max(WAIT_MAX_SECONDS),
-});
-
-export const sendEmailSchema = z.object({
-  email: z.string().email().optional(),
-});
-
-export const sendAnswersCopySchema = z.object({
-  email: z.string().email(),
 });
 
 export type BulkAnswersInput = z.infer<typeof bulkAnswersSchema>;

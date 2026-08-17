@@ -8,8 +8,6 @@ import {
   editSessionSchema,
   saveAnswerSchema,
   bulkAnswersSchema,
-  sendEmailSchema,
-  sendAnswersCopySchema,
   waitSchema,
   FILE_MAX_COUNT,
   invalidQuestionsMessage,
@@ -17,10 +15,8 @@ import {
   type CreateSessionInput,
   type QuestionIssue,
 } from "./schema";
-import { answersCopyHtml, answersCopyText } from "./answers-copy";
 import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
-import { createResendMailer, isMailNotConfigured, type Mailer, type SendEmailResult } from "./mailer";
 import { parseMoney, resolveEntryCurrency } from "./money";
 import {
   entriesAreComplete,
@@ -44,15 +40,7 @@ export type SessionServiceDeps = {
   publicBaseUrl: string;
   sleep: (ms: number) => Promise<void>;
   postCallback: (url: string, body: unknown) => Promise<void>;
-  sendEmail: Mailer;
   waitPollMs?: number;
-};
-
-export type SessionEmailView = {
-  to: string;
-  status: "sent" | "failed";
-  lastAttemptAt: string;
-  error?: string;
 };
 
 export type CreateSessionResult = {
@@ -63,7 +51,6 @@ export type CreateSessionResult = {
   manageUrl: string;
   expiresAt: string;
   status: "pending";
-  email?: SessionEmailView;
 };
 
 export type SessionProgress = {
@@ -114,7 +101,6 @@ export type AgentSessionView = {
   title?: string;
   context?: string;
   metadata?: Record<string, string>;
-  email?: SessionEmailView;
   progress: SessionProgress;
   answers: Session["answers"];
   questions: Session["questions"];
@@ -241,18 +227,6 @@ function questionIsAnswered(
   return answer.selectedOptionIds.length > 0;
 }
 
-function emailView(session: Session): SessionEmailView | undefined {
-  if (!session.emailTo || !session.emailStatus || !session.emailLastAttemptAt) {
-    return undefined;
-  }
-  return {
-    to: session.emailTo,
-    status: session.emailStatus,
-    lastAttemptAt: session.emailLastAttemptAt,
-    error: session.emailError,
-  };
-}
-
 function agentView(
   session: Session,
   urls: { answerUrl: string; manageUrl: string },
@@ -266,7 +240,6 @@ function agentView(
     title: session.title,
     context: session.context,
     metadata: session.metadata,
-    email: emailView(session),
     progress: progressFor(session),
     answers: session.answers,
     questions: session.questions,
@@ -513,40 +486,6 @@ export function createSessionService(deps: SessionServiceDeps) {
     };
   }
 
-  function mailNotConfiguredError(): SessionServiceError {
-    return {
-      code: "mail_not_configured",
-      message: "Mail is not configured",
-      status: 503,
-    };
-  }
-
-  async function deliverEmail(
-    session: Session,
-    to: string,
-  ): Promise<{ session: Session; send: SendEmailResult }> {
-    const urls = urlsFor(session);
-    let result: SendEmailResult;
-    try {
-      result = await deps.sendEmail({
-        to,
-        title: session.title,
-        answerUrl: urls.answerUrl,
-      });
-    } catch {
-      result = { ok: false, message: "Mail provider failed" };
-    }
-    const next: Session = {
-      ...session,
-      emailTo: to,
-      emailStatus: result.ok ? "sent" : "failed",
-      emailLastAttemptAt: deps.now().toISOString(),
-      emailError: result.ok ? undefined : result.message,
-    };
-    await deps.store.save(next);
-    return { session: next, send: result };
-  }
-
   async function notifyTerminal(session: Session): Promise<void> {
     if (!session.callbackUrl || session.callbackSent) {
       return;
@@ -567,16 +506,6 @@ export function createSessionService(deps: SessionServiceDeps) {
     async create(body: unknown): Promise<CreateSessionResult | SessionServiceError> {
       const parsed = createSessionSchema.safeParse(body);
       if (!parsed.success) {
-        const emailIssue = parsed.error.issues.some(
-          (issue) => issue.path[0] === "email",
-        );
-        if (emailIssue) {
-          return {
-            code: "invalid_email",
-            message: "Email address is not usable",
-            status: 400,
-          };
-        }
         const appearanceIssue = parsed.error.issues.some(
           (issue) => issue.path[0] === "appearance",
         );
@@ -620,14 +549,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         expiresAt: session.expiresAt,
         status: "pending",
       };
-      if (!input.email) {
-        return created;
-      }
-      const delivered = await deliverEmail(session, input.email);
-      return {
-        ...created,
-        email: emailView(delivered.session),
-      };
+      return created;
     },
 
     async getForAgent(input: {
@@ -683,16 +605,6 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
       const parsed = editSessionSchema.safeParse(input.body);
       if (!parsed.success) {
-        const emailIssue = parsed.error.issues.some(
-          (issue) => issue.path[0] === "email",
-        );
-        if (emailIssue) {
-          return {
-            code: "invalid_email",
-            message: "Email address is not usable",
-            status: 400,
-          };
-        }
         const appearanceIssue = parsed.error.issues.some(
           (issue) => issue.path[0] === "appearance",
         );
@@ -744,9 +656,6 @@ export function createSessionService(deps: SessionServiceDeps) {
         };
       }
       await deps.store.save(next);
-      if (patch.email !== undefined) {
-        next = (await deliverEmail(next, patch.email)).session;
-      }
       return agentView(next, urlsFor(next));
     },
 
@@ -1257,107 +1166,6 @@ export function createSessionService(deps: SessionServiceDeps) {
       return downloadAnswersFrom(session);
     },
 
-    async emailAnswersForPublic(input: {
-      sessionId: string;
-      publicToken?: string;
-      body: unknown;
-    }): Promise<{ sent: true } | SessionServiceError> {
-      const parsed = sendAnswersCopySchema.safeParse(input.body ?? {});
-      if (!parsed.success) {
-        return {
-          code: "invalid_email",
-          message: "Email address is not usable",
-          status: 400,
-        };
-      }
-      const session = await loadForPublic(input.sessionId, input.publicToken);
-      if (isServiceError(session)) {
-        return session;
-      }
-      if (session.status !== "submitted") {
-        return {
-          code: "not_available",
-          message: "A copy is only available after submit",
-          status: 409,
-        };
-      }
-      const download = downloadAnswersFrom(session);
-      const answersJson = JSON.stringify(download, null, 2);
-      let result: SendEmailResult;
-      try {
-        result = await deps.sendEmail({
-          to: parsed.data.email,
-          title: session.title,
-          answersText: answersCopyText(download, session.questions),
-          answersHtml: answersCopyHtml(download, session.questions),
-          answersJson,
-        });
-      } catch {
-        result = { ok: false, message: "Mail provider failed" };
-      }
-      if (!result.ok) {
-        if (isMailNotConfigured(result)) {
-          return mailNotConfiguredError();
-        }
-        return {
-          code: "mail_failed",
-          message: result.message,
-          status: 502,
-        };
-      }
-      return { sent: true };
-    },
-
-    async sendEmail(input: {
-      sessionId: string;
-      agentToken?: string;
-      hasCreateCredential: boolean;
-      body: unknown;
-    }): Promise<AgentSessionView | SessionServiceError> {
-      const parsed = sendEmailSchema.safeParse(input.body ?? {});
-      if (!parsed.success) {
-        return {
-          code: "invalid_email",
-          message: "Email address is not usable",
-          status: 400,
-        };
-      }
-
-      const session = await loadForAgent({
-        sessionId: input.sessionId,
-        agentToken: input.agentToken,
-        hasCreateCredential: input.hasCreateCredential,
-      });
-      if (isServiceError(session)) {
-        return session;
-      }
-      if (sessionIsFrozen(session)) {
-        return frozenError();
-      }
-
-      const to = parsed.data.email ?? session.emailTo;
-      if (!to) {
-        return {
-          code: "invalid_email",
-          message: "Email address is required",
-          status: 400,
-        };
-      }
-      if (session.emailTo && session.emailTo !== to) {
-        return {
-          code: "one_recipient",
-          message: "One questionnaire has at most one email recipient",
-          status: 400,
-        };
-      }
-
-      const delivered = await deliverEmail(session, to);
-      if (isMailNotConfigured(delivered.send)) {
-        return mailNotConfiguredError();
-      }
-      return agentView(delivered.session, urlsFor(delivered.session));
-    },
-
     async wait(input: {
       sessionId: string;
       agentToken?: string;
@@ -1439,9 +1247,5 @@ export function defaultSessionServiceDeps(store: SessionStore): SessionServiceDe
         setTimeout(resolve, ms);
       }),
     postCallback: postCallbackJson,
-    sendEmail: createResendMailer({
-      apiKey: process.env.RESEND_API_KEY,
-      domain: process.env.RESEND_EMAIL_DOMAIN,
-    }),
   };
 }

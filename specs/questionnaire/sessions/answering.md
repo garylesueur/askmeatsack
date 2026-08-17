@@ -6,13 +6,13 @@ status: partial
 
 # Answering a questionnaire
 
-**askmeatsack.com** is how an agent asks a human a set of questions. Create returns an askmeatsack.com link to put in the conversation there and then, or to send from an unattended job. The agent can also email that link to someone else and wait. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
+**askmeatsack.com** is how an agent asks a human a set of questions. Create returns an askmeatsack.com link to put in the conversation there and then, or to send from an unattended job. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
 
 ## Behaviours
 
 ### B1 — Agent starts a questionnaire 🟢
 
-An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, optionally one email address, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
+An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
 
 If a question is not usable, create is refused and no answer link is returned. The refusal names the question id and the rule (for example that `allowComment` needs options, items, or fields). Several bad questions are listed; the message is the first of those. HTTP and the tool use the same error body: `error.code`, `error.message`, and `error.issues`.
 
@@ -50,7 +50,7 @@ A choice that is not one of that question’s options is refused. Several option
 
 ### B10 — The two links have different powers 🟢
 
-The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, email the link, inspect the manage page, or edit the questions. Creating a questionnaire is open: there is no shared API key.
+The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. Creating a questionnaire is open: there is no shared API key.
 
 ### B11 — After submit, the human can close the tab 🟢
 
@@ -86,15 +86,11 @@ When creating a questionnaire, the agent may leave a callback URL. When status b
 
 ### B19 — Human can download the answers 🟢
 
-After submit, the confirmation screen lets the human download the answers as JSON (question ids, prompts, chosen labels and ids, any text). They may also type an email address and have a copy sent — a readable summary plus the same JSON. That is optional. Mail is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret. A failed send does not undo submit.
+After submit, the confirmation screen lets the human download the answers as JSON (question ids, prompts, chosen labels and ids, any text). Download is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret.
 
 ### B20 — Ask in the conversation 🟢
 
-Create always returns the askmeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **askmeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. No email is required for this path. If the agent needs someone else, it emails (B21) or it posts the same link itself (Slack, and so on) — that post is the agent’s job, not this service. The same skill also covers an unattended job that is not sitting in a chat (B34).
-
-### B21 — Email it out and wait 🟢
-
-The agent can email the same askmeatsack.com link to one person — at create, or again while the questionnaire is still open. Mail comes from askmeatsack.com, names the title, and includes the link. The agent then waits the same way as inline. A send failure does not destroy the questionnaire: the answer link still works, and the agent can see that mail failed (`email.status`). Create still returns the answer link when mail is not configured. Asking to send again (the email action, or POST email) while mail is not configured is refused with `mail_not_configured`, so a caller that only looks at HTTP success does not think the mail went out. One questionnaire, one inbox. Two people on one link would overwrite each other; another person means another questionnaire.
+Create always returns the askmeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **askmeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. If the agent needs someone else, they post the same link themselves (Slack, email, and so on) — that post is the agent’s job, not this service. The same skill also covers an unattended job that is not sitting in a chat (B34).
 
 ### B22 — Agent can hint a theme 🟢
 
@@ -122,7 +118,7 @@ Create also returns a private manage link, keyed by the agent token. Opening it 
 
 ### B28 — Owner can edit before anyone answers 🟢
 
-While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, callback URL, or the email recipient — via the askmeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
+While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, or callback URL — via the askmeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
 
 ### B29 — Questions may be grouped into sections 🔵 future
 
@@ -148,7 +144,7 @@ A question may ask for something the device can capture besides a file: the pers
 
 ### B34 — Unattended job can collect from many people 🟢
 
-The skill tells an agent that is filling records or chasing missing facts — HR fields, identity documents, files, an ID — to create one questionnaire per person. Each ask is unique to what is still missing for that person. Opaque metadata holds the record key so answers can be matched when they come back; the human does not see it. The agent emails the link or puts `answerUrl` wherever it already reaches them, then waits via callback, poll, or a later bounded wait — not only by pasting into the current chat. Two people never share one answer link. The product is the same as the live-chat path; the agent does not invent a second form because the run is automated.
+The skill tells an agent that is filling records or chasing missing facts — HR fields, identity documents, files, an ID — to create one questionnaire per person. Each ask is unique to what is still missing for that person. Opaque metadata holds the record key so answers can be matched when they come back; the human does not see it. The agent puts `answerUrl` wherever it already reaches them, then waits via callback, poll, or a later bounded wait — not only by pasting into the current chat. Two people never share one answer link. The product is the same as the live-chat path; the agent does not invent a second form because the run is automated.
 
 ## Rules (Invariants)
 
@@ -170,8 +166,6 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 - Text answers are at most 2000 characters. Question `detail` is at most 8000 characters.
 - A callback, when present, is invoked once per terminal status (`submitted`, `expired`, `cancelled`).
 - User-facing copy calls the product **askmeatsack.com**.
-- One questionnaire has at most one email recipient. Inline share of the same link is still allowed.
-- Email send failure never deletes the questionnaire or the answer link.
 - Appearance is optional. Missing appearance is the `ask` theme in the person’s system light or dark. Named themes are `ask`, `paper`, `grove`, and `ember`, each with both modes. `mode` may be `dark` or `light` to force one side. Accent, when present, is a `#` plus six hex digits.
 - The `.md` document is the same questionnaire as the browser page, keyed by the same public token. It never contains the agent status secret.
 - Files use the public answer token. A file is at most 4MB. A question accepts at most five files.
@@ -204,8 +198,6 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 | Edit questions and details | No | Yes, while `pending` | Yes, while `pending` |
 | Bounded wait | No | Yes, that questionnaire only | Yes, that questionnaire |
 | Download answers JSON | Yes, after submit, that questionnaire only | No | No |
-| Email a copy of the answers | Yes, after submit, to an address they type | No | No |
-| Email the link to the recipient | No | Yes, while open | Yes, on create or while open |
 | See the agent status secret | No | It *is* the secret | Not via the answering page |
 
 ### Saving an answer
@@ -246,27 +238,6 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 | Still `pending` or `in_progress` when the bound ends | Wait returns current status and progress; agent may wait again |
 | Bound omitted or over the maximum | Refused; agent is told the allowed bound |
 
-### Email
-
-| Situation | Outcome |
-| --- | --- |
-| Valid address, questionnaire open | Mail sent from askmeatsack.com with the answer link; agent can wait as usual |
-| Invalid address | Send refused; questionnaire unchanged; agent is told why |
-| Send attempted, mail provider fails | Questionnaire stays; answer link still works; agent sees that mail failed |
-| Mail is not configured, create with an address | Questionnaire created; answer link returned; `email.status` is `failed` |
-| Mail is not configured, email action or POST email | Refused (`mail_not_configured`); agent is told mail is not configured |
-| Resend while still open | Another mail with the same link |
-| Resend after submit, expiry, or cancel | Refused |
-
-### Answers copy
-
-| Situation | Outcome |
-| --- | --- |
-| After submit, usable email, public token | Readable copy and JSON sent to that address |
-| Questionnaire still open, expired, or cancelled | Refused |
-| Invalid address | Refused; submit unchanged |
-| Mail provider fails | Human is told; they can still download JSON |
-
 ### Appearance
 
 | Situation | Outcome |
@@ -304,7 +275,7 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 ## User Flows
 
 - **F1 — Human answers:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B2–B6, B8–B12, B14–B17, B19, B26
-- **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B21, B34
+- **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B34
 - **F3 — Owner inspects:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B27, B28
 
 ## Open Questions
@@ -317,9 +288,10 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 - **Settled:** `in_progress` starts on the first saved answer, not on opening the page. Chat unfurls must not look like work under way. Opened time is a separate signal from the running page. Recorded as B4 and B14.
 - **Settled:** After expiry the agent still reads any partial answers for one hour. Recorded as B8.
 - **Settled:** Tool and HTTP are both in. Same questionnaire. Recorded as B1, B7, B13.
-- **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, JSON download, and an optional emailed copy of the answers are in. Recorded as B13–B19.
+- **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, and JSON download are in. Recorded as B13–B19.
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
-- **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Email to one person is also in, same wait. Recorded as B1, B20, and B21.
+- **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Recorded as B1 and B20.
+- **Withdrawn:** Email from this service (B21). Giving `answerUrl` is the calling agent’s job; this service does not send mail.
 - **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
 - **Settled:** Create is public. There is no shared bearer to hand out. Agent status still needs that questionnaire’s agent token (the `pollUrl`). Recorded as B10.
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
@@ -343,7 +315,8 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 
 ## Out of Scope
 
-- Sign-in, accounts, or identifying the human beyond the one email address they were sent to.
+- Sending email.
+- Sign-in, accounts, or identifying the human.
 - Wiring into Cursor’s own product APIs or the native AskQuestion UI.
 - Long-term storage or search of past questionnaires.
 - Posting the answer link to Slack or any other chat. The calling agent does that with the URL this service already returns.
