@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { apiErrorBody } from "./app-sessions";
 import { createAskmeatsackTool, ASKMEATSACK_TOOL_NAME } from "./askmeatsack-tool";
 import { createMemorySessionStore } from "./session-store";
-import { createSessionService } from "./sessions";
+import { createSessionService, isSessionServiceError } from "./sessions";
 
 const usableQuestions = [
   {
@@ -82,8 +83,51 @@ describe("B1 — Tool create matches HTTP", () => {
       action: "create",
       questions: [],
     });
-    expect(result).toMatchObject({ code: "invalid_questions", status: 400 });
+    expect(result).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      message: "Need at least one question",
+      issues: [{ code: "questions_required" }],
+    });
     expect(result).not.toHaveProperty("answerUrl");
+  });
+
+  it("Tool errors use the same nested envelope as HTTP", async () => {
+    const { tool } = toolWithStore();
+    const result = await tool.invoke({
+      action: "create",
+      questions: [
+        {
+          id: "villain",
+          prompt: "Anything else?",
+          allowComment: true,
+        },
+      ],
+    });
+    expect(result).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      issues: [{ questionId: "villain", code: "comment_needs_shape" }],
+    });
+    expect(isSessionServiceError(result)).toBe(true);
+    if (!isSessionServiceError(result)) {
+      return;
+    }
+    expect(apiErrorBody(result)).toEqual({
+      error: {
+        code: "invalid_questions",
+        message:
+          "Question villain: allowComment is only valid on a choice, items, or fields question",
+        issues: [
+          {
+            questionId: "villain",
+            code: "comment_needs_shape",
+            message:
+              "allowComment is only valid on a choice, items, or fields question",
+          },
+        ],
+      },
+    });
   });
 });
 

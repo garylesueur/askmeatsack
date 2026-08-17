@@ -22,7 +22,9 @@ function serviceWithStore(options?: {
     answerUrl?: string;
     answersText?: string;
     answersJson?: string;
-  }) => Promise<{ ok: true } | { ok: false; message: string }>;
+  }) => Promise<
+    { ok: true } | { ok: false; message: string; code?: "mail_not_configured" }
+  >;
 }) {
   let now = new Date("2026-08-16T20:00:00.000Z");
   const store = createMemorySessionStore();
@@ -107,8 +109,81 @@ describe("B1 — Agent starts a questionnaire", () => {
     expect(result).toMatchObject({
       code: "invalid_questions",
       status: 400,
+      message: "Need at least one question",
+      issues: [
+        {
+          code: "questions_required",
+          message: "Need at least one question",
+        },
+      ],
     });
     expect(result).not.toHaveProperty("answerUrl");
+  });
+
+  it("Names the question when allowComment is set without a shape", async () => {
+    const { sessions } = serviceWithStore();
+    const result = await sessions.create({
+      title: "Notes",
+      questions: [
+        {
+          id: "villain",
+          prompt: "Anything else?",
+          allowComment: true,
+        },
+      ],
+    });
+    expect(result).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      message:
+        "Question villain: allowComment is only valid on a choice, items, or fields question",
+      issues: [
+        {
+          questionId: "villain",
+          code: "comment_needs_shape",
+        },
+      ],
+    });
+    expect(result).not.toHaveProperty("answerUrl");
+  });
+
+  it("Lists every bad question and puts the first rule in the message", async () => {
+    const { sessions } = serviceWithStore();
+    const result = await sessions.create({
+      questions: [
+        {
+          id: "villain",
+          prompt: "Comment?",
+          allowComment: true,
+        },
+        {
+          id: "rows",
+          prompt: "One row",
+          items: [{ id: "a", label: "A" }],
+        },
+      ],
+    });
+    expect(result).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      message:
+        "Question villain: allowComment is only valid on a choice, items, or fields question",
+    });
+    expect(
+      (result as { issues?: Array<{ questionId?: string; code: string }> }).issues,
+    ).toEqual([
+      {
+        questionId: "villain",
+        code: "comment_needs_shape",
+        message:
+          "allowComment is only valid on a choice, items, or fields question",
+      },
+      {
+        questionId: "rows",
+        code: "items_min",
+        message: "Item questions need two to sixteen rows",
+      },
+    ]);
   });
 });
 
@@ -881,7 +956,18 @@ describe("B15 — A recommended option is marked", () => {
         },
       ],
     });
-    expect(result).toMatchObject({ code: "invalid_questions", status: 400 });
+    expect(result).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      message:
+        "Question Q1: Recommended option must belong to the question",
+      issues: [
+        {
+          questionId: "Q1",
+          code: "recommended_unknown",
+        },
+      ],
+    });
   });
 
   it("Public view includes the recommended mark and does not preselect it", async () => {
@@ -1476,6 +1562,40 @@ describe("B21 — Email it out and wait", () => {
     expect(poll).toMatchObject({ status: "submitted" });
     expect((poll as { email?: unknown }).email).toBeUndefined();
   });
+
+  it("Refuses a later send when mail is not configured", async () => {
+    const { sessions } = serviceWithStore({
+      sendEmail: async () => ({
+        ok: false,
+        message: "Mail is not configured",
+        code: "mail_not_configured",
+      }),
+    });
+    const created = await sessions.create({
+      questions: usableQuestions,
+      email: "person@example.com",
+    });
+    expect(created).toMatchObject({
+      status: "pending",
+      email: {
+        to: "person@example.com",
+        status: "failed",
+        error: "Mail is not configured",
+      },
+    });
+    const resent = await sessions.sendEmail({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: {},
+    });
+    expect(resent).toMatchObject({
+      code: "mail_not_configured",
+      status: 503,
+      message: "Mail is not configured",
+    });
+    expect(resent).not.toHaveProperty("email");
+  });
 });
 
 describe("B27 — Owner can inspect on a private manage link", () => {
@@ -1646,7 +1766,12 @@ describe("B32 — labelled rows and named fields", () => {
         },
       ],
     });
-    expect(mixed).toMatchObject({ code: "invalid_questions", status: 400 });
+    expect(mixed).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      message: "Question bad: A question cannot mix options, items, and fields",
+      issues: [{ questionId: "bad", code: "mixed_shapes" }],
+    });
 
     await sessions.create({ questions: itemQuestions });
     const unknown = await sessions.saveAnswer({
@@ -1744,7 +1869,12 @@ describe("B32 — labelled rows and named fields", () => {
         },
       ],
     });
-    expect(created).toMatchObject({ code: "invalid_questions", status: 400 });
+    expect(created).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      message: "Question hmrc: Money rows need a currency",
+      issues: [{ questionId: "hmrc", code: "money_needs_currency" }],
+    });
   });
 });
 

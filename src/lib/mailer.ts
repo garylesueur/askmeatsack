@@ -7,9 +7,17 @@ export type SendEmailInput = {
   answersJson?: string;
 };
 
-export type SendEmailResult = { ok: true } | { ok: false; message: string };
+export type SendEmailResult =
+  | { ok: true }
+  | { ok: false; message: string; code?: "mail_not_configured" };
 
 export type Mailer = (input: SendEmailInput) => Promise<SendEmailResult>;
+
+export function isMailNotConfigured(
+  result: SendEmailResult,
+): result is { ok: false; message: string; code: "mail_not_configured" } {
+  return !result.ok && result.code === "mail_not_configured";
+}
 
 export function createResendMailer(deps: {
   apiKey?: string;
@@ -18,7 +26,11 @@ export function createResendMailer(deps: {
 }): Mailer {
   return async (input) => {
     if (!deps.apiKey || !deps.domain) {
-      return { ok: false, message: "Mail is not configured" };
+      return {
+        ok: false,
+        message: "Mail is not configured",
+        code: "mail_not_configured",
+      };
     }
 
     const domain = deps.domain.replace(/^@/, "");

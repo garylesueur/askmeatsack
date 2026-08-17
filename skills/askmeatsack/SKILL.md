@@ -30,6 +30,8 @@ Use that when you need more than a tap: leftover invoices, a sketch of a situati
 
 Do not use “I will answer in the comment” when the human should fill in known rows or named amounts. Use `items` (two to sixteen rows, each with `id`, `label`, optional `hint`) or `fields` (two to eight named boxes). The human types beside each row. Answers come back as `entries` keyed by those ids. A question cannot mix options, items, and fields.
 
+`allowComment` is only valid on a choice, items, or fields question. Do not set it on free text or on a photo-only question (no options, items, or fields). Free text already is the comment; `allowFiles` does not make a comment legal. Photo plus comment works when the question also has options, items, or fields.
+
 For money, set `input: "money"` and an ISO 4217 `currency` on the row or the question (`GBP`, `USD`, `EUR`). Put a known figure in `amount` as a canonical decimal (`2476.80`), not in the label. The human sees a formatted amount, and a currency-prefixed box when they type money. Answers stay canonical decimals in that currency. Do not convert. Mixed currencies are per-row. If a choice option is an amount, put the symbol in the label (`£6,500`).
 
 If you were sent an askmeatsack.com `/s/…` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
@@ -38,7 +40,7 @@ If you were sent an askmeatsack.com `/s/…` link and you already have the answe
 
 Email the same askmeatsack.com link to **one** person — on create, or again while the questionnaire is still open. Mail comes from askmeatsack.com, names the title, and includes the link. Then wait the same way as above.
 
-One questionnaire, one inbox. Another person means another questionnaire. A failed send does not destroy the session: `answerUrl` still works, and status shows that mail failed.
+One questionnaire, one inbox. Another person means another questionnaire. A failed send does not destroy the session: `answerUrl` still works, and status shows that mail failed. Create can still succeed with `email.status: "failed"` — always check that field. Action `email` (or `POST /api/v1/sessions/{id}/email`) is an error with `mail_not_configured` when mail send is not available; do not treat HTTP 200 as proof the mail went out.
 
 If mail send is not available, still create: you already have `answerUrl`. Giving that URL to them (in chat, mail, or anywhere you can already post) is **your** job. This service does not post to Slack or other chats.
 

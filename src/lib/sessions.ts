@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import type { ZodError } from "zod";
 import {
   SESSION_DEFAULT_TTL_SECONDS,
   SESSION_READ_WINDOW_SECONDS,
@@ -11,13 +12,15 @@ import {
   sendAnswersCopySchema,
   waitSchema,
   FILE_MAX_COUNT,
+  invalidQuestionsMessage,
+  questionIssuesFromZod,
   type CreateSessionInput,
+  type QuestionIssue,
 } from "./schema";
 import { answersCopyHtml, answersCopyText } from "./answers-copy";
 import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
-import type { Mailer } from "./mailer";
-import { createResendMailer } from "./mailer";
+import { createResendMailer, isMailNotConfigured, type Mailer, type SendEmailResult } from "./mailer";
 import { parseMoney, resolveEntryCurrency } from "./money";
 import {
   entriesAreComplete,
@@ -30,6 +33,7 @@ export type SessionServiceError = {
   code: string;
   message: string;
   status: number;
+  issues?: QuestionIssue[];
 };
 
 export type SessionServiceDeps = {
@@ -496,9 +500,33 @@ export function createSessionService(deps: SessionServiceDeps) {
     return session;
   }
 
-  async function deliverEmail(session: Session, to: string): Promise<Session> {
+  function invalidQuestionsError(
+    error: ZodError,
+    body: unknown,
+  ): SessionServiceError {
+    const issues = questionIssuesFromZod(error, body);
+    return {
+      code: "invalid_questions",
+      message: invalidQuestionsMessage(issues),
+      status: 400,
+      ...(issues.length > 0 ? { issues } : {}),
+    };
+  }
+
+  function mailNotConfiguredError(): SessionServiceError {
+    return {
+      code: "mail_not_configured",
+      message: "Mail is not configured",
+      status: 503,
+    };
+  }
+
+  async function deliverEmail(
+    session: Session,
+    to: string,
+  ): Promise<{ session: Session; send: SendEmailResult }> {
     const urls = urlsFor(session);
-    let result: { ok: true } | { ok: false; message: string };
+    let result: SendEmailResult;
     try {
       result = await deps.sendEmail({
         to,
@@ -516,7 +544,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       emailError: result.ok ? undefined : result.message,
     };
     await deps.store.save(next);
-    return next;
+    return { session: next, send: result };
   }
 
   async function notifyTerminal(session: Session): Promise<void> {
@@ -559,11 +587,7 @@ export function createSessionService(deps: SessionServiceDeps) {
             status: 400,
           };
         }
-        return {
-          code: "invalid_questions",
-          message: "Questions are not usable",
-          status: 400,
-        };
+        return invalidQuestionsError(parsed.error, body);
       }
 
       const input: CreateSessionInput = parsed.data;
@@ -602,7 +626,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       const delivered = await deliverEmail(session, input.email);
       return {
         ...created,
-        email: emailView(delivered),
+        email: emailView(delivered.session),
       };
     },
 
@@ -688,11 +712,7 @@ export function createSessionService(deps: SessionServiceDeps) {
             status: 400,
           };
         }
-        return {
-          code: "invalid_questions",
-          message: "Questions are not usable",
-          status: 400,
-        };
+        return invalidQuestionsError(parsed.error, input.body);
       }
 
       const patch = parsed.data;
@@ -725,7 +745,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
       await deps.store.save(next);
       if (patch.email !== undefined) {
-        next = await deliverEmail(next, patch.email);
+        next = (await deliverEmail(next, patch.email)).session;
       }
       return agentView(next, urlsFor(next));
     },
@@ -1263,7 +1283,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
       const download = downloadAnswersFrom(session);
       const answersJson = JSON.stringify(download, null, 2);
-      let result: { ok: true } | { ok: false; message: string };
+      let result: SendEmailResult;
       try {
         result = await deps.sendEmail({
           to: parsed.data.email,
@@ -1276,6 +1296,9 @@ export function createSessionService(deps: SessionServiceDeps) {
         result = { ok: false, message: "Mail provider failed" };
       }
       if (!result.ok) {
+        if (isMailNotConfigured(result)) {
+          return mailNotConfiguredError();
+        }
         return {
           code: "mail_failed",
           message: result.message,
@@ -1329,7 +1352,10 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
 
       const delivered = await deliverEmail(session, to);
-      return agentView(delivered, urlsFor(delivered));
+      if (isMailNotConfigured(delivered.send)) {
+        return mailNotConfiguredError();
+      }
+      return agentView(delivered.session, urlsFor(delivered.session));
     },
 
     async wait(input: {

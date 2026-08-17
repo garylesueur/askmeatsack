@@ -12,6 +12,16 @@ export const QUESTION_FIELDS_MAX = 8;
 export const WAIT_MAX_SECONDS = 60;
 export const FILE_MAX_BYTES = 4 * 1024 * 1024;
 export const FILE_MAX_COUNT = 5;
+export const QUESTION_OPTIONS_MAX = 8;
+export const QUESTION_OPTIONS_MIN = 2;
+export const QUESTION_ITEMS_MIN = 2;
+export const QUESTION_FIELDS_MIN = 2;
+
+export type QuestionIssue = {
+  questionId?: string;
+  code: string;
+  message: string;
+};
 
 export const questionOptionSchema = z.object({
   id: z.string().min(1),
@@ -49,17 +59,48 @@ export const appearanceSchema = z.object({
 
 export type Appearance = z.infer<typeof appearanceSchema>;
 
+const QUESTION_ISSUE_MESSAGES: Record<string, string> = {
+  questions_required: "Need at least one question",
+  items_min: "Item questions need two to sixteen rows",
+  items_max: "Item questions need two to sixteen rows",
+  fields_min: "Field questions need two to eight fields",
+  fields_max: "Field questions need two to eight fields",
+  options_min: "Choice questions need two to eight options",
+  options_max: "Choice questions need two to eight options",
+  invalid_currency: "Currency must be a three-letter ISO 4217 code",
+  comment_needs_shape:
+    "allowComment is only valid on a choice, items, or fields question",
+  mixed_shapes: "A question cannot mix options, items, and fields",
+  money_needs_currency: "Money rows need a currency",
+  amount_needs_currency: "An amount needs a currency",
+  invalid_amount: "Amount is not a usable money value",
+  recommended_unknown: "Recommended option must belong to the question",
+  duplicate_question_id: "Question ids must be unique",
+  duplicate_option_id: "Option ids must be unique on a question",
+  duplicate_entry_id: "Entry ids must be unique on a question",
+  choice_fields_on_text: "Text questions cannot have choice fields",
+  choice_fields_on_entries: "Item and field questions cannot have choice fields",
+};
+
 export const questionSchema = z.object({
   id: z.string().min(1),
   prompt: z.string().min(1),
   detail: z.string().max(QUESTION_DETAIL_MAX_CHARS).optional(),
-  options: z.array(questionOptionSchema).max(8).optional().default([]),
-  items: z.array(questionEntrySchema).max(QUESTION_ITEMS_MAX).optional().default([]),
-  fields: z
-    .array(questionEntrySchema)
-    .max(QUESTION_FIELDS_MAX)
+  options: z
+    .array(questionOptionSchema)
+    .max(QUESTION_OPTIONS_MAX)
     .optional()
     .default([]),
+  items: z
+    .array(questionEntrySchema)
+    .min(QUESTION_ITEMS_MIN)
+    .max(QUESTION_ITEMS_MAX)
+    .optional(),
+  fields: z
+    .array(questionEntrySchema)
+    .min(QUESTION_FIELDS_MIN)
+    .max(QUESTION_FIELDS_MAX)
+    .optional(),
   allowMultiple: z.boolean().optional().default(false),
   required: z.boolean().optional().default(true),
   allowComment: z.boolean().optional().default(false),
@@ -68,124 +109,146 @@ export const questionSchema = z.object({
   currency: isoCurrencySchema.optional(),
 });
 
+function addQuestionIssue(
+  ctx: z.RefinementCtx,
+  index: number,
+  questionId: string,
+  issueCode: string,
+  message: string,
+): void {
+  ctx.addIssue({
+    code: z.ZodIssueCode.custom,
+    message,
+    path: ["questions", index],
+    params: { questionId, issueCode },
+  });
+}
+
 function refineQuestionList(
   questions: z.infer<typeof questionSchema>[],
   ctx: z.RefinementCtx,
 ): void {
   const questionIds = new Set<string>();
-  for (const question of questions) {
+  for (const [index, question] of questions.entries()) {
     if (questionIds.has(question.id)) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Question ids must be unique",
-        path: ["questions"],
-      });
-      return;
+      addQuestionIssue(
+        ctx,
+        index,
+        question.id,
+        "duplicate_question_id",
+        QUESTION_ISSUE_MESSAGES.duplicate_question_id,
+      );
     }
     questionIds.add(question.id);
 
+    const options = question.options ?? [];
+    const items = question.items ?? [];
+    const fields = question.fields ?? [];
     const shaped =
-      (question.options.length > 0 ? 1 : 0) +
-      (question.items.length > 0 ? 1 : 0) +
-      (question.fields.length > 0 ? 1 : 0);
+      (options.length > 0 ? 1 : 0) +
+      (items.length > 0 ? 1 : 0) +
+      (fields.length > 0 ? 1 : 0);
     if (shaped > 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: "A question cannot mix options, items, and fields",
-        path: ["questions"],
-      });
-      return;
+      addQuestionIssue(
+        ctx,
+        index,
+        question.id,
+        "mixed_shapes",
+        QUESTION_ISSUE_MESSAGES.mixed_shapes,
+      );
     }
 
-    if (question.items.length === 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Item questions need two to sixteen rows",
-        path: ["questions"],
-      });
-      return;
+    if (options.length === 1) {
+      addQuestionIssue(
+        ctx,
+        index,
+        question.id,
+        "options_min",
+        QUESTION_ISSUE_MESSAGES.options_min,
+      );
     }
 
-    if (question.fields.length === 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Field questions need two to eight fields",
-        path: ["questions"],
-      });
-      return;
-    }
-
-    if (question.options.length === 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Choice questions need two to eight options",
-        path: ["questions"],
-      });
-      return;
-    }
-
-    if (question.options.length === 0 && question.items.length === 0 && question.fields.length === 0) {
-      if (
-        question.allowComment ||
-        question.allowMultiple ||
-        question.recommendedOptionId
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Text questions cannot have choice fields",
-          path: ["questions"],
-        });
-        return;
+    if (options.length === 0 && items.length === 0 && fields.length === 0) {
+      if (question.allowComment) {
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "comment_needs_shape",
+          QUESTION_ISSUE_MESSAGES.comment_needs_shape,
+        );
+      }
+      if (question.allowMultiple) {
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "choice_fields_on_text",
+          QUESTION_ISSUE_MESSAGES.choice_fields_on_text,
+        );
+      }
+      if (question.recommendedOptionId) {
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "recommended_unknown",
+          QUESTION_ISSUE_MESSAGES.recommended_unknown,
+        );
       }
       continue;
     }
 
-    if (question.items.length > 0 || question.fields.length > 0) {
+    if (items.length > 0 || fields.length > 0) {
       if (question.allowMultiple || question.recommendedOptionId) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Item and field questions cannot have choice fields",
-          path: ["questions"],
-        });
-        return;
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "choice_fields_on_entries",
+          QUESTION_ISSUE_MESSAGES.choice_fields_on_entries,
+        );
       }
-      const rows = question.items.length > 0 ? question.items : question.fields;
+      const rows = items.length > 0 ? items : fields;
       const rowIds = new Set<string>();
       for (const row of rows) {
         if (rowIds.has(row.id)) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Entry ids must be unique on a question",
-            path: ["questions"],
-          });
-          return;
+          addQuestionIssue(
+            ctx,
+            index,
+            question.id,
+            "duplicate_entry_id",
+            QUESTION_ISSUE_MESSAGES.duplicate_entry_id,
+          );
         }
         rowIds.add(row.id);
         const currency = row.currency ?? question.currency;
         if (row.input === "money" && !currency) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Money rows need a currency",
-            path: ["questions"],
-          });
-          return;
+          addQuestionIssue(
+            ctx,
+            index,
+            question.id,
+            "money_needs_currency",
+            QUESTION_ISSUE_MESSAGES.money_needs_currency,
+          );
         }
         if (row.amount) {
           if (!currency) {
-            ctx.addIssue({
-              code: "custom",
-              message: "An amount needs a currency",
-              path: ["questions"],
-            });
-            return;
-          }
-          if (!parseMoney(row.amount, currency)) {
-            ctx.addIssue({
-              code: "custom",
-              message: "Amount is not a usable money value",
-              path: ["questions"],
-            });
-            return;
+            addQuestionIssue(
+              ctx,
+              index,
+              question.id,
+              "amount_needs_currency",
+              QUESTION_ISSUE_MESSAGES.amount_needs_currency,
+            );
+          } else if (!parseMoney(row.amount, currency)) {
+            addQuestionIssue(
+              ctx,
+              index,
+              question.id,
+              "invalid_amount",
+              QUESTION_ISSUE_MESSAGES.invalid_amount,
+            );
           }
         }
       }
@@ -193,14 +256,15 @@ function refineQuestionList(
     }
 
     const optionIds = new Set<string>();
-    for (const option of question.options) {
+    for (const option of options) {
       if (optionIds.has(option.id)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Option ids must be unique on a question",
-          path: ["questions"],
-        });
-        return;
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "duplicate_option_id",
+          QUESTION_ISSUE_MESSAGES.duplicate_option_id,
+        );
       }
       optionIds.add(option.id);
     }
@@ -209,14 +273,133 @@ function refineQuestionList(
       question.recommendedOptionId &&
       !optionIds.has(question.recommendedOptionId)
     ) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Recommended option must belong to the question",
-        path: ["questions"],
-      });
-      return;
+      addQuestionIssue(
+        ctx,
+        index,
+        question.id,
+        "recommended_unknown",
+        QUESTION_ISSUE_MESSAGES.recommended_unknown,
+      );
     }
   }
+}
+
+function questionIdFromInput(input: unknown, index: number): string | undefined {
+  if (!input || typeof input !== "object") {
+    return undefined;
+  }
+  const questions = (input as { questions?: unknown }).questions;
+  if (!Array.isArray(questions)) {
+    return undefined;
+  }
+  const question = questions[index];
+  if (!question || typeof question !== "object") {
+    return undefined;
+  }
+  const id = (question as { id?: unknown }).id;
+  return typeof id === "string" && id.length > 0 ? id : undefined;
+}
+
+function mappedIssueCode(issue: z.ZodIssue): string | undefined {
+  const params = "params" in issue ? issue.params : undefined;
+  if (
+    params &&
+    typeof params === "object" &&
+    "issueCode" in params &&
+    typeof params.issueCode === "string"
+  ) {
+    return params.issueCode;
+  }
+  const leaf = issue.path[issue.path.length - 1];
+  if (
+    issue.path.length === 1 &&
+    issue.path[0] === "questions" &&
+    issue.code === z.ZodIssueCode.too_small
+  ) {
+    return "questions_required";
+  }
+  if (leaf === "items" && issue.code === z.ZodIssueCode.too_small) {
+    return "items_min";
+  }
+  if (leaf === "items" && issue.code === z.ZodIssueCode.too_big) {
+    return "items_max";
+  }
+  if (leaf === "fields" && issue.code === z.ZodIssueCode.too_small) {
+    return "fields_min";
+  }
+  if (leaf === "fields" && issue.code === z.ZodIssueCode.too_big) {
+    return "fields_max";
+  }
+  if (leaf === "options" && issue.code === z.ZodIssueCode.too_small) {
+    return "options_min";
+  }
+  if (leaf === "options" && issue.code === z.ZodIssueCode.too_big) {
+    return "options_max";
+  }
+  if (leaf === "currency") {
+    return "invalid_currency";
+  }
+  return undefined;
+}
+
+export function questionIssuesFromZod(
+  error: z.ZodError,
+  input?: unknown,
+): QuestionIssue[] {
+  const issues: QuestionIssue[] = [];
+  const seen = new Set<string>();
+  const sorted = [...error.issues].sort((left, right) => {
+    const leftIndex = typeof left.path[1] === "number" ? left.path[1] : -1;
+    const rightIndex = typeof right.path[1] === "number" ? right.path[1] : -1;
+    if (leftIndex !== rightIndex) {
+      return leftIndex - rightIndex;
+    }
+    return left.path.length - right.path.length;
+  });
+  for (const issue of sorted) {
+    if (issue.path[0] !== "questions") {
+      continue;
+    }
+    const code = mappedIssueCode(issue);
+    if (!code) {
+      continue;
+    }
+    const index =
+      typeof issue.path[1] === "number" ? issue.path[1] : undefined;
+    const params = "params" in issue ? issue.params : undefined;
+    const fromParams =
+      params &&
+      typeof params === "object" &&
+      "questionId" in params &&
+      typeof params.questionId === "string"
+        ? params.questionId
+        : undefined;
+    const questionId =
+      fromParams ?? (index !== undefined ? questionIdFromInput(input, index) : undefined);
+    const message = QUESTION_ISSUE_MESSAGES[code] ?? issue.message;
+    const key = `${questionId ?? ""}:${code}:${message}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    const mapped: QuestionIssue = { code, message };
+    if (questionId) {
+      mapped.questionId = questionId;
+    }
+    issues.push(mapped);
+  }
+  return issues;
+}
+
+export function invalidQuestionsMessage(issues: QuestionIssue[]): string {
+  const first = issues[0];
+  if (!first) {
+    return "Questions are not usable";
+  }
+  if (first.questionId) {
+    return `Question ${first.questionId}: ${first.message}`;
+  }
+  return first.message;
 }
 
 const sessionFieldsSchema = z.object({

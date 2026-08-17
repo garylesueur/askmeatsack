@@ -8,6 +8,7 @@ import {
   createSessionService,
   defaultSessionServiceDeps,
   tokensMatch,
+  type SessionServiceError,
 } from "./sessions";
 
 const globalForSessions = globalThis as typeof globalThis & {
@@ -53,6 +54,29 @@ export function readPublicToken(request: Request): string | undefined {
   return url.searchParams.get("token") ?? url.searchParams.get("t") ?? undefined;
 }
 
-export function jsonError(status: number, code: string, message: string): Response {
-  return Response.json({ error: { code, message } }, { status });
+export function apiErrorBody(error: {
+  code: string;
+  message: string;
+  issues?: SessionServiceError["issues"];
+}): { error: { code: string; message: string; issues?: SessionServiceError["issues"] } } {
+  return {
+    error: {
+      code: error.code,
+      message: error.message,
+      ...(error.issues && error.issues.length > 0 ? { issues: error.issues } : {}),
+    },
+  };
+}
+
+export function jsonError(
+  status: number,
+  code: string,
+  message: string,
+  issues?: SessionServiceError["issues"],
+): Response {
+  return Response.json(apiErrorBody({ code, message, issues }), { status });
+}
+
+export function jsonServiceError(error: SessionServiceError): Response {
+  return jsonError(error.status, error.code, error.message, error.issues);
 }
