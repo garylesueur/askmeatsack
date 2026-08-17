@@ -13,13 +13,16 @@ function StatusScreen({
   title,
   body,
   downloadHref,
+  markdownHref,
   appearance,
 }: {
   title: string;
   body: string;
   downloadHref?: string;
+  markdownHref?: string;
   appearance?: Appearance;
 }) {
+  const hasDownload = Boolean(markdownHref || downloadHref);
   return (
     <AppearanceShell appearance={appearance} className="items-center justify-center px-4">
       <Card className="w-full max-w-md">
@@ -28,13 +31,22 @@ function StatusScreen({
           <CardTitle className="text-2xl">{title}</CardTitle>
           <CardDescription className="text-base">{body}</CardDescription>
         </CardHeader>
-        {downloadHref ? (
-          <CardContent className="flex flex-col gap-4">
-            <Button asChild variant="outline">
-              <a href={downloadHref} download="answers.json">
-                Download answers as JSON
-              </a>
-            </Button>
+        {hasDownload ? (
+          <CardContent className="flex flex-col gap-3">
+            {markdownHref ? (
+              <Button asChild>
+                <a href={markdownHref} download="answers.md">
+                  Download as Markdown
+                </a>
+              </Button>
+            ) : null}
+            {downloadHref ? (
+              <Button asChild variant="outline">
+                <a href={downloadHref} download="answers.json">
+                  Download as JSON
+                </a>
+              </Button>
+            ) : null}
           </CardContent>
         ) : null}
       </Card>
@@ -73,16 +85,19 @@ export function CancelledScreen({ appearance }: { appearance?: Appearance }) {
 
 export function SubmittedScreen({
   downloadHref,
+  markdownHref,
   appearance,
 }: {
   downloadHref?: string;
+  markdownHref?: string;
   appearance?: Appearance;
 }) {
   return (
     <StatusScreen
       title="This questionnaire is already finished"
-      body="You can close this tab. Answers cannot be changed."
+      body="You can close this tab. Answers cannot be changed. Download a copy if you want one."
       downloadHref={downloadHref}
+      markdownHref={markdownHref}
       appearance={appearance}
     />
   );
@@ -90,16 +105,19 @@ export function SubmittedScreen({
 
 export function ThankYouScreen({
   downloadHref,
+  markdownHref,
   appearance,
 }: {
   downloadHref?: string;
+  markdownHref?: string;
   appearance?: Appearance;
 }) {
   return (
     <StatusScreen
       title="You are done"
-      body="You can close this tab."
+      body="You can close this tab. Download a copy if you want one."
       downloadHref={downloadHref}
+      markdownHref={markdownHref}
       appearance={appearance}
     />
   );

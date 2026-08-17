@@ -86,7 +86,7 @@ When creating a questionnaire, the agent may leave a callback URL. When status b
 
 ### B19 — Human can download the answers 🟢
 
-After submit, the confirmation screen lets the human download the answers as JSON (question ids, prompts, chosen labels and ids, any text). Download is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret.
+After submit, the confirmation screen lets the human download the answers as Markdown or JSON (question ids, prompts, chosen labels and ids, any text). Download is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret. This service does not email a copy.
 
 ### B20 — Ask in the conversation 🟢
 
@@ -241,7 +241,7 @@ found to be infected is removed and never served.
 | Open the manage summary | No | Yes, that questionnaire only | Yes, that questionnaire |
 | Edit questions and details | No | Yes, while `pending` | Yes, while `pending` |
 | Bounded wait | No | Yes, that questionnaire only | Yes, that questionnaire |
-| Download answers JSON | Yes, after submit, that questionnaire only | No | No |
+| Download answers (Markdown or JSON) | Yes, after submit, that questionnaire only | No | No |
 | See the agent status secret | No | It *is* the secret | Not via the answering page |
 
 ### Saving an answer
