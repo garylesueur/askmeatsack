@@ -6,7 +6,7 @@ See `AGENTS.md` and `specs/questionnaire/sessions/answering.md`.
 
 ```bash
 pnpm install
-cp .env.example .env.local
+pnpm env   # or: cp .env.example .env.local
 pnpm dev
 ```
 

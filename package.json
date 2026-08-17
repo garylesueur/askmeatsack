@@ -4,6 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:op": "op run --env-file=.env.development.tpl -- next dev",
+    "env": "op inject -i .env.development.tpl -o .env.local",
+    "env:op-items": "bash scripts/ensure-op-items.sh",
+    "env:vercel": "bash scripts/sync-vercel-env.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

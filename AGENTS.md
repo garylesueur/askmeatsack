@@ -7,14 +7,21 @@ Greenfield project. Next.js App Router, TypeScript, Tailwind, pnpm. Merge gates 
 ## Commands
 
 ```bash
-pnpm dev         # Dev server
+pnpm env         # Write .env.local from the Development item
+pnpm dev         # Dev server (reads .env.local)
+pnpm dev:op      # Dev server with Development secrets in-process, nothing on disk
+pnpm env:op-items                     # Create the three 1Password items if missing
+pnpm env:vercel [preview|production]  # Push tpl → Vercel (default: both)
+pnpm env:vercel --var KEY --only-new  # One key, skip existing
 pnpm typecheck   # TypeScript
 pnpm lint        # ESLint
 pnpm test        # Vitest
 pnpm build       # Production build
 ```
 
-Copy `.env.example` to `.env.local`. Never print `.env` contents, never commit secrets.
+1Password holds three items in the **Agents** vault (`mep374l3cpdtzwibf5fswsimbi`, override with `OP_VAULT`): `askmeatsack.com Development`, `askmeatsack.com Preview`, and `askmeatsack.com Production`. Same field names, different values. Local commands use the Development item only. Preview and Production are pushed to Vercel; they are not for a laptop. Marketplace KV on Vercel can still inject `KV_REST_API_*` for that environment; leave those fields empty in 1Password so sync does not overwrite them. Leave Development Redis empty to stay local. File uploads need R2 on the environment you are using, including `R2_PUBLIC_BASE_URL`. `.env.development.tpl`, `.env.preview.tpl`, and `.env.production.tpl` hold `op://` references only. `.env.example` is the empty placeholder. Never print `.env` contents, never commit secrets.
+
+On Vercel, Preview and Production already have Upstash. `AGENT_API_KEY`, Resend, and R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_BASE_URL`) belong in the matching 1Password items and are pushed with `pnpm env:vercel`. Preview and Production should each have their own R2 bucket.
 
 ## What this is
 
