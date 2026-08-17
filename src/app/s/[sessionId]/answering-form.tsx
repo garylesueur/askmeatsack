@@ -639,8 +639,6 @@ export function AnsweringForm({
       <ThankYouScreen
         downloadHref={downloadHref}
         appearance={appearance}
-        sessionId={sessionId}
-        publicToken={publicToken}
       />
     );
   }

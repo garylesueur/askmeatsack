@@ -13,8 +13,6 @@ export type SecretEnv = LocalSecretEnv | VercelSecretEnv;
 
 export const secretKeys = [
   "AGENT_API_KEY",
-  "RESEND_API_KEY",
-  "RESEND_EMAIL_DOMAIN",
   "KV_REST_API_URL",
   "KV_REST_API_TOKEN",
   "R2_ACCOUNT_ID",

@@ -16,26 +16,10 @@ const usableQuestions = [
 function serviceWithStore(options?: {
   onSleep?: () => void | Promise<void>;
   postCallback?: (url: string, body: unknown) => Promise<void>;
-  sendEmail?: (input: {
-    to: string;
-    title?: string;
-    answerUrl?: string;
-    answersText?: string;
-    answersJson?: string;
-  }) => Promise<
-    { ok: true } | { ok: false; message: string; code?: "mail_not_configured" }
-  >;
 }) {
   let now = new Date("2026-08-16T20:00:00.000Z");
   const store = createMemorySessionStore();
   const callbackCalls: Array<{ url: string; body: unknown }> = [];
-  const emailSends: Array<{
-    to: string;
-    title?: string;
-    answerUrl?: string;
-    answersText?: string;
-    answersJson?: string;
-  }> = [];
   const sessions = createSessionService({
     store,
     now: () => now,
@@ -59,19 +43,11 @@ function serviceWithStore(options?: {
       }
       callbackCalls.push({ url, body });
     },
-    sendEmail: async (input) => {
-      if (options?.sendEmail) {
-        return options.sendEmail(input);
-      }
-      emailSends.push(input);
-      return { ok: true };
-    },
   });
   return {
     store,
     sessions,
     callbackCalls,
-    emailSends,
     setNow(next: Date) {
       now = next;
     },
@@ -1179,48 +1155,6 @@ describe("B19 — Human can download the answers", () => {
     });
     expect(refused).toMatchObject({ code: "not_available", status: 409 });
   });
-
-  it("emails a copy after submit and never includes the agent secret", async () => {
-    const { sessions, emailSends } = serviceWithStore();
-    await sessions.create({ title: "Naming", questions: mixedQuestions });
-    await sessions.saveAnswer({
-      sessionId: "session-1",
-      questionId: "Q1",
-      publicToken,
-      body: { selectedOptionIds: ["1"] },
-    });
-    await sessions.saveAnswer({
-      sessionId: "session-1",
-      questionId: "Q2",
-      publicToken,
-      body: { text: "Ship it" },
-    });
-    await sessions.submit({ sessionId: "session-1", publicToken });
-    const sent = await sessions.emailAnswersForPublic({
-      sessionId: "session-1",
-      publicToken,
-      body: { email: "kerry@example.com" },
-    });
-    expect(sent).toEqual({ sent: true });
-    expect(emailSends).toHaveLength(1);
-    expect(emailSends[0]?.to).toBe("kerry@example.com");
-    expect(emailSends[0]?.answerUrl).toBeUndefined();
-    expect(emailSends[0]?.answersText).toContain("askmeatsack.com");
-    expect(emailSends[0]?.answersText).toContain("Ship it");
-    expect(emailSends[0]?.answersJson).toContain("Ship it");
-    expect(JSON.stringify(emailSends[0])).not.toContain(agentToken);
-  });
-
-  it("refuses an answers copy while the questionnaire is still open", async () => {
-    const { sessions } = serviceWithStore();
-    await sessions.create({ questions: mixedQuestions });
-    const refused = await sessions.emailAnswersForPublic({
-      sessionId: "session-1",
-      publicToken,
-      body: { email: "kerry@example.com" },
-    });
-    expect(refused).toMatchObject({ code: "not_available", status: 409 });
-  });
 });
 
 describe("B13 — Agent can wait a bounded time", () => {
@@ -1463,138 +1397,6 @@ describe("B18 — Agent can be called back on a terminal status", () => {
       callbackUrl: "not-a-url",
     });
     expect(result).toMatchObject({ code: "invalid_questions", status: 400 });
-  });
-});
-
-describe("B21 — Email it out and wait", () => {
-  it("F2.T13 — Valid address on an open questionnaire attempts send", async () => {
-    const { sessions, emailSends } = serviceWithStore();
-    const created = await sessions.create({
-      questions: usableQuestions,
-      title: "Naming",
-      email: "person@example.com",
-    });
-    expect(created).toMatchObject({
-      status: "pending",
-      answerUrl:
-        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      email: { to: "person@example.com", status: "sent" },
-    });
-    expect(emailSends).toHaveLength(1);
-    expect(emailSends[0]).toMatchObject({
-      to: "person@example.com",
-      title: "Naming",
-      answerUrl:
-        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    });
-    const resent = await sessions.sendEmail({
-      sessionId: "session-1",
-      agentToken,
-      hasCreateCredential: false,
-      body: {},
-    });
-    expect(resent).toMatchObject({
-      status: "pending",
-      email: { to: "person@example.com", status: "sent" },
-    });
-    expect(emailSends).toHaveLength(2);
-  });
-
-  it("F2.T14 — Invalid address is refused and no questionnaire is created", async () => {
-    const { sessions, store, emailSends } = serviceWithStore();
-    const result = await sessions.create({
-      questions: usableQuestions,
-      email: "not-an-email",
-    });
-    expect(result).toMatchObject({ code: "invalid_email", status: 400 });
-    expect(result).not.toHaveProperty("answerUrl");
-    expect(await store.getById("session-1")).toBeNull();
-    expect(emailSends).toHaveLength(0);
-  });
-
-  it("F2.T14 — Provider failure still returns the answer link and shows mail failed", async () => {
-    const { sessions } = serviceWithStore({
-      sendEmail: async () => ({ ok: false, message: "provider down" }),
-    });
-    const created = await sessions.create({
-      questions: usableQuestions,
-      email: "person@example.com",
-    });
-    expect(created).toMatchObject({
-      status: "pending",
-      answerUrl:
-        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      email: { to: "person@example.com", status: "failed", error: "provider down" },
-    });
-    const poll = await sessions.getForAgent({
-      sessionId: "session-1",
-      agentToken,
-      hasCreateCredential: false,
-    });
-    expect(poll).toMatchObject({
-      status: "pending",
-      email: { to: "person@example.com", status: "failed" },
-    });
-  });
-
-  it("F2.T14 — Send after submit is refused and status stays submitted", async () => {
-    const { sessions } = serviceWithStore();
-    await sessions.create({ questions: usableQuestions });
-    await sessions.saveAnswer({
-      sessionId: "session-1",
-      questionId: "Q1",
-      publicToken,
-      body: { selectedOptionIds: ["1"] },
-    });
-    await sessions.submit({ sessionId: "session-1", publicToken });
-    const result = await sessions.sendEmail({
-      sessionId: "session-1",
-      agentToken,
-      hasCreateCredential: false,
-      body: { email: "person@example.com" },
-    });
-    expect(result).toMatchObject({ code: "frozen", status: 409 });
-    const poll = await sessions.getForAgent({
-      sessionId: "session-1",
-      agentToken,
-      hasCreateCredential: false,
-    });
-    expect(poll).toMatchObject({ status: "submitted" });
-    expect((poll as { email?: unknown }).email).toBeUndefined();
-  });
-
-  it("Refuses a later send when mail is not configured", async () => {
-    const { sessions } = serviceWithStore({
-      sendEmail: async () => ({
-        ok: false,
-        message: "Mail is not configured",
-        code: "mail_not_configured",
-      }),
-    });
-    const created = await sessions.create({
-      questions: usableQuestions,
-      email: "person@example.com",
-    });
-    expect(created).toMatchObject({
-      status: "pending",
-      email: {
-        to: "person@example.com",
-        status: "failed",
-        error: "Mail is not configured",
-      },
-    });
-    const resent = await sessions.sendEmail({
-      sessionId: "session-1",
-      agentToken,
-      hasCreateCredential: false,
-      body: {},
-    });
-    expect(resent).toMatchObject({
-      code: "mail_not_configured",
-      status: 503,
-      message: "Mail is not configured",
-    });
-    expect(resent).not.toHaveProperty("email");
   });
 });
 

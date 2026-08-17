@@ -18,7 +18,6 @@ export const askmeatsackToolActions = [
   "status",
   "wait",
   "cancel",
-  "email",
   "edit",
 ] as const;
 
@@ -38,7 +37,6 @@ export const askmeatsackToolInputShape = {
     .optional(),
   metadata: z.record(z.string(), z.string()).optional(),
   callbackUrl: z.string().url().optional(),
-  email: z.string().email().optional(),
   appearance: appearanceSchema.optional(),
   agentToken: z.string().min(1).optional(),
   questions: z.array(questionSchema).optional(),
@@ -66,7 +64,6 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
       expiresInSeconds?: number;
       metadata?: Record<string, string>;
       callbackUrl?: string;
-      email?: string;
       appearance?: unknown;
       agentToken?: string;
       questions?: unknown;
@@ -78,7 +75,6 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
           expiresInSeconds: input.expiresInSeconds,
           metadata: input.metadata,
           callbackUrl: input.callbackUrl,
-          email: input.email,
           appearance: input.appearance,
           questions: input.questions,
         });
@@ -105,15 +101,6 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
         });
       }
 
-      if (input.action === "email") {
-        return await sessions.sendEmail({
-          sessionId: input.sessionId,
-          agentToken: input.agentToken,
-          hasCreateCredential: false,
-          body: { email: input.email },
-        });
-      }
-
       if (input.action === "edit") {
         return await sessions.update({
           sessionId: input.sessionId,
@@ -125,7 +112,6 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
             expiresInSeconds: input.expiresInSeconds,
             metadata: input.metadata,
             callbackUrl: input.callbackUrl,
-            email: input.email,
             appearance: input.appearance,
             questions: input.questions,
           },

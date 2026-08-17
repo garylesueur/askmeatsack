@@ -38,9 +38,6 @@ function toolWithStore() {
     postCallback: async () => {
       return;
     },
-    sendEmail: async () => {
-      return { ok: true };
-    },
   });
   return {
     sessions,
@@ -225,21 +222,6 @@ describe("B17 — Tool cancel matches HTTP", () => {
       agentToken: "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
     expect(result).toMatchObject({ status: "cancelled" });
-  });
-});
-
-describe("B21 — Tool email matches HTTP", () => {
-  it("Create with an email attempts send", async () => {
-    const { tool } = toolWithStore();
-    const result = await tool.invoke({
-      action: "create",
-      questions: usableQuestions,
-      email: "person@example.com",
-    });
-    expect(result).toMatchObject({
-      status: "pending",
-      email: { to: "person@example.com", status: "sent" },
-    });
   });
 });
 

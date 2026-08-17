@@ -1,5 +1,4 @@
 import type { Appearance } from "@/lib/schema";
-import { AnswersCopyForm } from "@/components/answers-copy-form";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,15 +14,11 @@ function StatusScreen({
   body,
   downloadHref,
   appearance,
-  sessionId,
-  publicToken,
 }: {
   title: string;
   body: string;
   downloadHref?: string;
   appearance?: Appearance;
-  sessionId?: string;
-  publicToken?: string;
 }) {
   return (
     <AppearanceShell appearance={appearance} className="items-center justify-center px-4">
@@ -40,12 +35,6 @@ function StatusScreen({
                 Download answers as JSON
               </a>
             </Button>
-            {sessionId && publicToken ? (
-              <AnswersCopyForm
-                sessionId={sessionId}
-                publicToken={publicToken}
-              />
-            ) : null}
           </CardContent>
         ) : null}
       </Card>
@@ -85,13 +74,9 @@ export function CancelledScreen({ appearance }: { appearance?: Appearance }) {
 export function SubmittedScreen({
   downloadHref,
   appearance,
-  sessionId,
-  publicToken,
 }: {
   downloadHref?: string;
   appearance?: Appearance;
-  sessionId?: string;
-  publicToken?: string;
 }) {
   return (
     <StatusScreen
@@ -99,8 +84,6 @@ export function SubmittedScreen({
       body="You can close this tab. Answers cannot be changed."
       downloadHref={downloadHref}
       appearance={appearance}
-      sessionId={sessionId}
-      publicToken={publicToken}
     />
   );
 }
@@ -108,13 +91,9 @@ export function SubmittedScreen({
 export function ThankYouScreen({
   downloadHref,
   appearance,
-  sessionId,
-  publicToken,
 }: {
   downloadHref?: string;
   appearance?: Appearance;
-  sessionId?: string;
-  publicToken?: string;
 }) {
   return (
     <StatusScreen
@@ -122,8 +101,6 @@ export function ThankYouScreen({
       body="You can close this tab."
       downloadHref={downloadHref}
       appearance={appearance}
-      sessionId={sessionId}
-      publicToken={publicToken}
     />
   );
 }
