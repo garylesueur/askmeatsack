@@ -12,7 +12,9 @@ status: partial
 
 ### B1 — Agent starts a questionnaire 🟢
 
-An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, optionally one email address, and optionally a theme (dark or light, and/or one accent colour). It always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
+An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, optionally one email address, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
+
+If a question is not usable, create is refused and no answer link is returned. The refusal names the question id and the rule (for example that `allowComment` needs options, items, or fields). Several bad questions are listed; the message is the first of those. HTTP and the tool use the same error body: `error.code`, `error.message`, and `error.issues`.
 
 ### B2 — Human answers one question at a time 🟢
 
@@ -92,7 +94,7 @@ Create always returns the askmeatsack.com answer link immediately. A skill shipp
 
 ### B21 — Email it out and wait 🟢
 
-The agent can email the same askmeatsack.com link to one person — at create, or again while the questionnaire is still open. Mail comes from askmeatsack.com, names the title, and includes the link. The agent then waits the same way as inline. A send failure does not destroy the questionnaire: the answer link still works, and the agent can see that mail failed. One questionnaire, one inbox. Two people on one link would overwrite each other; another person means another questionnaire.
+The agent can email the same askmeatsack.com link to one person — at create, or again while the questionnaire is still open. Mail comes from askmeatsack.com, names the title, and includes the link. The agent then waits the same way as inline. A send failure does not destroy the questionnaire: the answer link still works, and the agent can see that mail failed (`email.status`). Create still returns the answer link when mail is not configured. Asking to send again (the email action, or POST email) while mail is not configured is refused with `mail_not_configured`, so a caller that only looks at HTTP success does not think the mail went out. One questionnaire, one inbox. Two people on one link would overwrite each other; another person means another questionnaire.
 
 ### B22 — Agent can hint a theme 🟢
 
@@ -146,7 +148,7 @@ A question may ask for something the device can capture besides a file: the pers
 
 ## Rules (Invariants)
 
-- A choice question has at least two and at most eight options. A text question has no options, items, or fields. An item question has two to sixteen rows. A field question has two to eight named boxes. A question cannot mix options, items, and fields. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required.
+- A choice question has at least two and at most eight options. A text question has no options, items, or fields. An item question has two to sixteen rows. A field question has two to eight named boxes. A question cannot mix options, items, and fields. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required. `allowComment` is only valid when the question already has options, items, or fields. Free text already is the comment; a photo-only question cannot add a comment without a shape.
 - Money rows need an ISO 4217 currency on the row or the question. Known figures use `amount`. Stored money answers are canonical decimals. The service does not convert currencies.
 - A question is required unless it is marked otherwise. Required defaults to yes. Several options on one question default to no.
 - Saved answers freeze at submit, expiry, or cancel. They do not change afterwards.
@@ -157,7 +159,7 @@ A question may ask for something the device can capture besides a file: the pers
 - Questions can be replaced only while status is `pending`. The public answer token does not change when the owner edits.
 - Opaque metadata the agent attaches (repo, branch, run id) is stored and returned to the agent; the human does not need it to answer.
 - Sessions are ephemeral. This product does not keep a long-term archive of answers.
-- Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out.
+- Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out. Refused questions use the same error body on both: the first rule in the message, and a list of issues with question id and rule.
 - The agent tool is named **askmeatsack.com**. Answer links are on `https://askmeatsack.com`.
 - A bounded wait never exceeds the time the agent asked for, and never more than 60 seconds per call.
 - An opened signal comes only from the running answering page, never from a mere fetch of the link.
@@ -247,6 +249,8 @@ A question may ask for something the device can capture besides a file: the pers
 | Valid address, questionnaire open | Mail sent from askmeatsack.com with the answer link; agent can wait as usual |
 | Invalid address | Send refused; questionnaire unchanged; agent is told why |
 | Send attempted, mail provider fails | Questionnaire stays; answer link still works; agent sees that mail failed |
+| Mail is not configured, create with an address | Questionnaire created; answer link returned; `email.status` is `failed` |
+| Mail is not configured, email action or POST email | Refused (`mail_not_configured`); agent is told mail is not configured |
 | Resend while still open | Another mail with the same link |
 | Resend after submit, expiry, or cancel | Refused |
 
@@ -289,7 +293,7 @@ A question may ask for something the device can capture besides a file: the pers
 | GET manage with `.md` or `Accept: text/markdown` | The same summary as markdown |
 | GET manage with the public answer token, or a bad token | Refused; no questions |
 | PATCH while `pending`, usable fields, matching agent token | Questionnaire updated; answer link unchanged |
-| PATCH with unusable questions | Refused; questionnaire unchanged |
+| PATCH with unusable questions | Refused with the question id and the rule; questionnaire unchanged |
 | PATCH after an answer is saved, or after submit, expiry, or cancel | Refused; questions unchanged |
 | PATCH with nothing to change | Refused |
 

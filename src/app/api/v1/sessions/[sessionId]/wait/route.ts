@@ -1,6 +1,7 @@
 import {
   getDefaultSessionService,
   jsonError,
+  jsonServiceError,
   readCreateCredential,
 } from "@/lib/app-sessions";
 import { isSessionServiceError } from "@/lib/sessions";
@@ -32,7 +33,7 @@ export async function POST(
     body,
   });
   if (isSessionServiceError(result)) {
-    return jsonError(result.status, result.code, result.message);
+    return jsonServiceError(result);
   }
   return Response.json(result);
 }

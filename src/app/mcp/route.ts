@@ -6,7 +6,7 @@ import {
   mcpGuideHtml,
   mcpGuideMarkdown,
 } from "@/lib/agent-docs";
-import { getDefaultSessionService } from "@/lib/app-sessions";
+import { getDefaultSessionService, apiErrorBody } from "@/lib/app-sessions";
 import {
   ASKMEATSACK_TOOL_NAME,
   askmeatsackToolInputShape,
@@ -20,12 +20,14 @@ const mcpHandler = createMcpHandler(
   (server) => {
     server.tool(
       ASKMEATSACK_TOOL_NAME,
-      "Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the askmeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember — each follows the person’s system light or dark unless mode is set. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (label each row), or fields (named boxes), and may allow files. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.",
+      "Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the askmeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember — each follows the person’s system light or dark unless mode is set. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (two to sixteen rows), or fields (two to eight named boxes), and may allow files. allowComment is only valid on a choice, items, or fields question — not on free text or photo-only. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. Create with email still returns the session if mail fails: check email.status. Action email is an error when mail is not configured. This service does not score answers.",
       askmeatsackToolInputShape,
       async (args) => {
         const tool = createAskmeatsackTool(getDefaultSessionService());
         const result = await tool.invoke(args);
-        const text = JSON.stringify(result);
+        const text = JSON.stringify(
+          isAskmeatsackToolError(result) ? apiErrorBody(result) : result,
+        );
         if (isAskmeatsackToolError(result)) {
           return {
             content: [{ type: "text" as const, text }],

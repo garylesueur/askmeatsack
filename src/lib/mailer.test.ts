@@ -27,4 +27,18 @@ describe("resend mailer", () => {
     const payload = bodies[0] as { attachments?: Array<{ filename: string }> };
     expect(payload.attachments?.[0]?.filename).toBe("answers.json");
   });
+
+  it("returns mail_not_configured when the key or domain is missing", async () => {
+    const mailer = createResendMailer({});
+    const result = await mailer({
+      to: "kerry@example.com",
+      title: "Naming",
+      answerUrl: "https://askmeatsack.com/s/x",
+    });
+    expect(result).toEqual({
+      ok: false,
+      message: "Mail is not configured",
+      code: "mail_not_configured",
+    });
+  });
 });

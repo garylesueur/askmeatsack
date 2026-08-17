@@ -1,6 +1,7 @@
 import {
   getDefaultSessionService,
   jsonError,
+  jsonServiceError,
   readPublicToken,
 } from "@/lib/app-sessions";
 import {
@@ -74,7 +75,7 @@ export async function POST(
     url: stored.url,
   });
   if (isSessionServiceError(result)) {
-    return jsonError(result.status, result.code, result.message);
+    return jsonServiceError(result);
   }
   return Response.json(result, { status: 201 });
 }
