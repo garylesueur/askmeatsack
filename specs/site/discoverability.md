@@ -28,7 +28,7 @@ Opening `https://askmeatsack.com/mcp` in a browser shows a short HTML page with 
 
 ### B5 — The skill is on the site 🟢
 
-`/skill.md` is the askmeatsack.com skill: create, paste the link, wait, or email and wait. It matches the skill shipped for Cursor.
+`/skill.md` is the askmeatsack.com skill: create, inspect or edit on the private manage link, paste the answer link, wait, or email and wait. It matches the skill shipped for Cursor.
 
 ### B6 — Questionnaire pages are not for search 🟢
 

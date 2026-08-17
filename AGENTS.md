@@ -28,7 +28,7 @@ Always call the product **askmeatsack.com** in user-facing copy. The agent tool 
 - Specs live in `specs/`. Format: `specs/README.md`. Start with `specs/questionnaire/sessions/answering.md` for the product.
 - Conventions will live in `.engineering/conventions.yaml` once `conventions-decide` has been run. Do not invent a parallel rule list here.
 - calm-craft is vendored as a submodule at `.agents/plugins/calm-craft`.
-- The askmeatsack skill is `.cursor/skills/askmeatsack/SKILL.md` (inline create → paste link → wait, or email → wait). The same instructions ship as the Agent Plugin skill at `skills/askmeatsack/SKILL.md`.
+- The askmeatsack skill is `.cursor/skills/askmeatsack/SKILL.md` (create → inspect/edit on manageUrl → paste answerUrl → wait, or email → wait). The same instructions ship as the Agent Plugin skill at `skills/askmeatsack/SKILL.md`.
 - The repository root is an [Agent Plugin](https://agent-plugins.org/): `plugin.json`, `mcp.json`, and `skills/`. `.mcp.json` is for [cursor.directory](https://cursor.directory/plugins/new) detection.
 - Implementation plans and review reports go in `.plans/` and `.reports/` (gitignored).
 

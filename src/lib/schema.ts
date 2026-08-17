@@ -39,88 +39,125 @@ export const questionSchema = z.object({
   recommendedOptionId: z.string().min(1).optional(),
 });
 
-export const createSessionSchema = z
-  .object({
-    title: z.string().min(1).optional(),
-    context: z.string().optional(),
-    expiresInSeconds: z
-      .number()
-      .int()
-      .positive()
-      .max(SESSION_MAX_TTL_SECONDS)
-      .optional(),
-    metadata: z.record(z.string(), z.string()).optional(),
-    callbackUrl: z.string().url().optional(),
-    email: z.string().email().optional(),
-    appearance: appearanceSchema.optional(),
-    questions: z.array(questionSchema).min(1),
-  })
-  .superRefine((value, ctx) => {
-    const questionIds = new Set<string>();
-    for (const question of value.questions) {
-      if (questionIds.has(question.id)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Question ids must be unique",
-          path: ["questions"],
-        });
-        return;
-      }
-      questionIds.add(question.id);
+function refineQuestionList(
+  questions: z.infer<typeof questionSchema>[],
+  ctx: z.RefinementCtx,
+): void {
+  const questionIds = new Set<string>();
+  for (const question of questions) {
+    if (questionIds.has(question.id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Question ids must be unique",
+        path: ["questions"],
+      });
+      return;
+    }
+    questionIds.add(question.id);
 
-      if (question.options.length === 1) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Choice questions need two to eight options",
-          path: ["questions"],
-        });
-        return;
-      }
+    if (question.options.length === 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Choice questions need two to eight options",
+        path: ["questions"],
+      });
+      return;
+    }
 
-      if (question.options.length === 0) {
-        if (
-          question.allowComment ||
-          question.allowMultiple ||
-          question.recommendedOptionId
-        ) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Text questions cannot have choice fields",
-            path: ["questions"],
-          });
-          return;
-        }
-        continue;
-      }
-
-      const optionIds = new Set<string>();
-      for (const option of question.options) {
-        if (optionIds.has(option.id)) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Option ids must be unique on a question",
-            path: ["questions"],
-          });
-          return;
-        }
-        optionIds.add(option.id);
-      }
-
+    if (question.options.length === 0) {
       if (
-        question.recommendedOptionId &&
-        !optionIds.has(question.recommendedOptionId)
+        question.allowComment ||
+        question.allowMultiple ||
+        question.recommendedOptionId
       ) {
         ctx.addIssue({
           code: "custom",
-          message: "Recommended option must belong to the question",
+          message: "Text questions cannot have choice fields",
           path: ["questions"],
         });
         return;
       }
+      continue;
+    }
+
+    const optionIds = new Set<string>();
+    for (const option of question.options) {
+      if (optionIds.has(option.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Option ids must be unique on a question",
+          path: ["questions"],
+        });
+        return;
+      }
+      optionIds.add(option.id);
+    }
+
+    if (
+      question.recommendedOptionId &&
+      !optionIds.has(question.recommendedOptionId)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Recommended option must belong to the question",
+        path: ["questions"],
+      });
+      return;
+    }
+  }
+}
+
+const sessionFieldsSchema = z.object({
+  title: z.string().min(1).optional(),
+  context: z.string().optional(),
+  expiresInSeconds: z
+    .number()
+    .int()
+    .positive()
+    .max(SESSION_MAX_TTL_SECONDS)
+    .optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
+  callbackUrl: z.string().url().optional(),
+  email: z.string().email().optional(),
+  appearance: appearanceSchema.optional(),
+});
+
+export const createSessionSchema = sessionFieldsSchema
+  .extend({
+    questions: z.array(questionSchema).min(1),
+  })
+  .superRefine((value, ctx) => {
+    refineQuestionList(value.questions, ctx);
+  });
+
+export const editSessionSchema = sessionFieldsSchema
+  .extend({
+    questions: z.array(questionSchema).min(1).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.title === undefined &&
+      value.context === undefined &&
+      value.expiresInSeconds === undefined &&
+      value.metadata === undefined &&
+      value.callbackUrl === undefined &&
+      value.email === undefined &&
+      value.appearance === undefined &&
+      value.questions === undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Nothing to update",
+      });
+      return;
+    }
+    if (value.questions) {
+      refineQuestionList(value.questions, ctx);
     }
   });
 
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
+export type EditSessionInput = z.infer<typeof editSessionSchema>;
 export type Question = z.infer<typeof questionSchema>;
 export type ChoiceQuestion = Question;
 

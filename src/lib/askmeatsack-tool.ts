@@ -19,6 +19,7 @@ export const askmeatsackToolActions = [
   "wait",
   "cancel",
   "email",
+  "edit",
 ] as const;
 
 export type AskmeatsackToolAction = (typeof askmeatsackToolActions)[number];
@@ -110,6 +111,24 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
           agentToken: input.agentToken,
           hasCreateCredential: false,
           body: { email: input.email },
+        });
+      }
+
+      if (input.action === "edit") {
+        return await sessions.update({
+          sessionId: input.sessionId,
+          agentToken: input.agentToken,
+          hasCreateCredential: false,
+          body: {
+            title: input.title,
+            context: input.context,
+            expiresInSeconds: input.expiresInSeconds,
+            metadata: input.metadata,
+            callbackUrl: input.callbackUrl,
+            email: input.email,
+            appearance: input.appearance,
+            questions: input.questions,
+          },
         });
       }
 

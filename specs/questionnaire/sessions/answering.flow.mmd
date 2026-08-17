@@ -52,3 +52,12 @@ flowchart TD
     F2_waiting -->|"F2.T13: Send email [The address is valid and the questionnaire is still open.]"| F2_waiting
     F2_waiting -->|"F2.T14: Send email [The address is invalid, the provider fails, or the questionnaire is no longer open.]"| F2_waiting
   end
+  subgraph F3["F3: Owner inspects"]
+    F3_open_manage{{"Open the manage link"}}
+    F3_inspect["Summary"]
+    F3_unknown_manage(["Unknown manage link"])
+    F3_open_manage -->|"F3.T1: Open [The agent token matches.]"| F3_inspect
+    F3_open_manage -->|"F3.T2: Open [The token does not match or the questionnaire is gone.]"| F3_unknown_manage
+    F3_inspect -->|"F3.T3: Edit [Status is still pending and the fields are usable.]"| F3_inspect
+    F3_inspect -->|"F3.T4: Edit [An answer has been saved, or the questionnaire is submitted, expired, or cancelled.]"| F3_inspect
+  end

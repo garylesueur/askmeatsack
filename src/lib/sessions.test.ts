@@ -84,6 +84,8 @@ describe("B1 — Agent starts a questionnaire", () => {
         "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       pollUrl:
         "https://askmeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      manageUrl:
+        "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
   });
 
@@ -1423,6 +1425,121 @@ describe("B21 — Email it out and wait", () => {
     });
     expect(poll).toMatchObject({ status: "submitted" });
     expect((poll as { email?: unknown }).email).toBeUndefined();
+  });
+});
+
+describe("B27 — Owner can inspect on a private manage link", () => {
+  it("F3.T1 — Manage markdown lists the questions and the public answer link", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({
+      title: "Naming",
+      context: "Pick a name",
+      questions: usableQuestions,
+    });
+    const markdown = await sessions.markdownForManage({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(markdown).toContain("Naming");
+    expect(markdown).toContain("Pick a name");
+    expect(markdown).toContain("What should we call this?");
+    expect(markdown).toContain(
+      "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    );
+    expect(markdown).toContain("Nobody has answered yet");
+    const agent = await sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(agent).toMatchObject({
+      context: "Pick a name",
+      answerUrl:
+        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      manageUrl:
+        "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    });
+  });
+
+  it("F3.T2 — A public token does not open the manage summary", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: usableQuestions });
+    const markdown = await sessions.markdownForManage({
+      sessionId: "session-1",
+      agentToken: publicToken,
+      hasCreateCredential: false,
+    });
+    expect(markdown).toMatchObject({ code: "not_found", status: 404 });
+  });
+});
+
+describe("B28 — Owner can edit before anyone answers", () => {
+  it("F3.T3 — Edit while pending replaces questions and keeps the answer link", async () => {
+    const { sessions } = serviceWithStore();
+    const created = await sessions.create({
+      title: "Naming",
+      questions: usableQuestions,
+    });
+    const updated = await sessions.update({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: {
+        title: "Renamed",
+        questions: [
+          {
+            id: "Q2",
+            prompt: "Ship it?",
+            options: [
+              { id: "yes", label: "Yes" },
+              { id: "no", label: "Not yet" },
+            ],
+          },
+        ],
+      },
+    });
+    expect(updated).toMatchObject({
+      title: "Renamed",
+      status: "pending",
+      questions: [{ id: "Q2", prompt: "Ship it?" }],
+    });
+    expect(created).toMatchObject({
+      answerUrl: (updated as { answerUrl: string }).answerUrl,
+    });
+    const publicView = await sessions.getForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(publicView).toMatchObject({
+      title: "Renamed",
+      questions: [{ id: "Q2", prompt: "Ship it?" }],
+    });
+    expect(JSON.stringify(publicView)).not.toContain(agentToken);
+  });
+
+  it("F3.T4 — Edit after an answer is refused", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: usableQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q1",
+      publicToken,
+      body: { selectedOptionIds: ["1"] },
+    });
+    const result = await sessions.update({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: { title: "Too late" },
+    });
+    expect(result).toMatchObject({ code: "not_editable", status: 409 });
+    const agent = await sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(agent).toMatchObject({ title: undefined, status: "in_progress" });
   });
 });
 

@@ -71,6 +71,8 @@ describe("B1 — Tool create matches HTTP", () => {
         "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       pollUrl:
         "https://askmeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      manageUrl:
+        "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
   });
 
@@ -194,5 +196,19 @@ describe("B21 — Tool email matches HTTP", () => {
       status: "pending",
       email: { to: "person@example.com", status: "sent" },
     });
+  });
+});
+
+describe("B28 — Tool edit matches HTTP", () => {
+  it("F3.T3 — Edit while pending updates the title", async () => {
+    const { tool } = toolWithStore();
+    await tool.invoke({ action: "create", questions: usableQuestions });
+    const result = await tool.invoke({
+      action: "edit",
+      sessionId: "session-1",
+      agentToken: "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      title: "Renamed",
+    });
+    expect(result).toMatchObject({ title: "Renamed", status: "pending" });
   });
 });

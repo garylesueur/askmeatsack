@@ -1,6 +1,6 @@
 ---
 name: askmeatsack
-description: Creates an askmeatsack.com questionnaire for a human, pastes the answer link, and waits. Use when an agent needs answers, choices, file attachments, or a review before continuing.
+description: Creates an askmeatsack.com questionnaire for a human, pastes the answer link, and waits. Inspect or edit on the private manage link while nobody has answered. Use when an agent needs answers, choices, file attachments, or a review before continuing.
 ---
 
 # askmeatsack.com
@@ -9,12 +9,12 @@ Create a questionnaire, put the answer link where the human will see it, then wa
 
 The product is **askmeatsack.com**. The tool is named `askmeatsack.com`. HTTP and the tool are the same questionnaire. Answer links look like `https://askmeatsack.com/s/…`.
 
-There is no API key and no account. Create is open. After create, keep `pollUrl` (or its `token`) for status, wait, cancel, and email.
+There is no API key and no account. Create is open. After create, keep `pollUrl` (or its `token`) and `manageUrl` for status, wait, cancel, email, inspect, and edit.
 
 ## In this conversation
 
 1. Call `askmeatsack.com` with action `create` (or `POST /api/v1/sessions`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or `appearance` (`theme`: `ask`, `paper`, `grove`, or `ember`). Omit `appearance` for the product theme. Set `allowFiles` on a question if they should attach files. The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
-2. You always get `answerUrl`, `machineUrl`, and `pollUrl` immediately. Paste **`answerUrl` into this conversation** so the person here can open it. If they are an agent, they can fetch that same link with `Accept: text/markdown`, or the `.md` URL (`machineUrl`), for the questions, options, submit URL, and JSON Schema, then PUT answers as JSON. Do not wait for them to ask for the link.
+2. You always get `answerUrl`, `machineUrl`, `pollUrl`, and `manageUrl` immediately. Paste **`answerUrl` into this conversation** so the person answering can open it. Keep `manageUrl` for yourself: open it, or fetch it as markdown, to see the questions and status. While nobody has answered, action `edit` (or `PATCH` the session) can change title, context, questions, appearance, expiry, or email. The answer link stays the same. If the respondent is an agent, they can fetch `answerUrl` with `Accept: text/markdown`, or `machineUrl`, then PUT answers as JSON. Do not wait for them to ask for the link.
 3. Wait with action `wait` (pass `sessionId` and `agentToken` from `pollUrl`; at most 60 seconds per call; loop if you need longer), poll `status` the same way, or use `callbackUrl` if you set one. On a terminal status the service POSTs `{ sessionId, status, answers }` to that URL once. A failed POST does not undo the status.
 4. When status is `submitted`, continue with the answers. `expired` and `cancelled` are finished too — do not keep asking.
 
@@ -38,6 +38,6 @@ If mail send is not available, still create: you already have `answerUrl`. Givin
 
 ## Do not
 
-- Name extra tools. There is one tool, `askmeatsack.com`, with actions `create`, `status`, `wait`, `cancel`, and `email`.
-- Put the agent status secret in the conversation or on the answering page.
+- Name extra tools. There is one tool, `askmeatsack.com`, with actions `create`, `status`, `wait`, `cancel`, `email`, and `edit`.
+- Put the agent status secret or `manageUrl` on the answering page, in email, or anywhere the respondent should not see it.
 - Treat Slack (or any other chat) posting as a feature of this product.

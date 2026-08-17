@@ -72,6 +72,7 @@ describe("site agent documents", () => {
     expect(guide).toContain("askmeatsack.com");
     expect(guide).toContain("POST /api/v1/sessions");
     expect(guide).toContain("machineUrl");
+    expect(guide).toContain("manageUrl");
     expect(guide).toContain(skillMarkdown().trim());
   });
 

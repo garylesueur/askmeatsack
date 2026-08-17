@@ -38,7 +38,7 @@ export function llmsTxt(origin = publicOrigin()): string {
 
 > ${SITE_TAGLINE} ${SITE_DESCRIPTION}
 
-askmeatsack.com is how an agent asks a human a set of questions. Create returns a link. The human answers in the browser. The agent waits, polls, or is called back. Optional email from askmeatsack.com. MCP and HTTP are the same questionnaire.
+askmeatsack.com is how an agent asks a human a set of questions. Create returns an answer link and a private manage link. The human answers in the browser. The agent can inspect or edit while nobody has answered, then wait, poll, or be called back. Optional email from askmeatsack.com. MCP and HTTP are the same questionnaire.
 
 ## Docs
 
@@ -75,7 +75,7 @@ There is no API key and no account. Create is open.
 
 ## Tool
 
-One tool, named \`askmeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`email\`.
+One tool, named \`askmeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`email\`, \`edit\`.
 
 POST JSON-RPC to \`${mcpUrl}\`. Do not invent extra tools, a Slack bot, or a mailer of your own.
 
@@ -104,9 +104,11 @@ Content-Type: application/json
 }
 \`\`\`
 
-Create returns \`answerUrl\`, \`machineUrl\`, and \`pollUrl\`. Keep the token on \`pollUrl\` for status, wait, cancel, and email. Paste \`answerUrl\` where the human will see it.
+Create returns \`answerUrl\`, \`machineUrl\`, \`pollUrl\`, and \`manageUrl\`. Keep the token on \`pollUrl\` and \`manageUrl\` for status, wait, cancel, email, inspect, and edit. Paste \`answerUrl\` where the human will see it.
 
 - Status: \`GET /api/v1/sessions/{sessionId}?token=\`
+- Edit while pending: \`PATCH /api/v1/sessions/{sessionId}?token=\`
+- Manage summary: \`GET /s/{sessionId}/manage?token=\` (markdown at \`.md\`)
 - Wait: \`POST /api/v1/sessions/{sessionId}/wait\` (at most 60 seconds per call)
 - Cancel: \`POST /api/v1/sessions/{sessionId}/cancel\`
 - Email: \`POST /api/v1/sessions/{sessionId}/email\` (one inbox)
@@ -118,7 +120,7 @@ If the respondent is an agent, fetch the answer link with \`Accept: text/markdow
 ## Do not
 
 - Index or share questionnaire pages (\`/s/…\`). Those are private links.
-- Put the agent status secret in a conversation or on the answering page.
+- Put the agent status secret or manageUrl on the answering page, in email, or anywhere the respondent should not see it.
 - Treat Slack (or any other chat) posting as a feature of this product.
 `;
 }
@@ -187,7 +189,7 @@ export function mcpGuideHtml(origin = publicOrigin()): string {
       <li><a href="${originEscaped}/llms.txt">llms.txt</a></li>
       <li><a href="${originEscaped}/">${title}</a></li>
     </ul>
-    <p class="muted">One tool, named askmeatsack.com. Create, paste the link, wait. Optional email from askmeatsack.com.</p>
+    <p class="muted">One tool, named askmeatsack.com. Create, inspect or edit on the private manage link, paste the answer link, wait. Optional email from askmeatsack.com.</p>
   </main>
 </body>
 </html>

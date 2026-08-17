@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
           destination: "/s/:sessionId/md",
         },
         {
+          source: "/s/:sessionId/manage.md",
+          destination: "/s/:sessionId/manage/md",
+        },
+        {
           source: "/mcp.md",
           destination: "/agent/mcp",
         },

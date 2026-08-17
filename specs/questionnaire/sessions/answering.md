@@ -12,7 +12,7 @@ status: implemented
 
 ### B1 — Agent starts a questionnaire 🟢
 
-An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, optionally one email address, and optionally a theme (dark or light, and/or one accent colour). It always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post) and a status link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
+An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, optionally one email address, and optionally a theme (dark or light, and/or one accent colour). It always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
 
 ### B2 — Human answers one question at a time 🟢
 
@@ -48,7 +48,7 @@ A choice that is not one of that question’s options is refused. Several option
 
 ### B10 — The two links have different powers 🟢
 
-The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, or email the link. Creating a questionnaire is open: there is no shared API key.
+The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, email the link, inspect the manage page, or edit the questions. Creating a questionnaire is open: there is no shared API key.
 
 ### B11 — After submit, the human can close the tab 🟢
 
@@ -114,6 +114,14 @@ A question may allow file attachments. The public answer token can upload a file
 
 A question may include optional markdown `detail` shown with the prompt (diagrams, explanation, a sketch of a situation). Mermaid code fences in that markdown are drawn. Prompts may also be markdown. Option labels stay plain text. Raw HTML from the creator is not rendered. This product does not score, mark, or branch on answers; the calling agent interprets them.
 
+### B27 — Owner can inspect on a private manage link 🟢
+
+Create also returns a private manage link, keyed by the agent token. Opening it in a browser shows a summary: title, status, expiry, context, every question (prompt, options, and flags), progress, and the public answer link to share. Fetching that same manage path as markdown (or with `.md`) returns the same summary for an agent. Status (tool or HTTP) includes the questions, the answer link, and the manage link. The manage page never uses the public answer token. A token that does not match does not show the questions.
+
+### B28 — Owner can edit before anyone answers 🟢
+
+While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, callback URL, or the email recipient — via the askmeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
+
 ## Rules (Invariants)
 
 - A choice question has at least two and at most eight options. A text question has no options. A comment on a choice is optional extra text, not a substitute for the choice when the question is required.
@@ -122,7 +130,8 @@ A question may include optional markdown `detail` shown with the prompt (diagram
 - Default life is 24 hours from creation. The creator may ask for shorter or longer, never more than 7 days.
 - After submit, expiry, or cancel, the agent can still read status and answers for one hour. After that the questionnaire is gone. The human cannot save or submit once it has expired or been cancelled.
 - Prompts and optional question `detail` may be formatted as markdown, including mermaid diagrams. Option labels are plain text. Raw HTML from the creator is not rendered. The service does not score answers.
-- The agent’s status secret never appears in the answering page, the JSON download, or anything the browser is given to run.
+- The agent’s status secret never appears in the answering page, the JSON download, or anything the browser is given to run. It may appear in the manage URL, which is only for the owner.
+- Questions can be replaced only while status is `pending`. The public answer token does not change when the owner edits.
 - Opaque metadata the agent attaches (repo, branch, run id) is stored and returned to the agent; the human does not need it to answer.
 - Sessions are ephemeral. This product does not keep a long-term archive of answers.
 - Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out.
@@ -161,7 +170,9 @@ A question may include optional markdown `detail` shown with the prompt (diagram
 | Mark opened | Yes, that questionnaire only | No | No |
 | Submit | Yes, that questionnaire only | No | No |
 | Cancel while open | Yes, that questionnaire only | Yes, that questionnaire only | Yes, that questionnaire |
-| See status, progress, opened time, and answers | No | Yes, that questionnaire only | Yes, that questionnaire |
+| See status, progress, opened time, questions, and answers | No | Yes, that questionnaire only | Yes, that questionnaire |
+| Open the manage summary | No | Yes, that questionnaire only | Yes, that questionnaire |
+| Edit questions and details | No | Yes, while `pending` | Yes, while `pending` |
 | Bounded wait | No | Yes, that questionnaire only | Yes, that questionnaire |
 | Download answers JSON | Yes, after submit, that questionnaire only | No | No |
 | Email the link to the recipient | No | Yes, while open | Yes, on create or while open |
@@ -237,10 +248,23 @@ A question may include optional markdown `detail` shown with the prompt (diagram
 | POST a file on a question that allows files, matching token | File stored and attached |
 | POST a file on a question that does not allow files | Refused |
 
+### Manage and edit
+
+| Situation | Outcome |
+| --- | --- |
+| GET the manage path with a matching agent token | Summary of title, status, questions, progress, and the public answer link |
+| GET manage with `.md` or `Accept: text/markdown` | The same summary as markdown |
+| GET manage with the public answer token, or a bad token | Refused; no questions |
+| PATCH while `pending`, usable fields, matching agent token | Questionnaire updated; answer link unchanged |
+| PATCH with unusable questions | Refused; questionnaire unchanged |
+| PATCH after an answer is saved, or after submit, expiry, or cancel | Refused; questions unchanged |
+| PATCH with nothing to change | Refused |
+
 ## User Flows
 
 - **F1 — Human answers:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B2–B6, B8–B12, B14–B17, B19, B26
 - **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B21
+- **F3 — Owner inspects:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B27, B28
 
 ## Open Questions
 
@@ -259,6 +283,7 @@ A question may include optional markdown `detail` shown with the prompt (diagram
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`), with optional `mode` and hex accent still accepted. Default is `ask`. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.
+- **Settled:** Create returns a private manage link for inspect. Edit is allowed only while `pending`, so a person mid-answer is not left on vanished questions. Recorded as B27 and B28.
 
 ## Future Considerations
 

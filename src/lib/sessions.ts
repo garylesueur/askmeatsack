@@ -4,6 +4,7 @@ import {
   SESSION_READ_WINDOW_SECONDS,
   WAIT_MAX_SECONDS,
   createSessionSchema,
+  editSessionSchema,
   saveAnswerSchema,
   bulkAnswersSchema,
   sendEmailSchema,
@@ -11,6 +12,7 @@ import {
   FILE_MAX_COUNT,
   type CreateSessionInput,
 } from "./schema";
+import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import type { Mailer } from "./mailer";
 import { createResendMailer } from "./mailer";
@@ -46,6 +48,7 @@ export type CreateSessionResult = {
   answerUrl: string;
   machineUrl: string;
   pollUrl: string;
+  manageUrl: string;
   expiresAt: string;
   status: "pending";
   email?: SessionEmailView;
@@ -97,11 +100,14 @@ export type AgentSessionView = {
   submittedAt: string | null;
   openedAt: string | null;
   title?: string;
+  context?: string;
   metadata?: Record<string, string>;
   email?: SessionEmailView;
   progress: SessionProgress;
   answers: Session["answers"];
   questions: Session["questions"];
+  answerUrl: string;
+  manageUrl: string;
 };
 
 export type PublicSessionView = {
@@ -226,7 +232,10 @@ function emailView(session: Session): SessionEmailView | undefined {
   };
 }
 
-function agentView(session: Session): AgentSessionView {
+function agentView(
+  session: Session,
+  urls: { answerUrl: string; manageUrl: string },
+): AgentSessionView {
   return {
     sessionId: session.id,
     status: session.status,
@@ -234,11 +243,14 @@ function agentView(session: Session): AgentSessionView {
     submittedAt: session.submittedAt ?? null,
     openedAt: session.openedAt ?? null,
     title: session.title,
+    context: session.context,
     metadata: session.metadata,
     email: emailView(session),
     progress: progressFor(session),
     answers: session.answers,
     questions: session.questions,
+    answerUrl: urls.answerUrl,
+    manageUrl: urls.manageUrl,
   };
 }
 
@@ -290,6 +302,14 @@ function frozenError(): SessionServiceError {
   };
 }
 
+function notEditableError(): SessionServiceError {
+  return {
+    code: "not_editable",
+    message: "Questions can only be changed before anyone answers",
+    status: 409,
+  };
+}
+
 function expiredError(): SessionServiceError {
   return {
     code: "expired",
@@ -337,6 +357,7 @@ export function createSessionService(deps: SessionServiceDeps) {
     answerUrl: string;
     machineUrl: string;
     pollUrl: string;
+    manageUrl: string;
     answersUrl: string;
     submitUrl: string;
     filesUrl: string;
@@ -346,6 +367,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       answerUrl: `${baseUrl}/s/${session.id}?t=${token}`,
       machineUrl: `${baseUrl}/s/${session.id}.md?t=${token}`,
       pollUrl: `${baseUrl}/api/v1/sessions/${session.id}?token=${session.agentToken}`,
+      manageUrl: `${baseUrl}/s/${session.id}/manage?token=${session.agentToken}`,
       answersUrl: `${baseUrl}/api/v1/sessions/${session.id}/answers?t=${token}`,
       submitUrl: `${baseUrl}/api/v1/sessions/${session.id}/submit?t=${token}`,
       filesUrl: `${baseUrl}/api/v1/sessions/${session.id}/files?t=${token}`,
@@ -514,6 +536,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         answerUrl: urls.answerUrl,
         machineUrl: urls.machineUrl,
         pollUrl: urls.pollUrl,
+        manageUrl: urls.manageUrl,
         expiresAt: session.expiresAt,
         status: "pending",
       };
@@ -536,7 +559,119 @@ export function createSessionService(deps: SessionServiceDeps) {
       if (isServiceError(session)) {
         return session;
       }
-      return agentView(session);
+      return agentView(session, urlsFor(session));
+    },
+
+    async markdownForManage(input: {
+      sessionId: string;
+      agentToken?: string;
+      hasCreateCredential: boolean;
+    }): Promise<string | SessionServiceError> {
+      const session = await loadForAgent(input);
+      if (isServiceError(session)) {
+        return session;
+      }
+      const urls = urlsFor(session);
+      return manageMarkdown({
+        title: session.title,
+        context: session.context,
+        status: session.status,
+        expiresAt: session.expiresAt,
+        openedAt: session.openedAt ?? null,
+        questions: session.questions,
+        answers: session.answers,
+        progress: progressFor(session),
+        answerUrl: urls.answerUrl,
+        machineUrl: urls.machineUrl,
+        manageUrl: urls.manageUrl,
+        canEdit: session.status === "pending",
+      });
+    },
+
+    async update(input: {
+      sessionId: string;
+      agentToken?: string;
+      hasCreateCredential: boolean;
+      body: unknown;
+    }): Promise<AgentSessionView | SessionServiceError> {
+      const session = await loadForAgent(input);
+      if (isServiceError(session)) {
+        return session;
+      }
+      if (session.status !== "pending") {
+        return notEditableError();
+      }
+      const parsed = editSessionSchema.safeParse(input.body);
+      if (!parsed.success) {
+        const emailIssue = parsed.error.issues.some(
+          (issue) => issue.path[0] === "email",
+        );
+        if (emailIssue) {
+          return {
+            code: "invalid_email",
+            message: "Email address is not usable",
+            status: 400,
+          };
+        }
+        const appearanceIssue = parsed.error.issues.some(
+          (issue) => issue.path[0] === "appearance",
+        );
+        if (appearanceIssue) {
+          return {
+            code: "invalid_appearance",
+            message: "Appearance is not usable",
+            status: 400,
+          };
+        }
+        if (
+          parsed.error.issues.some((issue) => issue.message === "Nothing to update")
+        ) {
+          return {
+            code: "invalid_action",
+            message: "Nothing to update",
+            status: 400,
+          };
+        }
+        return {
+          code: "invalid_questions",
+          message: "Questions are not usable",
+          status: 400,
+        };
+      }
+
+      const patch = parsed.data;
+      let next: Session = { ...session };
+      if (patch.title !== undefined) {
+        next = { ...next, title: patch.title };
+      }
+      if (patch.context !== undefined) {
+        next = { ...next, context: patch.context };
+      }
+      if (patch.questions !== undefined) {
+        next = { ...next, questions: patch.questions };
+      }
+      if (patch.appearance !== undefined) {
+        next = { ...next, appearance: patch.appearance };
+      }
+      if (patch.metadata !== undefined) {
+        next = { ...next, metadata: patch.metadata };
+      }
+      if (patch.callbackUrl !== undefined) {
+        next = { ...next, callbackUrl: patch.callbackUrl };
+      }
+      if (patch.expiresInSeconds !== undefined) {
+        next = {
+          ...next,
+          expiresAt: new Date(
+            deps.now().getTime() + patch.expiresInSeconds * 1000,
+          ).toISOString(),
+        };
+      }
+      await deps.store.save(next);
+      if (patch.email !== undefined) {
+        next = await deliverEmail(next, patch.email);
+      }
+      return agentView(next, urlsFor(next));
     },
 
     async getForPublic(input: {
@@ -1046,7 +1181,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
 
       const delivered = await deliverEmail(session, to);
-      return agentView(delivered);
+      return agentView(delivered, urlsFor(delivered));
     },
 
     async wait(input: {
@@ -1076,11 +1211,11 @@ export function createSessionService(deps: SessionServiceDeps) {
           return session;
         }
         if (isTerminalStatus(session.status)) {
-          return agentView(session);
+          return agentView(session, urlsFor(session));
         }
         const remaining = deadline - deps.now().getTime();
         if (remaining <= 0) {
-          return agentView(session);
+          return agentView(session, urlsFor(session));
         }
         await deps.sleep(Math.min(pollMs, remaining));
       }

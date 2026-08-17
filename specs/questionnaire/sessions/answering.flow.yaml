@@ -185,7 +185,7 @@ flows:
         event: Create
         to: waiting
         guard: The questions are usable.
-        covers: [B1, B18, B20, B21]
+        covers: [B1, B18, B20, B21, B27]
       - id: F2.T2
         from: request
         event: Create
@@ -266,3 +266,44 @@ flows:
         outcome: Mail is not delivered. The answer link still works. The agent can see that mail failed.
         guard: The address is invalid, the provider fails, or the questionnaire is no longer open.
         covers: [B21]
+  - id: F3
+    name: Owner inspects
+    start: open_manage
+    states:
+      - id: open_manage
+        kind: action
+        label: Open the manage link
+      - id: inspect
+        kind: screen
+        label: Summary
+      - id: unknown_manage
+        kind: terminal
+        label: Unknown manage link
+        outcome: No questions are shown. No edit is accepted.
+    transitions:
+      - id: F3.T1
+        from: open_manage
+        event: Open
+        to: inspect
+        guard: The agent token matches.
+        covers: [B27]
+      - id: F3.T2
+        from: open_manage
+        event: Open
+        to: unknown_manage
+        guard: The token does not match or the questionnaire is gone.
+        covers: [B12, B27]
+      - id: F3.T3
+        from: inspect
+        event: Edit
+        to: inspect
+        outcome: Title, questions, or other details are replaced. The public answer link stays the same.
+        guard: Status is still pending and the fields are usable.
+        covers: [B28]
+      - id: F3.T4
+        from: inspect
+        event: Edit
+        to: inspect
+        outcome: The edit is refused. Questions stay as they were.
+        guard: An answer has been saved, or the questionnaire is submitted, expired, or cancelled.
+        covers: [B28]
