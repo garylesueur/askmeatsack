@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ENTRY_ANSWER_MAX_CHARS,
+  FILE_MAX_BYTES,
+  FILE_MAX_COUNT,
   TEXT_ANSWER_MAX_CHARS,
   type Appearance,
   type Question,
@@ -23,6 +25,8 @@ import {
   questionHasEvidence,
   questionKind,
 } from "@/lib/question-presentation";
+import { FileAttachField } from "@/components/file-attach-field";
+import { takeAttachableFiles } from "@/lib/files";
 import { Input } from "@/components/ui/input";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -430,6 +434,20 @@ export function AnsweringForm({
     });
     setProgress(body.progress);
     setSaveState("saved");
+  }
+
+  function addFiles(currentQuestion: Question, incoming: File[]): void {
+    const already = answers[currentQuestion.id]?.files?.length ?? 0;
+    const { accepted, error } = takeAttachableFiles({
+      incoming,
+      already,
+      maxCount: FILE_MAX_COUNT,
+      maxBytes: FILE_MAX_BYTES,
+    });
+    setSubmitError(error ?? null);
+    for (const file of accepted) {
+      void uploadFile(currentQuestion, file);
+    }
   }
 
   async function saveEntries(
@@ -919,27 +937,13 @@ export function AnsweringForm({
                   />
                 ) : null}
                 {question.allowFiles ? (
-                  <div className="flex flex-col gap-2">
-                    <Input
-                      type="file"
-                      multiple
-                      onChange={(event) => {
-                        const list = event.target.files;
-                        if (!list) {
-                          return;
-                        }
-                        for (const file of list) {
-                          void uploadFile(question, file);
-                        }
-                        event.target.value = "";
-                      }}
-                    />
-                    {(answers[question.id]?.files ?? []).map((file) => (
-                      <p key={file.id} className="text-sm text-muted-foreground">
-                        {file.filename}
-                      </p>
-                    ))}
-                  </div>
+                  <FileAttachField
+                    files={answers[question.id]?.files ?? []}
+                    disabled={submitting || cancelling}
+                    onAdd={(incoming) => {
+                      addFiles(question, incoming);
+                    }}
+                  />
                 ) : null}
               </div>
             </div>
