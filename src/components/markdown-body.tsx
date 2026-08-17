@@ -32,12 +32,26 @@ const markdownComponents: Components = {
     return (
       <a
         href={href}
-        className="underline underline-offset-2"
+        className="break-words text-foreground underline underline-offset-2"
         target="_blank"
         rel="noreferrer"
       >
         {children}
       </a>
+    );
+  },
+  img({ src, alt }) {
+    if (!src) {
+      return null;
+    }
+    return (
+      // Creator-supplied markdown may point at any URL.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={alt ?? ""}
+        className="my-3 max-w-full rounded-md"
+      />
     );
   },
   table({ children }) {

@@ -801,7 +801,6 @@ export function AnsweringForm({
               </div>
               {hasEvidence && question.detail ? (
                 <aside className="lg:col-start-2 lg:row-span-2 lg:sticky lg:top-6 lg:border-l lg:border-border/60 lg:pl-8">
-                  <p className="mb-2 text-sm text-muted-foreground">Situation</p>
                   <MarkdownBody source={question.detail} />
                 </aside>
               ) : null}

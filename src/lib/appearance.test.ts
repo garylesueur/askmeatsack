@@ -3,6 +3,7 @@ import {
   appearanceClassName,
   appearanceStyle,
   contrastingForeground,
+  resolveEffectiveMode,
   resolveMode,
   resolveTheme,
 } from "./appearance";
@@ -13,6 +14,13 @@ describe("questionnaire appearance", () => {
     expect(resolveMode()).toBe("system");
     expect(appearanceClassName()).toBe("theme-ask");
     expect(appearanceStyle()).toBeUndefined();
+  });
+
+  it("lets a stored choice win over the system and the agent hint", () => {
+    expect(resolveEffectiveMode(undefined, "dark")).toBe("dark");
+    expect(resolveEffectiveMode({ mode: "dark" }, "light")).toBe("light");
+    expect(resolveEffectiveMode({ mode: "light" }, null)).toBe("light");
+    expect(resolveEffectiveMode(undefined, null)).toBe("system");
   });
 
   it("keeps mode as a light or dark override, not a different theme", () => {

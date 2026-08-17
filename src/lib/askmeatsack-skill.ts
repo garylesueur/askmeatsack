@@ -17,7 +17,7 @@ No email is required for this path.
 
 ## What a question can carry
 
-The prompt is the ask — one short sentence the human can read as a heading. Put the situation in \`detail\`: a guide, a table of lines to label, lists, links, or a mermaid code fence (language mermaid). Do not jam a brief, a table of figures, and the ask into \`prompt\`.
+The prompt is the ask — one short sentence the human can read as a heading. Put the situation in \`detail\` as a lump of markdown: prose, lists, tables, links or bare URLs, images, and mermaid code fences (language mermaid). Do not jam a brief, a table of figures, and the ask into \`prompt\`.
 
 Prompts and \`detail\` are markdown. On a wide screen the human sees \`detail\` in a rail beside the question; on a narrow screen it sits under the prompt. Option labels stay plain text. Raw HTML is not rendered.
 
