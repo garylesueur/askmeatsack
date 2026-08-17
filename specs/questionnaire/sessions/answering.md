@@ -6,7 +6,7 @@ status: partial
 
 # Answering a questionnaire
 
-**askmeatsack.com** is how an agent asks a human a set of questions. Create returns an askmeatsack.com link to put in the conversation there and then. The agent can also email that link to someone else and wait. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
+**askmeatsack.com** is how an agent asks a human a set of questions. Create returns an askmeatsack.com link to put in the conversation there and then, or to send from an unattended job. The agent can also email that link to someone else and wait. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
 
 ## Behaviours
 
@@ -90,7 +90,7 @@ After submit, the confirmation screen lets the human download the answers as JSO
 
 ### B20 — Ask in the conversation 🟢
 
-Create always returns the askmeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **askmeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. No email is required for this path. If the agent needs someone else, it emails (B21) or it posts the same link itself (Slack, and so on) — that post is the agent’s job, not this service.
+Create always returns the askmeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **askmeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. No email is required for this path. If the agent needs someone else, it emails (B21) or it posts the same link itself (Slack, and so on) — that post is the agent’s job, not this service. The same skill also covers an unattended job that is not sitting in a chat (B34).
 
 ### B21 — Email it out and wait 🟢
 
@@ -145,6 +145,10 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 ### B33 — A question may ask for device capture 🔵 future
 
 A question may ask for something the device can capture besides a file: the person’s location, a live camera shot that is not just “pick an image”, and similar. File questions already cover choose, drop, and take a photo (B25). This is for typed capture that is not “here is a file”.
+
+### B34 — Unattended job can collect from many people 🟢
+
+The skill tells an agent that is filling records or chasing missing facts — HR fields, identity documents, files, an ID — to create one questionnaire per person. Each ask is unique to what is still missing for that person. Opaque metadata holds the record key so answers can be matched when they come back; the human does not see it. The agent emails the link or puts `answerUrl` wherever it already reaches them, then waits via callback, poll, or a later bounded wait — not only by pasting into the current chat. Two people never share one answer link. The product is the same as the live-chat path; the agent does not invent a second form because the run is automated.
 
 ## Rules (Invariants)
 
@@ -300,7 +304,7 @@ A question may ask for something the device can capture besides a file: the pers
 ## User Flows
 
 - **F1 — Human answers:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B2–B6, B8–B12, B14–B17, B19, B26
-- **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B21
+- **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B21, B34
 - **F3 — Owner inspects:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B27, B28
 
 ## Open Questions
@@ -316,6 +320,7 @@ A question may ask for something the device can capture besides a file: the pers
 - **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, JSON download, and an optional emailed copy of the answers are in. Recorded as B13–B19.
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
 - **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Email to one person is also in, same wait. Recorded as B1, B20, and B21.
+- **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
 - **Settled:** Create is public. There is no shared bearer to hand out. Agent status still needs that questionnaire’s agent token (the `pollUrl`). Recorded as B10.
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
