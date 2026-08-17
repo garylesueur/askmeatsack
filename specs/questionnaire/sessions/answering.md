@@ -106,7 +106,7 @@ Using the public answer token, a caller can PUT all answers as JSON in one reque
 
 ### B25 — Questions may accept files 🟢
 
-A question may allow file attachments. The human can choose files, drop them on a compact attach control next to the answer (not on the evidence rail), or take a photo. A question accepts at most five files, 4 MB each. The list shows each name and size after upload. There is no delete. The public answer token can upload a file for that question (same unguessable-link model as the page). Uploaded files are stored and returned with the answers. A question that does not allow files refuses uploads. Files go to Cloudflare R2. If that store is not configured, upload fails and the page says so.
+A question may allow file attachments. The human can choose files, drop them on a compact attach control next to the answer (not on the evidence rail), or take a photo. A question accepts at most five files, 4 MB each. The list shows each name and size after upload. There is no delete. The public answer token can upload a file for that question (same unguessable-link model as the page). Uploaded files are stored in Cloudflare R2 and served from the questionnaire’s own origin. A question that does not allow files refuses uploads. If that store is not configured, upload fails and the page says so.
 
 ### B26 — A question may carry extra material 🟢
 

@@ -57,7 +57,11 @@ export async function POST(
       body: file,
       contentType: file.type || "application/octet-stream",
     });
-  } catch {
+  } catch (error) {
+    console.error(
+      "R2 upload failed",
+      error instanceof Error ? error.message : "unknown error",
+    );
     return jsonError(
       502,
       "files_unavailable",
@@ -72,7 +76,7 @@ export async function POST(
     filename: file.name || "upload",
     contentType: file.type || "application/octet-stream",
     size: file.size,
-    url: stored.url,
+    storageKey: stored.pathname,
   });
   if (isSessionServiceError(result)) {
     return jsonServiceError(result);
