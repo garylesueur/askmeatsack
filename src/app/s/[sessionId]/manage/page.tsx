@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { MarkdownBody } from "@/components/markdown-body";
-import { isShortPrompt } from "@/lib/question-presentation";
+import { isShortPrompt, questionEntries, questionKind } from "@/lib/question-presentation";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -30,15 +30,24 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function questionKind(question: {
+function manageKindLabel(question: {
   options: { id: string }[];
+  items?: { id: string }[];
+  fields?: { id: string }[];
   allowMultiple: boolean;
 }): string {
-  if (question.options.length === 0) {
-    return "Text";
-  }
-  if (question.allowMultiple) {
+  const kind = questionKind(question);
+  if (kind === "choice" && question.allowMultiple) {
     return "Several options";
+  }
+  if (kind === "items") {
+    return "Items";
+  }
+  if (kind === "fields") {
+    return "Fields";
+  }
+  if (kind === "text") {
+    return "Text";
   }
   return "Choice";
 }
@@ -121,7 +130,7 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
                     <p className="font-mono text-xs text-muted-foreground">
                       {question.id}
                     </p>
-                    <Badge variant="outline">{questionKind(question)}</Badge>
+                    <Badge variant="outline">{manageKindLabel(question)}</Badge>
                     <Badge variant="outline">
                       {question.required ? "Required" : "Optional"}
                     </Badge>
@@ -143,6 +152,16 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
                           {question.recommendedOptionId === option.id
                             ? " (recommended)"
                             : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {questionEntries(question).length > 0 ? (
+                    <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                      {questionEntries(question).map((row) => (
+                        <li key={row.id}>
+                          {row.label}
+                          {row.hint ? ` — ${row.hint}` : ""}
                         </li>
                       ))}
                     </ul>

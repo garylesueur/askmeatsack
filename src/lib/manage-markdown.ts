@@ -1,3 +1,4 @@
+import { questionEntries, questionKind } from "./question-presentation";
 import type { Question } from "./schema";
 import type { Session, SessionAnswer } from "./session-store";
 
@@ -16,14 +17,12 @@ type ManageMarkdownInput = {
   canEdit: boolean;
 };
 
-function questionKind(question: Question): string {
-  if (question.options.length === 0) {
-    return "text";
-  }
-  if (question.allowMultiple) {
+function manageQuestionKind(question: Question): string {
+  const kind = questionKind(question);
+  if (kind === "choice" && question.allowMultiple) {
     return "several options";
   }
-  return "choice";
+  return kind;
 }
 
 export function manageMarkdown(input: ManageMarkdownInput): string {
@@ -57,7 +56,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
   }
   lines.push("", "## Questions");
   for (const question of input.questions) {
-    const flags: string[] = [questionKind(question)];
+    const flags: string[] = [manageQuestionKind(question)];
     flags.push(question.required ? "required" : "optional");
     if (question.allowComment) {
       flags.push("comment");
@@ -79,10 +78,30 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
         lines.push(`- \`${option.id}\`: ${option.label}${recommended}`);
       }
     }
+    const rows = questionEntries(question);
+    if (rows.length > 0) {
+      lines.push("", manageQuestionKind(question) === "items" ? "Rows:" : "Fields:");
+      for (const row of rows) {
+        const hint = row.hint ? ` — ${row.hint}` : "";
+        lines.push(`- \`${row.id}\`: ${row.label}${hint}`);
+      }
+    }
     if (answer) {
       const bits: string[] = [];
       if (answer.selectedOptionIds.length > 0) {
         bits.push(`options ${answer.selectedOptionIds.join(", ")}`);
+      }
+      if (answer.entries) {
+        const labelled: string[] = [];
+        for (const row of rows) {
+          const value = answer.entries[row.id];
+          if (value) {
+            labelled.push(`${row.label}: ${value}`);
+          }
+        }
+        if (labelled.length > 0) {
+          bits.push(labelled.join("; "));
+        }
       }
       if (answer.text) {
         bits.push(`text “${answer.text}”`);

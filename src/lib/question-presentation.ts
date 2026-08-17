@@ -1,4 +1,59 @@
+import type { Question } from "./schema";
+
 const SHORT_PROMPT_MAX_CHARS = 90;
+
+export type QuestionKind = "choice" | "text" | "items" | "fields";
+
+export function questionKind(question: {
+  options: { id: string }[];
+  items?: { id: string }[];
+  fields?: { id: string }[];
+}): QuestionKind {
+  if ((question.items ?? []).length > 0) {
+    return "items";
+  }
+  if ((question.fields ?? []).length > 0) {
+    return "fields";
+  }
+  if (question.options.length > 0) {
+    return "choice";
+  }
+  return "text";
+}
+
+export function questionEntries(question: {
+  items?: Question["items"];
+  fields?: Question["fields"];
+  options: { id: string }[];
+}): NonNullable<Question["items"]> {
+  if (questionKind(question) === "items") {
+    return question.items ?? [];
+  }
+  if (questionKind(question) === "fields") {
+    return question.fields ?? [];
+  }
+  return [];
+}
+
+export function entriesAreComplete(
+  question: {
+    items?: Question["items"];
+    fields?: Question["fields"];
+    options: { id: string }[];
+  },
+  entries: Record<string, string> | undefined,
+): boolean {
+  const rows = questionEntries(question);
+  if (rows.length === 0) {
+    return false;
+  }
+  for (const row of rows) {
+    if (!(entries?.[row.id] ?? "").trim()) {
+      return false;
+    }
+  }
+  return true;
+}
 
 export function isShortPrompt(prompt: string): boolean {
   const trimmed = prompt.trim();

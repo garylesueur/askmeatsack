@@ -1,13 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TEXT_ANSWER_MAX_CHARS, type Appearance, type Question } from "@/lib/schema";
+import {
+  ENTRY_ANSWER_MAX_CHARS,
+  TEXT_ANSWER_MAX_CHARS,
+  type Appearance,
+  type Question,
+} from "@/lib/schema";
 import type { PublicSessionView, SessionProgress } from "@/lib/sessions";
 import type { SessionAnswer, SessionFile } from "@/lib/session-store";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
+  entriesAreComplete,
   isShortPrompt,
+  questionEntries,
   questionHasEvidence,
+  questionKind,
 } from "@/lib/question-presentation";
 import { Input } from "@/components/ui/input";
 import { AppearanceShell } from "@/components/appearance-shell";
@@ -47,7 +55,11 @@ function hasUsableAnswer(
   question: Question,
   answer: SessionAnswer | undefined,
 ): boolean {
-  if (question.options.length === 0) {
+  const kind = questionKind(question);
+  if (kind === "items" || kind === "fields") {
+    return entriesAreComplete(question, answer?.entries);
+  }
+  if (kind === "text") {
     const text = answer?.text ?? "";
     const files = answer?.files ?? [];
     return text.trim().length > 0 || files.length > 0;
@@ -109,7 +121,7 @@ function nextSelectedIds(
 
 function shouldAdvanceOnChoice(question: Question): boolean {
   return (
-    question.options.length > 0 &&
+    questionKind(question) === "choice" &&
     !question.allowMultiple &&
     !question.allowComment &&
     !question.allowFiles
@@ -135,6 +147,18 @@ function answerSummary(
   }
   if (answer?.text) {
     parts.push(answer.text);
+  }
+  if (answer?.entries) {
+    const labelled: string[] = [];
+    for (const row of questionEntries(question)) {
+      const value = answer.entries[row.id];
+      if (value) {
+        labelled.push(`${row.label}: ${value}`);
+      }
+    }
+    if (labelled.length > 0) {
+      parts.push(labelled.join("; "));
+    }
   }
   const files = answer?.files ?? [];
   if (files.length > 0) {
@@ -272,6 +296,9 @@ export function AnsweringForm({
     if (previous?.files && previous.files.length > 0) {
       nextAnswer.files = previous.files;
     }
+    if (previous?.entries) {
+      nextAnswer.entries = previous.entries;
+    }
     const nextAnswers = { ...answers, [currentQuestion.id]: nextAnswer };
     const previousIndex = stepIndex;
     setAnswers(nextAnswers);
@@ -390,8 +417,47 @@ export function AnsweringForm({
       if (previous?.text) {
         nextAnswer.text = previous.text;
       }
+      if (previous?.entries) {
+        nextAnswer.entries = previous.entries;
+      }
       return { ...current, [currentQuestion.id]: nextAnswer };
     });
+    setProgress(body.progress);
+    setSaveState("saved");
+  }
+
+  async function saveEntries(
+    currentQuestion: Question,
+    entries: Record<string, string>,
+    previous: SessionAnswer | undefined,
+  ) {
+    const response = await fetch(
+      `/api/v1/sessions/${sessionId}/answers/${currentQuestion.id}?t=${encodeURIComponent(publicToken)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries }),
+      },
+    );
+    if (!response.ok) {
+      const body = (await response.json()) as { error?: { code?: string } };
+      if (body.error?.code === "expired") {
+        setExpired(true);
+        return;
+      }
+      setAnswers((current) => {
+        const restored = { ...current };
+        if (previous) {
+          restored[currentQuestion.id] = previous;
+        } else {
+          delete restored[currentQuestion.id];
+        }
+        return restored;
+      });
+      setSaveState("error");
+      return;
+    }
+    const body = (await response.json()) as { progress: SessionProgress };
     setProgress(body.progress);
     setSaveState("saved");
   }
@@ -408,6 +474,9 @@ export function AnsweringForm({
     if (previous?.files && previous.files.length > 0) {
       nextAnswer.files = previous.files;
     }
+    if (previous?.entries) {
+      nextAnswer.entries = previous.entries;
+    }
     setAnswers((current) => ({ ...current, [currentQuestion.id]: nextAnswer }));
     setSaveState("saving");
     setSubmitError(null);
@@ -417,6 +486,36 @@ export function AnsweringForm({
     }
     textTimers.current[currentQuestion.id] = window.setTimeout(() => {
       void saveText(currentQuestion, text, previous);
+    }, 400);
+  }
+
+  function onEntryChange(
+    currentQuestion: Question,
+    entryId: string,
+    value: string,
+  ) {
+    const previous = answers[currentQuestion.id];
+    const entries = { ...(previous?.entries ?? {}), [entryId]: value };
+    const nextAnswer: SessionAnswer = {
+      selectedOptionIds: previous?.selectedOptionIds ?? [],
+      answeredAt: new Date().toISOString(),
+      entries,
+    };
+    if (previous?.text) {
+      nextAnswer.text = previous.text;
+    }
+    if (previous?.files && previous.files.length > 0) {
+      nextAnswer.files = previous.files;
+    }
+    setAnswers((current) => ({ ...current, [currentQuestion.id]: nextAnswer }));
+    setSaveState("saving");
+    setSubmitError(null);
+    const existingTimer = textTimers.current[`entry:${currentQuestion.id}`];
+    if (existingTimer !== undefined) {
+      window.clearTimeout(existingTimer);
+    }
+    textTimers.current[`entry:${currentQuestion.id}`] = window.setTimeout(() => {
+      void saveEntries(currentQuestion, entries, previous);
     }, 400);
   }
 
@@ -430,6 +529,21 @@ export function AnsweringForm({
     void saveText(
       currentQuestion,
       answers[currentQuestion.id]?.text ?? "",
+      answers[currentQuestion.id],
+    );
+  }
+
+  function flushEntries(currentQuestion: Question) {
+    const timerKey = `entry:${currentQuestion.id}`;
+    const existingTimer = textTimers.current[timerKey];
+    if (existingTimer === undefined) {
+      return;
+    }
+    window.clearTimeout(existingTimer);
+    delete textTimers.current[timerKey];
+    void saveEntries(
+      currentQuestion,
+      answers[currentQuestion.id]?.entries ?? {},
       answers[currentQuestion.id],
     );
   }
@@ -629,6 +743,7 @@ export function AnsweringForm({
           }
           if (question) {
             flushText(question);
+            flushEntries(question);
           }
           goForward();
         }}
@@ -692,7 +807,7 @@ export function AnsweringForm({
                 </aside>
               ) : null}
               <div className="flex flex-col gap-4 lg:col-start-1">
-                {question.options.length === 0 ? (
+                {questionKind(question) === "text" ? (
                   <Textarea
                     value={answers[question.id]?.text ?? ""}
                     maxLength={TEXT_ANSWER_MAX_CHARS}
@@ -701,6 +816,29 @@ export function AnsweringForm({
                     }}
                     className="min-h-28"
                   />
+                ) : questionKind(question) === "items" ||
+                  questionKind(question) === "fields" ? (
+                  <div className="flex flex-col gap-3">
+                    {questionEntries(question).map((row) => (
+                      <label key={row.id} className="flex flex-col gap-1.5">
+                        <span className="text-sm font-medium text-foreground">
+                          {row.label}
+                        </span>
+                        {row.hint ? (
+                          <span className="text-xs text-muted-foreground">
+                            {row.hint}
+                          </span>
+                        ) : null}
+                        <Input
+                          value={answers[question.id]?.entries?.[row.id] ?? ""}
+                          maxLength={ENTRY_ANSWER_MAX_CHARS}
+                          onChange={(event) => {
+                            onEntryChange(question, row.id, event.target.value);
+                          }}
+                        />
+                      </label>
+                    ))}
+                  </div>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {question.options.map((option) => {

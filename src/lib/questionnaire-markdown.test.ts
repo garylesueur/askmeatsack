@@ -18,6 +18,8 @@ describe("questionnaire markdown", () => {
           required: true,
           allowComment: false,
           allowFiles: false,
+          items: [],
+          fields: [],
         },
       ],
       answerUrl: "https://askmeatsack.com/s/1?t=pub",

@@ -62,11 +62,11 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "hmrc",
       prompt: "What is the HMRC position after the letter?",
       detail:
-        "Chris can take this one.\n\nI need:\n\n- VAT on Time to Pay\n- VAT that is unplanned\n- PAYE / NIC balance after the letter\n\nA screenshot or the letter itself is welcome.",
-      options: [
-        { id: "will_answer", label: "I will answer in the comment" },
-        { id: "chris", label: "Chris will answer" },
-        { id: "unsure", label: "Not sure yet" },
+        "Chris can take this one. A screenshot or the letter itself is welcome.",
+      fields: [
+        { id: "vat_ttp", label: "VAT on Time to Pay" },
+        { id: "vat_unplanned", label: "Unplanned VAT" },
+        { id: "paye_nic", label: "PAYE / NIC after the letter" },
       ],
       allowComment: true,
       allowFiles: true,
@@ -75,10 +75,14 @@ export const kerryPlayQuestionnaire: CreateSessionInput = createSessionSchema.pa
       id: "bucks",
       prompt: "Please label these Buckinghamshire lines.",
       detail:
-        "Say what each line is in the comment.\n\n| Date | Amount | How |\n| --- | ---: | --- |\n| Feb / Mar 2025 | 2,476.80 | Direct debit |\n| Feb / Mar 2025 | 2,477.00 | Card |\n| Dec 2025 | 840.00 | |\n| Jan 2026 | 660.00 | |\n| 18 Feb 2026 | 81.00 | Credit |\n| 18 Feb 2026 | 588.00 | Credit |\n\n```mermaid\nflowchart LR\n  bucks[buckinghamshire.gov] --> dd[Monthly DD]\n  bucks --> card[Monthly card]\n  bucks --> credits[Feb credits]\n```",
-      options: [
-        { id: "will_label", label: "I will label them in the comment" },
-        { id: "unsure", label: "Not sure" },
+        "These are the buckinghamshire.gov amounts on the working list.\n\n```mermaid\nflowchart LR\n  bucks[buckinghamshire.gov] --> dd[Monthly DD]\n  bucks --> card[Monthly card]\n  bucks --> credits[Feb credits]\n```",
+      items: [
+        { id: "feb_dd", label: "Feb / Mar 2025 · 2,476.80", hint: "Direct debit" },
+        { id: "feb_card", label: "Feb / Mar 2025 · 2,477.00", hint: "Card" },
+        { id: "dec", label: "Dec 2025 · 840.00" },
+        { id: "jan", label: "Jan 2026 · 660.00" },
+        { id: "credit_81", label: "18 Feb 2026 · 81.00", hint: "Credit" },
+        { id: "credit_588", label: "18 Feb 2026 · 588.00", hint: "Credit" },
       ],
       allowComment: true,
     },

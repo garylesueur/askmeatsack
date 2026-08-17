@@ -1543,3 +1543,96 @@ describe("B28 — Owner can edit before anyone answers", () => {
   });
 });
 
+describe("B32 — labelled rows and named fields", () => {
+  const itemQuestions = [
+    {
+      id: "bucks",
+      prompt: "Please label these lines.",
+      items: [
+        { id: "feb_dd", label: "Feb DD" },
+        { id: "feb_card", label: "Feb card" },
+      ],
+    },
+  ];
+
+  it("saves entries on an item question", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: itemQuestions });
+    const saved = await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "bucks",
+      publicToken,
+      body: { entries: { feb_dd: "rent", feb_card: "card" } },
+    });
+    expect(saved).toMatchObject({
+      progress: { answeredCount: 1, requiredAnsweredCount: 1 },
+    });
+    const view = await sessions.getForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(view).toMatchObject({
+      answers: {
+        bucks: { entries: { feb_dd: "rent", feb_card: "card" } },
+      },
+    });
+  });
+
+  it("refuses an unknown entry id and mixing items with options", async () => {
+    const { sessions } = serviceWithStore();
+    const mixed = await sessions.create({
+      questions: [
+        {
+          id: "bad",
+          prompt: "Nope",
+          options: [
+            { id: "yes", label: "Yes" },
+            { id: "no", label: "No" },
+          ],
+          items: [
+            { id: "a", label: "A" },
+            { id: "b", label: "B" },
+          ],
+        },
+      ],
+    });
+    expect(mixed).toMatchObject({ code: "invalid_questions", status: 400 });
+
+    await sessions.create({ questions: itemQuestions });
+    const unknown = await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "bucks",
+      publicToken,
+      body: { entries: { mystery: "nope" } },
+    });
+    expect(unknown).toMatchObject({ code: "invalid_answer", status: 400 });
+  });
+
+  it("blocks submit until every required row is filled", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: itemQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "bucks",
+      publicToken,
+      body: { entries: { feb_dd: "rent" } },
+    });
+    const refused = await sessions.submit({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(refused).toMatchObject({ code: "required_unanswered", status: 400 });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "bucks",
+      publicToken,
+      body: { entries: { feb_dd: "rent", feb_card: "card" } },
+    });
+    const submitted = await sessions.submit({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(submitted).toMatchObject({ status: "submitted" });
+  });
+});
+

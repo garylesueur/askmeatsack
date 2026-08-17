@@ -1,4 +1,5 @@
 import { answersJsonSchema } from "./answers-json-schema";
+import { questionEntries, questionKind } from "./question-presentation";
 import type { Question } from "./schema";
 
 type MarkdownInput = {
@@ -58,8 +59,16 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
       lines.push("", question.detail);
     }
     lines.push("", `_${flags.join(", ")}_`);
-    if (question.options.length === 0) {
+    const kind = questionKind(question);
+    if (kind === "text") {
       lines.push("", "Free text (max 2000 characters).");
+    } else if (kind === "items" || kind === "fields") {
+      lines.push("", kind === "items" ? "Rows:" : "Fields:");
+      for (const row of questionEntries(question)) {
+        const hint = row.hint ? ` — ${row.hint}` : "";
+        lines.push(`- \`${row.id}\`: ${row.label}${hint}`);
+      }
+      lines.push("", "Answer with `entries` keyed by those ids.");
     } else {
       lines.push("", "Options:");
       for (const option of question.options) {

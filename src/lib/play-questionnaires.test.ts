@@ -12,7 +12,11 @@ describe("kerry playground pack", () => {
     const bucks = kerryPlayQuestionnaire.questions.find(
       (question) => question.id === "bucks",
     );
-    expect(bucks?.detail).toContain("| Date |");
+    expect(bucks?.items.length).toBe(6);
     expect(bucks?.detail).toContain("mermaid");
+    const hmrc = kerryPlayQuestionnaire.questions.find(
+      (question) => question.id === "hmrc",
+    );
+    expect(hmrc?.fields.length).toBe(3);
   });
 });

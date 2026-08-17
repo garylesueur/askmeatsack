@@ -13,6 +13,7 @@ export type SessionFile = {
 export type SessionAnswer = {
   selectedOptionIds: string[];
   text?: string;
+  entries?: Record<string, string>;
   files?: SessionFile[];
   answeredAt: string;
 };
