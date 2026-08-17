@@ -8,6 +8,7 @@ import {
 } from "@/lib/agent-docs";
 import { ColorSchemeSync } from "@/components/color-scheme-sync";
 import { publicOrigin } from "@/lib/public-origin";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const SYSTEM_DARK_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark');}}catch(e){}})();`;
@@ -88,6 +89,7 @@ export default function RootLayout({
         />
         <ColorSchemeSync />
         {children}
+        <Analytics />
       </body>
     </html>
   );
