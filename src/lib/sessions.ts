@@ -16,6 +16,11 @@ import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import type { Mailer } from "./mailer";
 import { createResendMailer } from "./mailer";
+import {
+  entriesAreComplete,
+  questionEntries,
+  questionKind,
+} from "./question-presentation";
 import type { Session, SessionAnswer, SessionFile, SessionStore } from "./session-store";
 
 export type SessionServiceError = {
@@ -132,6 +137,7 @@ export type DownloadAnswers = {
     selectedOptionIds: string[];
     selectedLabels: string[];
     text?: string;
+    entries?: Record<string, string>;
     files?: SessionFile[];
   }>;
 };
@@ -202,7 +208,12 @@ function isTerminalStatus(status: Session["status"]): boolean {
 const WAIT_POLL_MS = 50;
 
 function isTextQuestion(question: Session["questions"][number]): boolean {
-  return question.options.length === 0;
+  return questionKind(question) === "text";
+}
+
+function isEntryQuestion(question: Session["questions"][number]): boolean {
+  const kind = questionKind(question);
+  return kind === "items" || kind === "fields";
 }
 
 function questionIsAnswered(
@@ -211,6 +222,9 @@ function questionIsAnswered(
 ): boolean {
   if (!answer) {
     return false;
+  }
+  if (isEntryQuestion(question)) {
+    return entriesAreComplete(question, answer.entries);
   }
   if (isTextQuestion(question)) {
     const hasText = Boolean(answer.text && answer.text.trim().length > 0);
@@ -782,6 +796,8 @@ export function createSessionService(deps: SessionServiceDeps) {
         parsed.data.selectedOptionIds ?? previous?.selectedOptionIds ?? [];
       const text =
         parsed.data.text !== undefined ? parsed.data.text : previous?.text;
+      const entries =
+        parsed.data.entries !== undefined ? parsed.data.entries : previous?.entries;
 
       let files = previous?.files;
       if (parsed.data.fileIds !== undefined) {
@@ -800,11 +816,48 @@ export function createSessionService(deps: SessionServiceDeps) {
         files = resolved;
       }
 
-      if (isTextQuestion(question)) {
+      if (isEntryQuestion(question)) {
+        if (parsed.data.selectedOptionIds !== undefined) {
+          return {
+            code: "invalid_answer",
+            message: "This question does not take options",
+            status: 400,
+          };
+        }
+        if (parsed.data.text !== undefined && !question.allowComment) {
+          return {
+            code: "invalid_answer",
+            message: "This question does not allow a comment",
+            status: 400,
+          };
+        }
+        if (parsed.data.entries !== undefined) {
+          const allowed = new Set<string>();
+          for (const row of questionEntries(question)) {
+            allowed.add(row.id);
+          }
+          for (const entryId of Object.keys(parsed.data.entries)) {
+            if (!allowed.has(entryId)) {
+              return {
+                code: "invalid_answer",
+                message: "Entry is not on this question",
+                status: 400,
+              };
+            }
+          }
+        }
+      } else if (isTextQuestion(question)) {
         if (parsed.data.selectedOptionIds !== undefined) {
           return {
             code: "invalid_answer",
             message: "Text questions do not take options",
+            status: 400,
+          };
+        }
+        if (parsed.data.entries !== undefined) {
+          return {
+            code: "invalid_answer",
+            message: "Text questions do not take entries",
             status: 400,
           };
         }
@@ -822,6 +875,13 @@ export function createSessionService(deps: SessionServiceDeps) {
           return {
             code: "invalid_answer",
             message: "This question does not allow a comment",
+            status: 400,
+          };
+        }
+        if (parsed.data.entries !== undefined) {
+          return {
+            code: "invalid_answer",
+            message: "Choice questions do not take entries",
             status: 400,
           };
         }
@@ -847,11 +907,15 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
 
       const nextAnswer: SessionAnswer = {
-        selectedOptionIds: isTextQuestion(question) ? [] : selected,
+        selectedOptionIds:
+          isTextQuestion(question) || isEntryQuestion(question) ? [] : selected,
         answeredAt: deps.now().toISOString(),
       };
       if (text !== undefined && text.length > 0) {
         nextAnswer.text = text;
+      }
+      if (entries && Object.keys(entries).length > 0) {
+        nextAnswer.entries = entries;
       }
       if (files && files.length > 0) {
         nextAnswer.files = files;
@@ -1122,6 +1186,9 @@ export function createSessionService(deps: SessionServiceDeps) {
         };
         if (answer?.text) {
           row.text = answer.text;
+        }
+        if (answer?.entries && Object.keys(answer.entries).length > 0) {
+          row.entries = answer.entries;
         }
         if (answer?.files && answer.files.length > 0) {
           row.files = answer.files;

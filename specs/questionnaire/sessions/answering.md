@@ -72,7 +72,7 @@ A choice question may name one of its options as recommended. The human sees tha
 
 ### B16 — Questions may be choices, text, or both 🟢
 
-A question is a choice (two to eight options, optional several-at-once), free text, or a choice that also allows a short comment. The human answers in the matching control. The agent receives option ids, text, or both, keyed by question id.
+A question is a choice (two to eight options, optional several-at-once), free text, or a choice that also allows a short comment. The human answers in the matching control. The agent receives option ids, text, or both, keyed by question id. Structured rows and named fields are a separate kind (B32).
 
 ### B17 — Human or agent can cancel while it is open 🟢
 
@@ -134,9 +134,13 @@ Before the first question, the human may see the title and the context as a welc
 
 A question may name extra material for the rail: links, and files the agent attached when creating the questionnaire. Those are for the human to read, not answers. They are separate from files the human uploads as part of their answer.
 
+### B32 — A question may ask for labelled rows or named fields 🟢
+
+A question may be a list of rows to label (`items`) or a few named boxes (`fields`), instead of a choice or a single text box. The human answers each row or field in place. A required question of this kind needs every row or field filled. The agent receives those values keyed by id. A question cannot mix options, items, and fields. Optional comment and files still work on top.
+
 ## Rules (Invariants)
 
-- A choice question has at least two and at most eight options. A text question has no options. A comment on a choice is optional extra text, not a substitute for the choice when the question is required.
+- A choice question has at least two and at most eight options. A text question has no options, items, or fields. An item question has two to sixteen rows. A field question has two to eight named boxes. A question cannot mix options, items, and fields. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required.
 - A question is required unless it is marked otherwise. Required defaults to yes. Several options on one question default to no.
 - Saved answers freeze at submit, expiry, or cancel. They do not change afterwards.
 - Default life is 24 hours from creation. The creator may ask for shorter or longer, never more than 7 days.
@@ -301,10 +305,10 @@ A question may name extra material for the rail: links, and files the agent atta
 - **Blocks B29:** Does a new section get an interstitial intro screen, or only chrome (section name in the progress line)?
 - **Blocks B30:** Welcome screen, or keep title always visible and show context in the rail / on the first question?
 - **Blocks B31:** Are sources first-class (`label` + `url`, optional agent-attached files), or is markdown in `detail` enough?
+- **Settled:** “I will label them in the comment” is a weak answer type. Rows (`items`) and named boxes (`fields`) are in. Recorded as B32.
 
 ## Future Considerations
 
-- Structured line-item answers (label each row in a table) if comment-plus-table is not enough for briefs like leftover invoices.
 - Agent-attached source files on create, distinct from the human’s answer uploads.
 - Branching or scoring — still out of scope. The calling agent interprets answers.
 

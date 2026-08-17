@@ -28,6 +28,8 @@ Prompts and `detail` are markdown. On a wide screen the human sees `detail` in a
 
 Use that when you need more than a tap: leftover invoices, a sketch of a situation, a policy link, a diagram. Keep tap-only questions short when you want speed — a single choice with no comment or files advances as soon as they pick.
 
+Do not use “I will answer in the comment” when the human should fill in known rows or named amounts. Use `items` (two to sixteen rows, each with `id`, `label`, optional `hint`) or `fields` (two to eight named boxes). The human types beside each row. Answers come back as `entries` keyed by those ids. A question cannot mix options, items, and fields.
+
 If you were sent an askmeatsack.com `/s/…` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
 
 ## Someone who is not in this conversation

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isShortPrompt, questionHasEvidence } from "./question-presentation";
+import {
+  entriesAreComplete,
+  isShortPrompt,
+  questionHasEvidence,
+  questionKind,
+} from "./question-presentation";
 
 describe("isShortPrompt", () => {
   it("treats a one-line ask as a heading", () => {
@@ -19,6 +24,35 @@ describe("isShortPrompt", () => {
   it("does not treat markdown blocks as a heading", () => {
     expect(isShortPrompt("## Payroll\nIs Rebecca on this run?")).toBe(false);
     expect(isShortPrompt("- one\n- two")).toBe(false);
+  });
+});
+
+describe("questionKind", () => {
+  it("treats items and fields as their own kinds", () => {
+    expect(
+      questionKind({
+        options: [],
+        items: [{ id: "a" }, { id: "b" }],
+      }),
+    ).toBe("items");
+    expect(
+      questionKind({
+        options: [],
+        fields: [{ id: "vat" }, { id: "paye" }],
+      }),
+    ).toBe("fields");
+  });
+
+  it("needs every row filled", () => {
+    const question = {
+      options: [] as { id: string }[],
+      items: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+      ],
+    };
+    expect(entriesAreComplete(question, { a: "rent" })).toBe(false);
+    expect(entriesAreComplete(question, { a: "rent", b: "card" })).toBe(true);
   });
 });
 

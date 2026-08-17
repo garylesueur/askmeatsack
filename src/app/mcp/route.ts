@@ -20,7 +20,7 @@ const mcpHandler = createMcpHandler(
   (server) => {
     server.tool(
       ASKMEATSACK_TOOL_NAME,
-      "Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the askmeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may allow files. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.",
+      "Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the askmeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (label each row), or fields (named boxes), and may allow files. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.",
       askmeatsackToolInputShape,
       async (args) => {
         const tool = createAskmeatsackTool(getDefaultSessionService());

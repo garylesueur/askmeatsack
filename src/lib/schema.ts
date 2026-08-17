@@ -4,7 +4,10 @@ export const SESSION_DEFAULT_TTL_SECONDS = 86_400;
 export const SESSION_MAX_TTL_SECONDS = 7 * 86_400;
 export const SESSION_READ_WINDOW_SECONDS = 3_600;
 export const TEXT_ANSWER_MAX_CHARS = 2_000;
+export const ENTRY_ANSWER_MAX_CHARS = 200;
 export const QUESTION_DETAIL_MAX_CHARS = 8_000;
+export const QUESTION_ITEMS_MAX = 16;
+export const QUESTION_FIELDS_MAX = 8;
 export const WAIT_MAX_SECONDS = 60;
 export const FILE_MAX_BYTES = 4 * 1024 * 1024;
 export const FILE_MAX_COUNT = 5;
@@ -12,6 +15,12 @@ export const FILE_MAX_COUNT = 5;
 export const questionOptionSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
+});
+
+export const questionEntrySchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  hint: z.string().min(1).max(200).optional(),
 });
 
 export const appearanceThemeSchema = z.enum(["ask", "paper", "grove", "ember"]);
@@ -32,6 +41,12 @@ export const questionSchema = z.object({
   prompt: z.string().min(1),
   detail: z.string().max(QUESTION_DETAIL_MAX_CHARS).optional(),
   options: z.array(questionOptionSchema).max(8).optional().default([]),
+  items: z.array(questionEntrySchema).max(QUESTION_ITEMS_MAX).optional().default([]),
+  fields: z
+    .array(questionEntrySchema)
+    .max(QUESTION_FIELDS_MAX)
+    .optional()
+    .default([]),
   allowMultiple: z.boolean().optional().default(false),
   required: z.boolean().optional().default(true),
   allowComment: z.boolean().optional().default(false),
@@ -55,6 +70,37 @@ function refineQuestionList(
     }
     questionIds.add(question.id);
 
+    const shaped =
+      (question.options.length > 0 ? 1 : 0) +
+      (question.items.length > 0 ? 1 : 0) +
+      (question.fields.length > 0 ? 1 : 0);
+    if (shaped > 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A question cannot mix options, items, and fields",
+        path: ["questions"],
+      });
+      return;
+    }
+
+    if (question.items.length === 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Item questions need two to sixteen rows",
+        path: ["questions"],
+      });
+      return;
+    }
+
+    if (question.fields.length === 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Field questions need two to eight fields",
+        path: ["questions"],
+      });
+      return;
+    }
+
     if (question.options.length === 1) {
       ctx.addIssue({
         code: "custom",
@@ -64,7 +110,7 @@ function refineQuestionList(
       return;
     }
 
-    if (question.options.length === 0) {
+    if (question.options.length === 0 && question.items.length === 0 && question.fields.length === 0) {
       if (
         question.allowComment ||
         question.allowMultiple ||
@@ -76,6 +122,31 @@ function refineQuestionList(
           path: ["questions"],
         });
         return;
+      }
+      continue;
+    }
+
+    if (question.items.length > 0 || question.fields.length > 0) {
+      if (question.allowMultiple || question.recommendedOptionId) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Item and field questions cannot have choice fields",
+          path: ["questions"],
+        });
+        return;
+      }
+      const rows = question.items.length > 0 ? question.items : question.fields;
+      const rowIds = new Set<string>();
+      for (const row of rows) {
+        if (rowIds.has(row.id)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Entry ids must be unique on a question",
+            path: ["questions"],
+          });
+          return;
+        }
+        rowIds.add(row.id);
       }
       continue;
     }
@@ -176,12 +247,16 @@ export const saveAnswerSchema = z
     selectedOptionIds: z.array(z.string().min(1)).min(1).optional(),
     text: z.string().max(TEXT_ANSWER_MAX_CHARS).optional(),
     fileIds: z.array(z.string().min(1)).max(FILE_MAX_COUNT).optional(),
+    entries: z
+      .record(z.string().min(1), z.string().max(ENTRY_ANSWER_MAX_CHARS))
+      .optional(),
   })
   .superRefine((value, ctx) => {
     if (
       value.selectedOptionIds === undefined &&
       value.text === undefined &&
-      value.fileIds === undefined
+      value.fileIds === undefined &&
+      value.entries === undefined
     ) {
       ctx.addIssue({
         code: "custom",
