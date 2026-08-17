@@ -8,10 +8,12 @@ import {
   saveAnswerSchema,
   bulkAnswersSchema,
   sendEmailSchema,
+  sendAnswersCopySchema,
   waitSchema,
   FILE_MAX_COUNT,
   type CreateSessionInput,
 } from "./schema";
+import { answersCopyHtml, answersCopyText } from "./answers-copy";
 import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import type { Mailer } from "./mailer";
@@ -330,6 +332,45 @@ function expiredError(): SessionServiceError {
     code: "expired",
     message: "This link has expired",
     status: 409,
+  };
+}
+
+function downloadAnswersFrom(session: Session): DownloadAnswers {
+  const answers: DownloadAnswers["answers"] = [];
+  for (const question of session.questions) {
+    const answer = session.answers[question.id];
+    const selectedOptionIds = answer?.selectedOptionIds ?? [];
+    const selectedLabels: string[] = [];
+    for (const optionId of selectedOptionIds) {
+      for (const option of question.options) {
+        if (option.id === optionId) {
+          selectedLabels.push(option.label);
+          break;
+        }
+      }
+    }
+    const row: DownloadAnswers["answers"][number] = {
+      questionId: question.id,
+      prompt: question.prompt,
+      selectedOptionIds,
+      selectedLabels,
+    };
+    if (answer?.text) {
+      row.text = answer.text;
+    }
+    if (answer?.entries && Object.keys(answer.entries).length > 0) {
+      row.entries = answer.entries;
+    }
+    if (answer?.files && answer.files.length > 0) {
+      row.files = answer.files;
+    }
+    answers.push(row);
+  }
+  return {
+    sessionId: session.id,
+    title: session.title,
+    status: "submitted",
+    answers,
   };
 }
 
@@ -1193,43 +1234,55 @@ export function createSessionService(deps: SessionServiceDeps) {
         };
       }
 
-      const answers: DownloadAnswers["answers"] = [];
-      for (const question of session.questions) {
-        const answer = session.answers[question.id];
-        const selectedOptionIds = answer?.selectedOptionIds ?? [];
-        const selectedLabels: string[] = [];
-        for (const optionId of selectedOptionIds) {
-          for (const option of question.options) {
-            if (option.id === optionId) {
-              selectedLabels.push(option.label);
-              break;
-            }
-          }
-        }
-        const row: DownloadAnswers["answers"][number] = {
-          questionId: question.id,
-          prompt: question.prompt,
-          selectedOptionIds,
-          selectedLabels,
-        };
-        if (answer?.text) {
-          row.text = answer.text;
-        }
-        if (answer?.entries && Object.keys(answer.entries).length > 0) {
-          row.entries = answer.entries;
-        }
-        if (answer?.files && answer.files.length > 0) {
-          row.files = answer.files;
-        }
-        answers.push(row);
-      }
+      return downloadAnswersFrom(session);
+    },
 
-      return {
-        sessionId: session.id,
-        title: session.title,
-        status: "submitted",
-        answers,
-      };
+    async emailAnswersForPublic(input: {
+      sessionId: string;
+      publicToken?: string;
+      body: unknown;
+    }): Promise<{ sent: true } | SessionServiceError> {
+      const parsed = sendAnswersCopySchema.safeParse(input.body ?? {});
+      if (!parsed.success) {
+        return {
+          code: "invalid_email",
+          message: "Email address is not usable",
+          status: 400,
+        };
+      }
+      const session = await loadForPublic(input.sessionId, input.publicToken);
+      if (isServiceError(session)) {
+        return session;
+      }
+      if (session.status !== "submitted") {
+        return {
+          code: "not_available",
+          message: "A copy is only available after submit",
+          status: 409,
+        };
+      }
+      const download = downloadAnswersFrom(session);
+      const answersJson = JSON.stringify(download, null, 2);
+      let result: { ok: true } | { ok: false; message: string };
+      try {
+        result = await deps.sendEmail({
+          to: parsed.data.email,
+          title: session.title,
+          answersText: answersCopyText(download, session.questions),
+          answersHtml: answersCopyHtml(download, session.questions),
+          answersJson,
+        });
+      } catch {
+        result = { ok: false, message: "Mail provider failed" };
+      }
+      if (!result.ok) {
+        return {
+          code: "mail_failed",
+          message: result.message,
+          status: 502,
+        };
+      }
+      return { sent: true };
     },
 
     async sendEmail(input: {

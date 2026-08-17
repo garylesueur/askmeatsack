@@ -19,13 +19,21 @@ function serviceWithStore(options?: {
   sendEmail?: (input: {
     to: string;
     title?: string;
-    answerUrl: string;
+    answerUrl?: string;
+    answersText?: string;
+    answersJson?: string;
   }) => Promise<{ ok: true } | { ok: false; message: string }>;
 }) {
   let now = new Date("2026-08-16T20:00:00.000Z");
   const store = createMemorySessionStore();
   const callbackCalls: Array<{ url: string; body: unknown }> = [];
-  const emailSends: Array<{ to: string; title?: string; answerUrl: string }> = [];
+  const emailSends: Array<{
+    to: string;
+    title?: string;
+    answerUrl?: string;
+    answersText?: string;
+    answersJson?: string;
+  }> = [];
   const sessions = createSessionService({
     store,
     now: () => now,
@@ -1082,6 +1090,48 @@ describe("B19 — Human can download the answers", () => {
     const refused = await sessions.downloadForPublic({
       sessionId: "session-1",
       publicToken,
+    });
+    expect(refused).toMatchObject({ code: "not_available", status: 409 });
+  });
+
+  it("emails a copy after submit and never includes the agent secret", async () => {
+    const { sessions, emailSends } = serviceWithStore();
+    await sessions.create({ title: "Naming", questions: mixedQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q1",
+      publicToken,
+      body: { selectedOptionIds: ["1"] },
+    });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q2",
+      publicToken,
+      body: { text: "Ship it" },
+    });
+    await sessions.submit({ sessionId: "session-1", publicToken });
+    const sent = await sessions.emailAnswersForPublic({
+      sessionId: "session-1",
+      publicToken,
+      body: { email: "kerry@example.com" },
+    });
+    expect(sent).toEqual({ sent: true });
+    expect(emailSends).toHaveLength(1);
+    expect(emailSends[0]?.to).toBe("kerry@example.com");
+    expect(emailSends[0]?.answerUrl).toBeUndefined();
+    expect(emailSends[0]?.answersText).toContain("askmeatsack.com");
+    expect(emailSends[0]?.answersText).toContain("Ship it");
+    expect(emailSends[0]?.answersJson).toContain("Ship it");
+    expect(JSON.stringify(emailSends[0])).not.toContain(agentToken);
+  });
+
+  it("refuses an answers copy while the questionnaire is still open", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: mixedQuestions });
+    const refused = await sessions.emailAnswersForPublic({
+      sessionId: "session-1",
+      publicToken,
+      body: { email: "kerry@example.com" },
     });
     expect(refused).toMatchObject({ code: "not_available", status: 409 });
   });

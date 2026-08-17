@@ -84,7 +84,7 @@ When creating a questionnaire, the agent may leave a callback URL. When status b
 
 ### B19 — Human can download the answers 🟢
 
-After submit, the confirmation screen lets the human download the answers as JSON (question ids, prompts, chosen labels and ids, any text). Download is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret.
+After submit, the confirmation screen lets the human download the answers as JSON (question ids, prompts, chosen labels and ids, any text). They may also type an email address and have a copy sent — a readable summary plus the same JSON. That is optional. Mail is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret. A failed send does not undo submit.
 
 ### B20 — Ask in the conversation 🟢
 
@@ -194,6 +194,7 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 | Edit questions and details | No | Yes, while `pending` | Yes, while `pending` |
 | Bounded wait | No | Yes, that questionnaire only | Yes, that questionnaire |
 | Download answers JSON | Yes, after submit, that questionnaire only | No | No |
+| Email a copy of the answers | Yes, after submit, to an address they type | No | No |
 | Email the link to the recipient | No | Yes, while open | Yes, on create or while open |
 | See the agent status secret | No | It *is* the secret | Not via the answering page |
 
@@ -245,6 +246,15 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 | Resend while still open | Another mail with the same link |
 | Resend after submit, expiry, or cancel | Refused |
 
+### Answers copy
+
+| Situation | Outcome |
+| --- | --- |
+| After submit, usable email, public token | Readable copy and JSON sent to that address |
+| Questionnaire still open, expired, or cancelled | Refused |
+| Invalid address | Refused; submit unchanged |
+| Mail provider fails | Human is told; they can still download JSON |
+
 ### Appearance
 
 | Situation | Outcome |
@@ -295,7 +305,7 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 - **Settled:** `in_progress` starts on the first saved answer, not on opening the page. Chat unfurls must not look like work under way. Opened time is a separate signal from the running page. Recorded as B4 and B14.
 - **Settled:** After expiry the agent still reads any partial answers for one hour. Recorded as B8.
 - **Settled:** Tool and HTTP are both in. Same questionnaire. Recorded as B1, B7, B13.
-- **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, and JSON download are in. Recorded as B13–B19.
+- **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, JSON download, and an optional emailed copy of the answers are in. Recorded as B13–B19.
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
 - **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Email to one person is also in, same wait. Recorded as B1, B20, and B21.
 - **Settled:** Create is public. There is no shared bearer to hand out. Agent status still needs that questionnaire’s agent token (the `pollUrl`). Recorded as B10.
