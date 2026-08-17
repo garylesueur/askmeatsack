@@ -9,7 +9,7 @@ There is no API key and no account. Create is open. After create, keep \`pollUrl
 ## In this conversation
 
 1. Call \`askmeatsack.com\` with action \`create\` (or \`POST /api/v1/sessions\`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or \`appearance\` (\`theme\`: \`ask\`, \`paper\`, \`grove\`, or \`ember\`). Omit \`appearance\` for the product theme. Set \`allowFiles\` on a question if they should attach files. The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
-2. You always get \`answerUrl\`, \`machineUrl\`, \`pollUrl\`, and \`manageUrl\` immediately. Paste **\`answerUrl\` into this conversation** so the person answering can open it. Keep \`manageUrl\` for yourself: open it, or fetch it as markdown, to see the questions and status. While nobody has answered, action \`edit\` (or \`PATCH\` the session) can change title, context, questions, appearance, expiry, or email. The answer link stays the same. If the respondent is an agent, they can fetch \`answerUrl\` with \`Accept: text/markdown\`, or \`machineUrl\`, then PUT answers as JSON. Do not wait for them to ask for the link.
+2. You always get \`answerUrl\`, \`machineUrl\`, \`pollUrl\`, and \`manageUrl\` immediately. Paste **\`answerUrl\` into this conversation** so the person answering can open it. Keep \`manageUrl\` for yourself: open it, or fetch it as markdown, to see the questions and status. The manage page is a stacked owner summary — it is not what the human sees. While nobody has answered, action \`edit\` (or \`PATCH\` the session) can change title, context, questions, appearance, expiry, or email. The answer link stays the same. If the respondent is an agent, they can fetch \`answerUrl\` with \`Accept: text/markdown\`, or \`machineUrl\`, then PUT answers as JSON. Do not wait for them to ask for the link.
 3. Wait with action \`wait\` (pass \`sessionId\` and \`agentToken\` from \`pollUrl\`; at most 60 seconds per call; loop if you need longer), poll \`status\` the same way, or use \`callbackUrl\` if you set one. On a terminal status the service POSTs \`{ sessionId, status, answers }\` to that URL once. A failed POST does not undo the status.
 4. When status is \`submitted\`, continue with the answers. \`expired\` and \`cancelled\` are finished too — do not keep asking.
 
@@ -17,9 +17,11 @@ No email is required for this path.
 
 ## What a question can carry
 
-Prompts and optional \`detail\` are markdown. Use \`detail\` for a guide, links, lists, or a mermaid code fence (language mermaid). Option labels stay plain text. Raw HTML is not rendered.
+The prompt is the ask — one short sentence the human can read as a heading. Put the situation in \`detail\`: a guide, a table of lines to label, lists, links, or a mermaid code fence (language mermaid). Do not jam a brief, a table of figures, and the ask into \`prompt\`.
 
-Use that when you need more than a tap: HR forms, a sketch of a situation, a policy link, a diagram. Keep tap-only questions short when you want speed — a single choice with no comment or files advances as soon as they pick.
+Prompts and \`detail\` are markdown. On a wide screen the human sees \`detail\` in a rail beside the question; on a narrow screen it sits under the prompt. Option labels stay plain text. Raw HTML is not rendered.
+
+Use that when you need more than a tap: leftover invoices, a sketch of a situation, a policy link, a diagram. Keep tap-only questions short when you want speed — a single choice with no comment or files advances as soon as they pick.
 
 If you were sent an askmeatsack.com \`/s/…\` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
 

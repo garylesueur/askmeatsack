@@ -5,6 +5,10 @@ import { TEXT_ANSWER_MAX_CHARS, type Appearance, type Question } from "@/lib/sch
 import type { PublicSessionView, SessionProgress } from "@/lib/sessions";
 import type { SessionAnswer, SessionFile } from "@/lib/session-store";
 import { MarkdownBody } from "@/components/markdown-body";
+import {
+  isShortPrompt,
+  questionHasEvidence,
+} from "@/lib/question-presentation";
 import { Input } from "@/components/ui/input";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -542,8 +546,17 @@ export function AnsweringForm({
     ? 100
     : Math.round(((stepIndex + 1) / questions.length) * 100);
 
+  const hasEvidence = !reviewing && questionHasEvidence(question);
   const form = (
-    <main className={layout === "embed" ? "w-full" : "mx-auto w-full max-w-lg py-6"}>
+    <main
+      className={
+        layout === "embed"
+          ? "w-full"
+          : hasEvidence
+            ? "mx-auto w-full max-w-5xl py-6"
+            : "mx-auto w-full max-w-xl py-6"
+      }
+    >
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {layout === "page" ? "askmeatsack.com" : title ?? "Questions"}
@@ -603,7 +616,7 @@ export function AnsweringForm({
       ) : null}
 
       {stepIndex === 0 && !reviewing && context ? (
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">{context}</p>
+        <MarkdownBody source={context} className="mt-4" />
       ) : null}
 
       <form
@@ -651,92 +664,111 @@ export function AnsweringForm({
           </>
         ) : (
           <>
-            <div className="flex flex-col gap-3">
+            <div
+              className={
+                hasEvidence
+                  ? "grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,28rem)_minmax(16rem,1fr)] lg:items-start lg:gap-10"
+                  : "flex flex-col gap-3"
+              }
+            >
               <div className="flex flex-wrap items-start gap-2">
-                <MarkdownBody source={question.prompt} compact />
+                <MarkdownBody
+                  source={question.prompt}
+                  tone="prompt"
+                  compact={isShortPrompt(question.prompt)}
+                />
                 {question.required ? (
                   <span className="sr-only"> (required)</span>
                 ) : (
                   <Badge variant="secondary">Optional</Badge>
                 )}
               </div>
-              {question.detail ? <MarkdownBody source={question.detail} /> : null}
-            </div>
-
-            {question.options.length === 0 ? (
-              <Textarea
-                value={answers[question.id]?.text ?? ""}
-                maxLength={TEXT_ANSWER_MAX_CHARS}
-                onChange={(event) => {
-                  onTextChange(question, event.target.value);
-                }}
-                className="min-h-28"
-              />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {question.options.map((option) => {
-                  const isSelected = selected.includes(option.id);
-                  const isRecommended = question.recommendedOptionId === option.id;
-                  return (
-                    <Button
-                      key={option.id}
-                      type="button"
-                      variant={isSelected ? "default" : "outline"}
-                      aria-pressed={isSelected}
-                      disabled={submitting}
-                      onClick={() => {
-                        void chooseOption(question, option.id);
-                      }}
-                      className="h-auto min-h-11 w-full justify-start whitespace-normal px-3 py-2.5 text-left"
-                    >
-                      <span>{option.label}</span>
-                      {isRecommended ? (
-                        <Badge
-                          variant={isSelected ? "secondary" : "outline"}
-                          className="ml-2"
-                        >
-                          Recommended
-                        </Badge>
-                      ) : null}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-            {question.allowComment ? (
-              <Textarea
-                value={answers[question.id]?.text ?? ""}
-                maxLength={TEXT_ANSWER_MAX_CHARS}
-                placeholder="Optional comment"
-                onChange={(event) => {
-                  onTextChange(question, event.target.value);
-                }}
-                className="min-h-20"
-              />
-            ) : null}
-            {question.allowFiles ? (
-              <div className="flex flex-col gap-2">
-                <Input
-                  type="file"
-                  multiple
-                  onChange={(event) => {
-                    const list = event.target.files;
-                    if (!list) {
-                      return;
-                    }
-                    for (const file of list) {
-                      void uploadFile(question, file);
-                    }
-                    event.target.value = "";
-                  }}
-                />
-                {(answers[question.id]?.files ?? []).map((file) => (
-                  <p key={file.id} className="text-sm text-muted-foreground">
-                    {file.filename}
+              {hasEvidence && question.detail ? (
+                <aside className="rounded-xl border border-border bg-card/60 p-4 lg:col-start-2 lg:row-span-2 lg:sticky lg:top-6">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Situation
                   </p>
-                ))}
+                  <MarkdownBody source={question.detail} />
+                </aside>
+              ) : null}
+              <div className="flex flex-col gap-4 lg:col-start-1">
+                {question.options.length === 0 ? (
+                  <Textarea
+                    value={answers[question.id]?.text ?? ""}
+                    maxLength={TEXT_ANSWER_MAX_CHARS}
+                    onChange={(event) => {
+                      onTextChange(question, event.target.value);
+                    }}
+                    className="min-h-28"
+                  />
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {question.options.map((option) => {
+                      const isSelected = selected.includes(option.id);
+                      const isRecommended =
+                        question.recommendedOptionId === option.id;
+                      return (
+                        <Button
+                          key={option.id}
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          aria-pressed={isSelected}
+                          disabled={submitting}
+                          onClick={() => {
+                            void chooseOption(question, option.id);
+                          }}
+                          className="h-auto min-h-11 w-full justify-start whitespace-normal px-3 py-2.5 text-left"
+                        >
+                          <span>{option.label}</span>
+                          {isRecommended ? (
+                            <Badge
+                              variant={isSelected ? "secondary" : "outline"}
+                              className="ml-2"
+                            >
+                              Recommended
+                            </Badge>
+                          ) : null}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+                {question.allowComment ? (
+                  <Textarea
+                    value={answers[question.id]?.text ?? ""}
+                    maxLength={TEXT_ANSWER_MAX_CHARS}
+                    placeholder="Optional comment"
+                    onChange={(event) => {
+                      onTextChange(question, event.target.value);
+                    }}
+                    className="min-h-20"
+                  />
+                ) : null}
+                {question.allowFiles ? (
+                  <div className="flex flex-col gap-2">
+                    <Input
+                      type="file"
+                      multiple
+                      onChange={(event) => {
+                        const list = event.target.files;
+                        if (!list) {
+                          return;
+                        }
+                        for (const file of list) {
+                          void uploadFile(question, file);
+                        }
+                        event.target.value = "";
+                      }}
+                    />
+                    {(answers[question.id]?.files ?? []).map((file) => (
+                      <p key={file.id} className="text-sm text-muted-foreground">
+                        {file.filename}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            </div>
           </>
         )}
 

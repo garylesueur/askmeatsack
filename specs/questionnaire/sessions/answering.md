@@ -1,7 +1,7 @@
 ---
 id: questionnaire-sessions-answering
 area: Questionnaire / Sessions
-status: implemented
+status: partial
 ---
 
 # Answering a questionnaire
@@ -112,7 +112,7 @@ A question may allow file attachments. The public answer token can upload a file
 
 ### B26 — A question may carry extra material 🟢
 
-A question may include optional markdown `detail` shown with the prompt (diagrams, explanation, a sketch of a situation). Mermaid code fences in that markdown are drawn. Prompts may also be markdown. Option labels stay plain text. Raw HTML from the creator is not rendered. This product does not score, mark, or branch on answers; the calling agent interprets them.
+A question may include optional markdown `detail` — the situation, not the ask. Mermaid code fences in that markdown are drawn. Tables, lists, and links are shown as written. On a wide screen the human sees that material in a rail beside the question; on a narrow screen it sits under the prompt, before the choices. A short prompt is shown as the question heading. A long prompt is shown as readable body text, not a giant title. Prompts may also be markdown. Option labels stay plain text. Raw HTML from the creator is not rendered. This product does not score, mark, or branch on answers; the calling agent interprets them.
 
 ### B27 — Owner can inspect on a private manage link 🟢
 
@@ -122,6 +122,18 @@ Create also returns a private manage link, keyed by the agent token. Opening it 
 
 While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, callback URL, or the email recipient — via the askmeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
 
+### B29 — Questions may be grouped into sections 🔵 future
+
+The agent may group questions into named sections. The human sees which section they are in, and progress can say which step they are on inside that section as well as overall. Step numbers stay jumpable. A section may carry its own short title and optional markdown. Sections do not change how answers are saved or submitted.
+
+### B30 — A questionnaire may open on a welcome 🔵 future
+
+Before the first question, the human may see the title and the context as a welcome, then start. Context is markdown. It is not only a muted paragraph on the first question. Skip the welcome when there is no context and the title is enough to begin.
+
+### B31 — A question may name sources 🔵 future
+
+A question may name extra material for the rail: links, and files the agent attached when creating the questionnaire. Those are for the human to read, not answers. They are separate from files the human uploads as part of their answer.
+
 ## Rules (Invariants)
 
 - A choice question has at least two and at most eight options. A text question has no options. A comment on a choice is optional extra text, not a substitute for the choice when the question is required.
@@ -129,7 +141,7 @@ While status is still `pending`, the owner can change title, context, questions,
 - Saved answers freeze at submit, expiry, or cancel. They do not change afterwards.
 - Default life is 24 hours from creation. The creator may ask for shorter or longer, never more than 7 days.
 - After submit, expiry, or cancel, the agent can still read status and answers for one hour. After that the questionnaire is gone. The human cannot save or submit once it has expired or been cancelled.
-- Prompts and optional question `detail` may be formatted as markdown, including mermaid diagrams. Option labels are plain text. Raw HTML from the creator is not rendered. The service does not score answers.
+- Prompts and optional question `detail` may be formatted as markdown, including mermaid diagrams and tables. The prompt is the ask; `detail` is the situation shown in the evidence rail. Option labels are plain text. Raw HTML from the creator is not rendered. The service does not score answers.
 - The agent’s status secret never appears in the answering page, the JSON download, or anything the browser is given to run. It may appear in the manage URL, which is only for the owner.
 - Questions can be replaced only while status is `pending`. The public answer token does not change when the owner edits.
 - Opaque metadata the agent attaches (repo, branch, run id) is stored and returned to the agent; the human does not need it to answer.
@@ -284,10 +296,17 @@ While status is still `pending`, the owner can change title, context, questions,
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.
 - **Settled:** Create returns a private manage link for inspect. Edit is allowed only while `pending`, so a person mid-answer is not left on vanished questions. Recorded as B27 and B28.
+- **Settled:** One question at a time stays. The fix for questions that do not render is the evidence rail and a short-ask / situation split, not a return to a stacked form. Recorded as B2 and B26.
+- **Blocks B29:** Are sections first-class objects (id, title, optional intro markdown) that questions point at, or only a label string on each question?
+- **Blocks B29:** Does a new section get an interstitial intro screen, or only chrome (section name in the progress line)?
+- **Blocks B30:** Welcome screen, or keep title always visible and show context in the rail / on the first question?
+- **Blocks B31:** Are sources first-class (`label` + `url`, optional agent-attached files), or is markdown in `detail` enough?
 
 ## Future Considerations
 
-_None._
+- Structured line-item answers (label each row in a table) if comment-plus-table is not enough for briefs like leftover invoices.
+- Agent-attached source files on create, distinct from the human’s answer uploads.
+- Branching or scoring — still out of scope. The calling agent interprets answers.
 
 ## Out of Scope
 

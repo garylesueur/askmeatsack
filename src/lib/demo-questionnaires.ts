@@ -121,6 +121,39 @@ export const demoQuestionnaires: DemoPack[] = [
       },
     ],
   },
+  {
+    title: "A leftover brief",
+    context:
+      "Working list, not an audit. Short answers are fine. The situation sits beside the question.",
+    expiresInSeconds: 3600,
+    metadata: { demo: "homepage" },
+    appearance: { theme: "ask" },
+    questions: [
+      {
+        id: "bucks",
+        prompt: "Please label these Buckinghamshire lines.",
+        detail:
+          "Say what each line is in the comment.\n\n| Date | Amount | How |\n| --- | ---: | --- |\n| Feb / Mar 2025 | 2476.80 | Direct debit |\n| Feb / Mar 2025 | 2477.00 | Card |\n| Dec 2025 | 840.00 | |\n| Jan 2026 | 660.00 | |\n| 18 Feb 2026 | 81.00 | Credit |\n| 18 Feb 2026 | 588.00 | Credit |\n\n```mermaid\nflowchart LR\n  bucks[buckinghamshire.gov] --> dd[Monthly DD]\n  bucks --> card[Monthly card]\n  bucks --> credits[Feb credits]\n```",
+        options: [
+          { id: "will_label", label: "I will label them in the comment" },
+          { id: "unsure", label: "Not sure" },
+        ],
+        allowComment: true,
+      },
+      {
+        id: "flexipay",
+        prompt: "Which FlexiPay figure should I use?",
+        detail:
+          "You said **6500** is left. The three dated repayments add to **6758.50**.",
+        options: [
+          { id: "6500", label: "6500 outstanding" },
+          { id: "6758", label: "The three repayments (6758.50)" },
+          { id: "unsure", label: "Not sure, I will check" },
+        ],
+        allowComment: true,
+      },
+    ],
+  },
 ];
 
 export function pickDemoQuestionnaire(

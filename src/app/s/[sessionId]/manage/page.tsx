@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { MarkdownBody } from "@/components/markdown-body";
+import { isShortPrompt } from "@/lib/question-presentation";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -128,7 +129,11 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
                       <Badge variant="outline">Files</Badge>
                     ) : null}
                   </div>
-                  <MarkdownBody source={question.prompt} compact />
+                  <MarkdownBody
+                    source={question.prompt}
+                    tone="prompt"
+                    compact={isShortPrompt(question.prompt)}
+                  />
                   {question.detail ? <MarkdownBody source={question.detail} /> : null}
                   {question.options.length > 0 ? (
                     <ul className="list-disc pl-5 text-sm text-muted-foreground">
