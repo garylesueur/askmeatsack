@@ -111,14 +111,16 @@ export function HomeLanding({
             Try it
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-[90vh] gap-3 overflow-y-auto p-4 sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent size="large" className="gap-3">
+          <DialogHeader className="shrink-0 pr-10">
             <DialogTitle>Try it</DialogTitle>
             <DialogDescription>
               A real questionnaire. Submit and you will see what the agent gets.
             </DialogDescription>
           </DialogHeader>
-          {tryOpen ? <HomeDemo /> : null}
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {tryOpen ? <HomeDemo /> : null}
+          </div>
         </DialogContent>
       </Dialog>
 
