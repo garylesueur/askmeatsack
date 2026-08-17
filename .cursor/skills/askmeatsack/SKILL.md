@@ -6,6 +6,8 @@ The product is **askmeatsack.com**. The tool is named `askmeatsack.com`. HTTP an
 
 There is no API key and no account. Create is open. After create, keep `pollUrl` (or its `token`) and `manageUrl` for status, wait, cancel, email, inspect, and edit.
 
+Use this in a live chat, or from an unattended job that still needs facts, files, or an ID from a person.
+
 ## In this conversation
 
 1. Call `askmeatsack.com` with action `create` (or `POST /api/v1/sessions`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or `appearance` (`theme`: `ask`, `paper`, `grove`, or `ember`). Omit `appearance` to follow the person’s system light or dark. Each theme has both modes. Set `mode` to `light` or `dark` only if you must force one. Set `allowFiles` on a question if they should attach files (they can choose, drop, or take a photo; at most five, 4 MB each). The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
@@ -14,6 +16,16 @@ There is no API key and no account. Create is open. After create, keep `pollUrl`
 4. When status is `submitted`, continue with the answers. `expired` and `cancelled` are finished too — do not keep asking.
 
 No email is required for this path.
+
+## When you are running a job
+
+You do not need a human in this chat. If you were given work to fill records, chase missing facts, or collect files and you cannot find them, ask. A Grok bot populating HR, a nightly sweep, or any unattended run is the same product.
+
+One person, one questionnaire. Each ask is unique to what you still need from that person — their ID, a passport scan, leftover invoices, a missing field. Do not reuse one `answerUrl` across a list. Two people on one link overwrite each other.
+
+Put their record key (employee id, ticket, email) in `metadata` so you can match the answers when they come back. The human never sees that metadata.
+
+Email the link if you have an address. Otherwise put `answerUrl` wherever you already reach them. Set `callbackUrl` if you will not sit waiting in a conversation; you can still poll `status` or `wait` later. On a terminal status the service POSTs `{ sessionId, status, answers }` once. Then continue the job with those answers.
 
 ## What a question can carry
 
@@ -44,3 +56,4 @@ If mail send is not available, still create: you already have `answerUrl`. Givin
 - Name extra tools. There is one tool, `askmeatsack.com`, with actions `create`, `status`, `wait`, `cancel`, `email`, and `edit`.
 - Put the agent status secret or `manageUrl` on the answering page, in email, or anywhere the respondent should not see it.
 - Treat Slack (or any other chat) posting as a feature of this product.
+- Share one answer link across a list of people, or invent a second form because the ask is automated.
