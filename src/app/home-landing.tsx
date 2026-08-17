@@ -22,6 +22,7 @@ import {
 type HomeLandingProps = {
   mcpUrl: string;
   cursorHref: string;
+  pluginHref: string;
   curl: string;
   skillHref: string;
   guideHref: string;
@@ -30,6 +31,7 @@ type HomeLandingProps = {
 export function HomeLanding({
   mcpUrl,
   cursorHref,
+  pluginHref,
   curl,
   skillHref,
   guideHref,
@@ -78,16 +80,27 @@ export function HomeLanding({
         </a>
       </p>
 
-      <a href={cursorHref} className="inline-flex w-fit">
-        <Image
-          src="/mcp-install-light.svg"
-          alt="Add askmeatsack.com to Cursor"
-          width={126}
-          height={28}
-          unoptimized
-          className="dark:invert"
-        />
-      </a>
+      <div className="flex flex-col gap-2">
+        <a href={cursorHref} className="inline-flex w-fit">
+          <Image
+            src="/mcp-install-light.svg"
+            alt="Add askmeatsack.com to Cursor"
+            width={126}
+            height={28}
+            unoptimized
+            className="dark:invert"
+          />
+        </a>
+        <a
+          href={pluginHref}
+          className="w-fit text-sm underline underline-offset-4"
+        >
+          Cursor plugin
+        </a>
+        <p className="text-sm text-muted-foreground">
+          The plugin is the MCP server plus the skill. Install it from GitHub.
+        </p>
+      </div>
 
       <div className="flex flex-col gap-2">
         <Button asChild variant="outline" size="sm" className="w-fit">

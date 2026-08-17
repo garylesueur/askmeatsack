@@ -1,3 +1,6 @@
+export const CURSOR_PLUGIN_HREF =
+  "https://github.com/garylesueur/askmeatsack";
+
 function encodeConfig(mcpUrl: string): string {
   const json = JSON.stringify({ url: mcpUrl });
   return typeof Buffer === "undefined"

@@ -16,15 +16,15 @@ The home page has a title, description, canonical URL, Open Graph tags, a large 
 
 ### B2 — Crawlers get a sitemap and robots file 🟢
 
-Crawlers can fetch a sitemap of the public documents (home, MCP page, markdown guide, skill, llms.txt). Robots allow those, and do not ask crawlers to index API routes or questionnaire pages.
+Crawlers can fetch a sitemap of the public documents (home, MCP page, markdown guide, skill, llms.txt). Robots allow those, and do not ask crawlers to index API routes, questionnaire pages, or the playground.
 
 ### B3 — Answer engines get a plain-text index 🟢
 
-`/llms.txt` describes the product in short and lists the skill and the MCP/HTTP guide. Agents that look for that file can find the rest from it.
+`/llms.txt` describes the product in short and lists the skill, the MCP/HTTP guide, and the Cursor plugin. Agents that look for that file can find the rest from it.
 
 ### B4 — Pasting the MCP URL yields a guide 🟢
 
-Opening `https://askmeatsack.com/mcp` in a browser shows a short HTML page with the MCP URL and links to the markdown guide and skill. Fetching that same URL as markdown (or with no HTML Accept), or fetching `/mcp.md`, returns a markdown API guide: what the product does, how to connect, the tool actions, curl, machine answering, and the skill.
+Opening `https://askmeatsack.com/mcp` in a browser shows a short HTML page with the MCP URL and links to the markdown guide, skill, and Cursor plugin. Fetching that same URL as markdown (or with no HTML Accept), or fetching `/mcp.md`, returns a markdown API guide: what the product does, how to connect, the tool actions, curl, machine answering, and the skill.
 
 ### B5 — The skill is on the site 🟢
 

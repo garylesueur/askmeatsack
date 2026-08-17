@@ -1,5 +1,9 @@
 import { HomeLanding } from "@/app/home-landing";
-import { cursorInstallPageHref } from "@/lib/cursor-install";
+import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/agent-docs";
+import {
+  CURSOR_PLUGIN_HREF,
+  cursorInstallPageHref,
+} from "@/lib/cursor-install";
 import { publicOrigin } from "@/lib/public-origin";
 
 export default function Home() {
@@ -27,17 +31,17 @@ export default function Home() {
         <header className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">askmeatsack.com</p>
           <h1 className="font-heading text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            An agent asks. A human answers.
+            {SITE_TAGLINE}
           </h1>
           <p className="max-w-md text-base leading-7 text-muted-foreground">
-            Create a questionnaire, paste the link, wait. No accounts. No API
-            key.
+            {SITE_DESCRIPTION}
           </p>
         </header>
 
         <HomeLanding
           mcpUrl={mcpUrl}
           cursorHref={cursorHref}
+          pluginHref={CURSOR_PLUGIN_HREF}
           curl={curl}
           skillHref={`${origin}/skill.md`}
           guideHref={`${origin}/mcp.md`}
