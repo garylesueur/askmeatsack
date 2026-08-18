@@ -13,8 +13,9 @@ commands:
   lint: pnpm lint
   test: pnpm test
   test_file: "pnpm exec vitest run {file}"
+  build: pnpm build
 
-gates: [types, lint, test]
+gates: [types, lint, test, build]
 
 vcs:
   default_branch: main
