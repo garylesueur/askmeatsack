@@ -1,5 +1,10 @@
 import { CurlBlock, HomeLanding } from "@/app/home-landing";
-import { AGENT_SAMPLE, HERO, USE_CASES } from "@/app/home-content";
+import {
+  AGENT_SAMPLE,
+  HERO,
+  SEAM_QUESTION,
+  USE_CASES,
+} from "@/app/home-content";
 import {
   SectionLabel,
   Seam,
@@ -76,37 +81,36 @@ export default function Home() {
           person={
             <>
               <p className="mb-1 text-[15px] font-semibold tracking-tight">
-                Ship it?
+                {SEAM_QUESTION.title}
               </p>
               <p className="mb-4 text-sm text-muted-foreground">
-                14 commits are staged for production.
+                {SEAM_QUESTION.prompt}
               </p>
-              {[
-                { label: "Ship it now", picked: true },
-                { label: "Hold until Monday", picked: false },
-                { label: "Let me look first", picked: false },
-              ].map((option) => (
-                <div
-                  key={option.label}
-                  className={`mb-2 flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
-                    option.picked
-                      ? "border-primary bg-primary/[0.07]"
-                      : "border-border bg-background"
-                  }`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`relative size-[15px] shrink-0 rounded-full border-[1.5px] ${
-                      option.picked ? "border-primary" : "border-muted-foreground"
+              {SEAM_QUESTION.options.map((option) => {
+                const picked = option.id === SEAM_QUESTION.picked;
+                return (
+                  <div
+                    key={option.id}
+                    className={`mb-2 flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                      picked
+                        ? "border-primary bg-primary/[0.07]"
+                        : "border-border bg-background"
                     }`}
                   >
-                    {option.picked ? (
-                      <span className="absolute inset-[3px] rounded-full bg-primary" />
-                    ) : null}
-                  </span>
-                  {option.label}
-                </div>
-              ))}
+                    <span
+                      aria-hidden="true"
+                      className={`relative size-[15px] shrink-0 rounded-full border-[1.5px] ${
+                        picked ? "border-primary" : "border-muted-foreground"
+                      }`}
+                    >
+                      {picked ? (
+                        <span className="absolute inset-[3px] rounded-full bg-primary" />
+                      ) : null}
+                    </span>
+                    {option.label}
+                  </div>
+                );
+              })}
             </>
           }
         />

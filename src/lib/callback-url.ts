@@ -1,8 +1,10 @@
-import { isIP } from "node:net";
-import { lookup } from "node:dns/promises";
-
 /**
  * Where a `callbackUrl` is allowed to point.
+ *
+ * Deliberately free of Node built-ins. `schema.ts` imports this so create can
+ * refuse a bad address, and client components import `schema.ts` for their
+ * types — so a `node:net` import here ends up in the browser bundle and fails
+ * the build. DNS resolution lives in `callback-dns.ts`, which is server-only.
  *
  * The agent supplies this and the server fetches it, so without a check it is a
  * request forgery primitive: anything reachable from the function can be probed,
@@ -21,6 +23,17 @@ import { lookup } from "node:dns/promises";
 export type CallbackRefusal = { ok: false; reason: string };
 export type CallbackAccepted = { ok: true; url: URL };
 export type CallbackCheck = CallbackAccepted | CallbackRefusal;
+
+const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+/** 4, 6, or 0 for "not an address". Enough to pick a blocklist. */
+export function addressFamily(value: string): 0 | 4 | 6 {
+  const match = IPV4.exec(value);
+  if (match) {
+    return match.slice(1).every((part) => Number(part) <= 255) ? 4 : 0;
+  }
+  return value.includes(":") ? 6 : 0;
+}
 
 /** Ranges that are never a legitimate destination for a callback. */
 function isBlockedIpv4(address: string): boolean {
@@ -51,7 +64,7 @@ function isBlockedIpv6(address: string): boolean {
 }
 
 export function isBlockedAddress(address: string): boolean {
-  const family = isIP(address);
+  const family = addressFamily(address);
   if (family === 4) return isBlockedIpv4(address);
   if (family === 6) return isBlockedIpv6(address);
   return true; // not an address we can reason about
@@ -76,36 +89,11 @@ export function callbackUrlIsUsable(raw: string): CallbackCheck {
   }
   const host = url.hostname.replace(/^\[|\]$/g, "");
   // A literal address skips DNS entirely, so judge it here.
-  if (isIP(host) && isBlockedAddress(host)) {
+  if (addressFamily(host) !== 0 && isBlockedAddress(host)) {
     return { ok: false, reason: "callbackUrl must be a public address" };
   }
   if (host === "localhost" || host.endsWith(".localhost")) {
     return { ok: false, reason: "callbackUrl must be a public address" };
   }
   return { ok: true, url };
-}
-
-/**
- * Resolves the host and refuses if any address it answers with is private.
- * Every address is checked, not just the first — a name that returns one public
- * and one private address is still a way in.
- */
-export async function callbackHostResolvesPublicly(
-  hostname: string,
-  resolve: (host: string) => Promise<{ address: string }[]> = (host) =>
-    lookup(host, { all: true }),
-): Promise<boolean> {
-  const host = hostname.replace(/^\[|\]$/g, "");
-  if (isIP(host)) {
-    return !isBlockedAddress(host);
-  }
-  try {
-    const addresses = await resolve(host);
-    if (addresses.length === 0) {
-      return false;
-    }
-    return addresses.every((entry) => !isBlockedAddress(entry.address));
-  } catch {
-    return false;
-  }
 }

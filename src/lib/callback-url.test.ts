@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  callbackHostResolvesPublicly,
-  callbackUrlIsUsable,
-  isBlockedAddress,
-} from "./callback-url";
+import { callbackHostResolvesPublicly } from "./callback-dns";
+import { callbackUrlIsUsable, isBlockedAddress } from "./callback-url";
 
 describe("B38 — a callback only reaches the public internet", () => {
   it("accepts an ordinary public https address", () => {
