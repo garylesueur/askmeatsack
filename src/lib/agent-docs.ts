@@ -8,7 +8,7 @@ import { publicOrigin } from "@/lib/public-origin";
 export const SITE_TITLE = "askmeatsack.com";
 export const SITE_TAGLINE = "An agent asks. A human answers.";
 export const SITE_DESCRIPTION =
-  "Create a questionnaire, paste the link, wait. No accounts. No API key.";
+  "Create a questionnaire, paste the link, wait. No install, no setup, no dashboard to learn.";
 
 export type McpGetKind = "html" | "markdown" | "protocol";
 
