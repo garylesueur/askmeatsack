@@ -66,6 +66,28 @@ describe("R2 object keys and public URLs", () => {
     ).toBe("askmeatsack/sess/photo/ab12-My_receipt_.JPG");
   });
 
+  it("Keeps a caller from choosing its own prefix", () => {
+    expect(
+      fileObjectKey({
+        sessionId: "sess/../../elsewhere",
+        questionId: "a/b",
+        filename: "x.txt",
+        suffix: "ab12",
+      }),
+    ).toBe("askmeatsack/sess_.._.._elsewhere/a_b/ab12-x.txt");
+  });
+
+  it("Replaces dot-only segments, which are never real ids", () => {
+    expect(
+      fileObjectKey({
+        sessionId: "..",
+        questionId: ".",
+        filename: "x.txt",
+        suffix: "ab12",
+      }),
+    ).toBe("askmeatsack/_/_/ab12-x.txt");
+  });
+
   it("builds the S3 and public URLs from the key", () => {
     const key = "askmeatsack/sess/photo/ab12-notes.txt";
     expect(

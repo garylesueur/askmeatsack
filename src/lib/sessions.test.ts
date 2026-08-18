@@ -326,6 +326,65 @@ describe("B25 — Questions may accept files", () => {
   });
 });
 
+describe("Files use the public answer token", () => {
+  const fileQuestion = [
+    { id: "Q1", prompt: "Attach the notes", options: [], allowFiles: true },
+  ];
+
+  it("Refuses before storage when the answer token is missing", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: fileQuestion });
+    const refused = await sessions.canAcceptFile({
+      sessionId: "session-1",
+      questionId: "Q1",
+    });
+    expect(refused).toMatchObject({ status: 404 });
+  });
+
+  it("Refuses before storage when the answer token is wrong", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: fileQuestion });
+    const refused = await sessions.canAcceptFile({
+      sessionId: "session-1",
+      publicToken: "not-the-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      questionId: "Q1",
+    });
+    expect(refused).toMatchObject({ status: 404 });
+  });
+
+  it("Refuses before storage when the session does not exist", async () => {
+    const { sessions } = serviceWithStore();
+    const refused = await sessions.canAcceptFile({
+      sessionId: "no-such-session",
+      publicToken: "public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      questionId: "Q1",
+    });
+    expect(refused).toMatchObject({ status: 404 });
+  });
+
+  it("Refuses before storage when the question does not take files", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: usableQuestions });
+    const refused = await sessions.canAcceptFile({
+      sessionId: "session-1",
+      publicToken: "public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      questionId: "Q1",
+    });
+    expect(refused).toMatchObject({ code: "invalid_answer", status: 400 });
+  });
+
+  it("Allows a real answer token on a question that takes files", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: fileQuestion });
+    const refused = await sessions.canAcceptFile({
+      sessionId: "session-1",
+      publicToken: "public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      questionId: "Q1",
+    });
+    expect(refused).toBeNull();
+  });
+});
+
 describe("B10 — The two links have different powers", () => {
   it("Public token is not enough to read agent status", async () => {
     const { sessions } = serviceWithStore();

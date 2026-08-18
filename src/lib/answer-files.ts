@@ -71,14 +71,29 @@ export function fileStoreAvailable(env: EnvMap = process.env): boolean {
   return readR2Config(env) !== null;
 }
 
+// Every segment is caller-supplied: sessionId comes from the path, questionId
+// from the query string, filename from the upload. Only the filename used to be
+// filtered, which let a caller choose its own prefix inside the bucket.
+function safeSegment(value: string, max: number): string {
+  const filtered = value.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, max);
+  // "." and ".." survive the filter above and are legal object-key characters,
+  // but neither is ever a real id.
+  if (filtered === "" || /^\.+$/.test(filtered)) {
+    return "_";
+  }
+  return filtered;
+}
+
 export function fileObjectKey(input: {
   sessionId: string;
   questionId: string;
   filename: string;
   suffix: string;
 }): string {
-  const safeName = input.filename.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
-  return `askmeatsack/${input.sessionId}/${input.questionId}/${input.suffix}-${safeName}`;
+  const sessionId = safeSegment(input.sessionId, 64);
+  const questionId = safeSegment(input.questionId, 64);
+  const safeName = safeSegment(input.filename, 80);
+  return `askmeatsack/${sessionId}/${questionId}/${input.suffix}-${safeName}`;
 }
 
 export function publicFileUrl(publicBaseUrl: string, key: string): string {

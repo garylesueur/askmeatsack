@@ -359,6 +359,39 @@ function sessionIsFrozen(session: Session): boolean {
   );
 }
 
+// Shared by canAcceptFile and attachFile so the pre-upload check and the
+// post-upload check can never drift apart. Returns the refusal, or null.
+function fileGuard(
+  session: Session,
+  questionId: string,
+): SessionServiceError | null {
+  if (session.status === "expired") {
+    return expiredError();
+  }
+  if (sessionIsFrozen(session)) {
+    return frozenError();
+  }
+  const question = session.questions.find(
+    (candidate) => candidate.id === questionId,
+  );
+  if (!question || !question.allowFiles) {
+    return {
+      code: "invalid_answer",
+      message: "This question does not allow files",
+      status: 400,
+    };
+  }
+  const existing = session.answers[questionId]?.files ?? [];
+  if (existing.length >= FILE_MAX_COUNT) {
+    return {
+      code: "invalid_answer",
+      message: "Too many files on this question",
+      status: 400,
+    };
+  }
+  return null;
+}
+
 function readWindowEndsAtMs(
   session: Session,
   status: Session["status"],
@@ -984,6 +1017,22 @@ export function createSessionService(deps: SessionServiceDeps) {
       return { progress, submitted };
     },
 
+    // Every check attachFile makes, without writing anything. The upload route
+    // calls this before it puts bytes in storage, so a caller without the
+    // answer token cannot reach the bucket at all. attachFile still repeats the
+    // checks — the upload is not instant and the session can freeze meanwhile.
+    async canAcceptFile(input: {
+      sessionId: string;
+      publicToken?: string;
+      questionId: string;
+    }): Promise<SessionServiceError | null> {
+      const session = await loadForPublic(input.sessionId, input.publicToken);
+      if (isServiceError(session)) {
+        return session;
+      }
+      return fileGuard(session, input.questionId);
+    },
+
     async attachFile(input: {
       sessionId: string;
       publicToken?: string;
@@ -997,34 +1046,11 @@ export function createSessionService(deps: SessionServiceDeps) {
       if (isServiceError(session)) {
         return session;
       }
-      if (session.status === "expired") {
-        return expiredError();
-      }
-      if (sessionIsFrozen(session)) {
-        return frozenError();
-      }
-      let question: Session["questions"][number] | undefined;
-      for (const candidate of session.questions) {
-        if (candidate.id === input.questionId) {
-          question = candidate;
-          break;
-        }
-      }
-      if (!question || !question.allowFiles) {
-        return {
-          code: "invalid_answer",
-          message: "This question does not allow files",
-          status: 400,
-        };
+      const refused = fileGuard(session, input.questionId);
+      if (refused) {
+        return refused;
       }
       const existing = session.answers[input.questionId]?.files ?? [];
-      if (existing.length >= FILE_MAX_COUNT) {
-        return {
-          code: "invalid_answer",
-          message: "Too many files on this question",
-          status: 400,
-        };
-      }
       const fileId = deps.createToken();
       const file: SessionFile = {
         id: fileId,
