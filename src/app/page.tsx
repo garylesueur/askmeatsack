@@ -1,4 +1,12 @@
-import { HomeLanding } from "@/app/home-landing";
+import { CurlBlock, HomeLanding } from "@/app/home-landing";
+import { AGENT_SAMPLE, HERO, USE_CASES } from "@/app/home-content";
+import {
+  SectionLabel,
+  Seam,
+  Steps,
+  UseCases,
+} from "@/components/home-sections";
+import { SiteShell } from "@/components/site-chrome";
 import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/agent-docs";
 import {
   CURSOR_PLUGIN_HREF,
@@ -6,11 +14,15 @@ import {
 } from "@/lib/cursor-install";
 import { publicOrigin } from "@/lib/public-origin";
 
+const SIBLING = {
+  name: "showmeatsack.com",
+  href: "https://showmeatsack.com",
+};
+
 export default function Home() {
   const origin = publicOrigin();
   const mcpUrl = `${origin}/mcp`;
   const createUrl = `${origin}/api/v1/sessions`;
-  const cursorHref = cursorInstallPageHref(mcpUrl);
   const curl = `curl -sS ${createUrl} \\
   -H 'content-type: application/json' \\
   -d '{
@@ -20,33 +32,100 @@ export default function Home() {
       "prompt": "Ship it?",
       "options": [
         {"id": "yes", "label": "Yes"},
-        {"id": "no", "label": "Not yet"}
+        {"id": "no",  "label": "Not yet"}
       ]
     }]
   }'`;
 
   return (
-    <div className="flex flex-1 flex-col px-6 py-16 sm:px-10 sm:py-24">
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-8">
-        <header className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">askmeatsack.com</p>
-          <h1 className="font-heading text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            {SITE_TAGLINE}
-          </h1>
-          <p className="max-w-md text-base leading-7 text-muted-foreground">
-            {SITE_DESCRIPTION}
-          </p>
-        </header>
+    <SiteShell
+      wordmark="askmeatsack.com"
+      sibling={SIBLING}
+      repoHref={CURSOR_PLUGIN_HREF}
+      docs={[
+        { label: "skill.md", href: `${origin}/skill.md` },
+        { label: "mcp.md", href: `${origin}/mcp.md` },
+        { label: "llms.txt", href: "/llms.txt" },
+      ]}
+    >
+      <header className="pt-16 sm:pt-20">
+        <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          {HERO.eyebrow}
+        </p>
+        <h1 className="max-w-[15ch] font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance text-foreground sm:text-6xl">
+          {SITE_TAGLINE}
+        </h1>
+        <p className="mt-5 max-w-[46ch] text-lg leading-relaxed text-muted-foreground">
+          {SITE_DESCRIPTION}
+        </p>
 
         <HomeLanding
           mcpUrl={mcpUrl}
-          cursorHref={cursorHref}
+          cursorHref={cursorInstallPageHref(mcpUrl)}
           pluginHref={CURSOR_PLUGIN_HREF}
-          curl={curl}
-          skillHref={`${origin}/skill.md`}
-          guideHref={`${origin}/mcp.md`}
         />
-      </main>
-    </div>
+
+        <Seam
+          wireLabel="one link"
+          personLabel="the person"
+          agent={AGENT_SAMPLE.map(([className, text], index) => (
+            <span key={index} className={className}>
+              {text}
+            </span>
+          ))}
+          person={
+            <>
+              <p className="mb-1 text-[15px] font-semibold tracking-tight">
+                Ship it?
+              </p>
+              <p className="mb-4 text-sm text-muted-foreground">
+                14 commits are staged for production.
+              </p>
+              {[
+                { label: "Ship it now", picked: true },
+                { label: "Hold until Monday", picked: false },
+                { label: "Let me look first", picked: false },
+              ].map((option) => (
+                <div
+                  key={option.label}
+                  className={`mb-2 flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
+                    option.picked
+                      ? "border-primary bg-primary/[0.07]"
+                      : "border-border bg-background"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`relative size-[15px] shrink-0 rounded-full border-[1.5px] ${
+                      option.picked ? "border-primary" : "border-muted-foreground"
+                    }`}
+                  >
+                    {option.picked ? (
+                      <span className="absolute inset-[3px] rounded-full bg-primary" />
+                    ) : null}
+                  </span>
+                  {option.label}
+                </div>
+              ))}
+            </>
+          }
+        />
+      </header>
+
+      <section className="pt-20 sm:pt-24">
+        <SectionLabel>How it goes</SectionLabel>
+        <Steps steps={HERO.steps} />
+      </section>
+
+      <section className="pt-20 sm:pt-24">
+        <SectionLabel>What people use it for</SectionLabel>
+        <UseCases cases={USE_CASES} />
+      </section>
+
+      <section className="pt-20 sm:pt-24">
+        <SectionLabel>Or just curl it</SectionLabel>
+        <CurlBlock endpoint="POST /api/v1/sessions" curl={curl} />
+      </section>
+    </SiteShell>
   );
 }

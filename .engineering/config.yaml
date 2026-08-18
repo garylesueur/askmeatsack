@@ -14,7 +14,7 @@ commands:
   test: pnpm test
   test_file: "pnpm exec vitest run {file}"
 
-gates: [types, lint]
+gates: [types, lint, test]
 
 vcs:
   default_branch: main
@@ -22,3 +22,7 @@ vcs:
 
 tickets:
   provider: none
+
+tests:
+  location: colocated
+  unit: "*.test.ts"
