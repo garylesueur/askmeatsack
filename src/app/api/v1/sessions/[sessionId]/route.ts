@@ -10,10 +10,7 @@ type RouteContext = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function GET(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function GET(request: Request, context: RouteContext): Promise<Response> {
   const { sessionId } = await context.params;
   const credential = readCreateCredential(request);
   const token = new URL(request.url).searchParams.get("token") ?? undefined;
@@ -31,10 +28,7 @@ export async function GET(
   return Response.json(result);
 }
 
-export async function PATCH(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function PATCH(request: Request, context: RouteContext): Promise<Response> {
   const { sessionId } = await context.params;
   const credential = readCreateCredential(request);
   const token = new URL(request.url).searchParams.get("token") ?? undefined;

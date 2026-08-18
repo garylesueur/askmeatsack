@@ -12,10 +12,7 @@ type RouteContext = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function POST(request: Request, context: RouteContext): Promise<Response> {
   const { sessionId } = await context.params;
   const credential = readCreateCredential(request);
   const token = new URL(request.url).searchParams.get("token") ?? undefined;

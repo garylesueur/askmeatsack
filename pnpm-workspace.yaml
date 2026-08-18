@@ -1,3 +1,9 @@
+# Refuse any package published less than a day ago. A compromised
+# release is usually caught within hours, so waiting one day blocks
+# most supply-chain attacks at no real cost. A week would sit on
+# security patches exactly when they are wanted quickly.
+minimumReleaseAge: 1440
+
 allowBuilds:
   sharp: false
   unrs-resolver: false

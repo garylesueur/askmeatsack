@@ -75,15 +75,12 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
       }
       lines.push("", "Answer with `entries` keyed by those ids.");
       if (hasMoney) {
-        lines.push(
-          "Money values are canonical decimals in that currency — do not convert.",
-        );
+        lines.push("Money values are canonical decimals in that currency — do not convert.");
       }
     } else {
       lines.push("", "Options:");
       for (const option of question.options) {
-        const recommended =
-          question.recommendedOptionId === option.id ? " — recommended" : "";
+        const recommended = question.recommendedOptionId === option.id ? " — recommended" : "";
         lines.push(`- \`${option.id}\`: ${option.label}${recommended}`);
       }
     }

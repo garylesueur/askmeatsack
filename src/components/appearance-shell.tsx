@@ -44,10 +44,7 @@ function applyHtmlMode(mode: "system" | "light" | "dark"): void {
   root.classList.toggle("dark", systemDark);
 }
 
-function modeIsDark(
-  mode: "system" | "light" | "dark",
-  systemDark: boolean,
-): boolean {
+function modeIsDark(mode: "system" | "light" | "dark", systemDark: boolean): boolean {
   if (mode === "light") {
     return false;
   }
@@ -63,16 +60,8 @@ export function AppearanceShell({
   className,
   showModeToggle = true,
 }: AppearanceShellProps) {
-  const stored = useSyncExternalStore(
-    subscribeColorMode,
-    readStoredColorMode,
-    () => null,
-  );
-  const systemDark = useSyncExternalStore(
-    subscribeSystemDark,
-    readSystemDark,
-    () => false,
-  );
+  const stored = useSyncExternalStore(subscribeColorMode, readStoredColorMode, () => null);
+  const systemDark = useSyncExternalStore(subscribeSystemDark, readSystemDark, () => false);
   const mode = resolveEffectiveMode(appearance, stored);
   const isDark = modeIsDark(mode, systemDark);
 

@@ -18,9 +18,9 @@ kebab-case, no number prefixes. Ordering comes from the folder and the front-mat
 
 ```yaml
 ---
-id: billing-invoicing-refund-processing   # globally unique, mirrors the folder path
-area: Billing / Invoicing                 # Title Case, used for grouping
-status: partial                           # implemented | partial | future — roll-up of behaviours
+id: billing-invoicing-refund-processing # globally unique, mirrors the folder path
+area: Billing / Invoicing # Title Case, used for grouping
+status: partial # implemented | partial | future — roll-up of behaviours
 ---
 ```
 
@@ -30,10 +30,10 @@ status: partial                           # implemented | partial | future — r
 
 With a provider set, a `ticket` field becomes available in front matter and on 🟡 behaviours:
 
-| Provider | Setup |
-| --- | --- |
-| `none` | Default. No ticket field |
-| `github` | Inferred from the repository. `gh` is already authenticated, so skills can genuinely resolve issue state |
+| Provider                   | Setup                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `none`                     | Default. No ticket field                                                                                      |
+| `github`                   | Inferred from the repository. `gh` is already authenticated, so skills can genuinely resolve issue state      |
 | `linear`, `jira`, `custom` | Require `pattern` and a `url` template. Skills can link, but usually cannot resolve state without credentials |
 
 **What never changes:** a 🟡 behaviour always carries a one-line note on what's missing. The note is the valuable half — it describes the state of the product. The ticket is optional metadata recording that someone made a card.
@@ -59,14 +59,15 @@ Every spec has all of these headers, always, in this order. Empty sections are w
 
 Status lives at the **behaviour level**, not just the file level — a spec can describe a whole feature when only part is built. Behaviours are numbered `B1`, `B2`, … so anything can cite them.
 
-| Badge | Meaning |
-| --- | --- |
-| 🟢 `implemented` | Built and tested |
-| 🟡 `partial` | Built but incomplete. **Must** carry a one-line note on what's missing, plus a ticket if the repo links them |
-| 🔵 `future` | Designed, not scheduled. No ticket required |
+| Badge            | Meaning                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| 🟢 `implemented` | Built and tested                                                                                             |
+| 🟡 `partial`     | Built but incomplete. **Must** carry a one-line note on what's missing, plus a ticket if the repo links them |
+| 🔵 `future`      | Designed, not scheduled. No ticket required                                                                  |
 
 ```markdown
 ### B3 — Refunding a partially paid invoice 🟡 partial
+
 > ABC-123 — the refund succeeds but the customer is not notified
 
 A customer can be refunded before their invoice is fully paid, up to the amount
@@ -77,17 +78,17 @@ Front-matter `status` is the roll-up: `implemented` only if every behaviour is; 
 
 ## Voice — requirements, not implementation
 
-| Avoid | Use |
-| --- | --- |
-| "A projection is calculated in memory and cached…" | "A saved search shows the same results next time…" |
-| "An hourly job scans the table and flips a flag…" | "An invitation stops working once it expires, without anyone acting…" |
-| "We publish a message to the queue…" | "When someone leaves a team, their access ends everywhere…" |
+| Avoid                                              | Use                                                                   |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| "A projection is calculated in memory and cached…" | "A saved search shows the same results next time…"                    |
+| "An hourly job scans the table and flips a flag…"  | "An invitation stops working once it expires, without anyone acting…" |
+| "We publish a message to the queue…"               | "When someone leaves a team, their access ends everywhere…"           |
 
 If you couldn't say it to a non-developer, it doesn't belong in a spec. Implementation detail belongs in code, comments, or design docs.
 
 ## Test cross-references: none
 
-Specs are deliberately test-agnostic. Never write "tested by file X". Reasoning from a behaviour ID to matching tests is the assessor's job; if it can't find them, that *is* the gap report. Hand-maintained test links rot.
+Specs are deliberately test-agnostic. Never write "tested by file X". Reasoning from a behaviour ID to matching tests is the assessor's job; if it can't find them, that _is_ the gap report. Hand-maintained test links rot.
 
 ## Open Question markers
 
@@ -122,7 +123,7 @@ flows:
     start: upload
     states:
       - id: upload
-        kind: screen           # screen | action | terminal
+        kind: screen # screen | action | terminal
         label: Upload File
       - id: complete
         kind: terminal

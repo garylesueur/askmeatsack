@@ -6,11 +6,5 @@
   "homepage": "https://askmeatsack.com",
   "repository": "https://github.com/garylesueur/askmeatsack",
   "license": "MIT",
-  "keywords": [
-    "askmeatsack",
-    "questionnaire",
-    "mcp",
-    "human-in-the-loop",
-    "forms"
-  ]
+  "keywords": ["askmeatsack", "questionnaire", "mcp", "human-in-the-loop", "forms"]
 }

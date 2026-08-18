@@ -28,7 +28,9 @@ function serviceWithStore(options?: {
       let n = 0;
       return () => {
         n += 1;
-        return n === 1 ? "public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa" : "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        return n === 1
+          ? "public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          : "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
       };
     })(),
     publicBaseUrl: "https://askmeatsack.com",
@@ -66,8 +68,7 @@ describe("B1 — Agent starts a questionnaire", () => {
       sessionId: "session-1",
       status: "pending",
       expiresAt: "2026-08-17T20:00:00.000Z",
-      answerUrl:
-        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       pollUrl:
         "https://askmeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       manageUrl:
@@ -145,14 +146,11 @@ describe("B1 — Agent starts a questionnaire", () => {
       message:
         "Question villain: allowComment is only valid on a choice, items, or fields question",
     });
-    expect(
-      (result as { issues?: Array<{ questionId?: string; code: string }> }).issues,
-    ).toEqual([
+    expect((result as { issues?: Array<{ questionId?: string; code: string }> }).issues).toEqual([
       {
         questionId: "villain",
         code: "comment_needs_shape",
-        message:
-          "allowComment is only valid on a choice, items, or fields question",
+        message: "allowComment is only valid on a choice, items, or fields question",
       },
       {
         questionId: "rows",
@@ -327,9 +325,7 @@ describe("B25 — Questions may accept files", () => {
 });
 
 describe("Files use the public answer token", () => {
-  const fileQuestion = [
-    { id: "Q1", prompt: "Attach the notes", options: [], allowFiles: true },
-  ];
+  const fileQuestion = [{ id: "Q1", prompt: "Attach the notes", options: [], allowFiles: true }];
 
   it("Refuses before storage when the answer token is missing", async () => {
     const { sessions } = serviceWithStore();
@@ -1007,8 +1003,7 @@ describe("B15 — A recommended option is marked", () => {
     expect(result).toMatchObject({
       code: "invalid_questions",
       status: 400,
-      message:
-        "Question Q1: Recommended option must belong to the question",
+      message: "Question Q1: Recommended option must belong to the question",
       issues: [
         {
           questionId: "Q1",
@@ -1525,8 +1520,7 @@ describe("B27 — Owner can inspect on a private manage link", () => {
     });
     expect(agent).toMatchObject({
       context: "Pick a name",
-      answerUrl:
-        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       manageUrl:
         "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
@@ -1777,4 +1771,3 @@ describe("B32 — labelled rows and named fields", () => {
     });
   });
 });
-

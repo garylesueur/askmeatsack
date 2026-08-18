@@ -11,11 +11,12 @@ paths:
 commands:
   types: pnpm typecheck
   lint: pnpm lint
+  format: pnpm format:check
   test: pnpm test
   test_file: "pnpm exec vitest run {file}"
   build: pnpm build
 
-gates: [types, lint, test, build]
+gates: [types, format, lint, test, build]
 
 vcs:
   default_branch: main

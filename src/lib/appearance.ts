@@ -117,9 +117,7 @@ export function contrastingForeground(accent: string): string {
   return relativeLuminance(accent) > 0.45 ? "#171717" : "#fafafa";
 }
 
-export function appearanceStyle(
-  appearance?: Appearance,
-): CSSProperties | undefined {
+export function appearanceStyle(appearance?: Appearance): CSSProperties | undefined {
   const accent = appearance?.accent;
   if (!accent) {
     return undefined;

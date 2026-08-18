@@ -116,10 +116,7 @@ export async function bytesFromUploadBody(body: UploadBody): Promise<Uint8Array>
   return new Uint8Array(await body.arrayBuffer());
 }
 
-export function storageKeyFromFile(file: {
-  key?: string;
-  url: string;
-}): string | null {
+export function storageKeyFromFile(file: { key?: string; url: string }): string | null {
   if (file.key) {
     return file.key;
   }
@@ -146,11 +143,9 @@ async function readR2Error(response: Response): Promise<string> {
   return text.slice(0, 300);
 }
 
-export function createR2Sender(config: R2Config): (input: {
-  key: string;
-  body: UploadBody;
-  contentType: string;
-}) => Promise<void> {
+export function createR2Sender(
+  config: R2Config,
+): (input: { key: string; body: UploadBody; contentType: string }) => Promise<void> {
   const client = createR2Client(config);
 
   return async (input) => {
@@ -174,11 +169,7 @@ export function createR2Sender(config: R2Config): (input: {
 
 export function createAnswerFileStore(deps: {
   config: R2Config;
-  send: (input: {
-    key: string;
-    body: UploadBody;
-    contentType: string;
-  }) => Promise<void>;
+  send: (input: { key: string; body: UploadBody; contentType: string }) => Promise<void>;
   randomSuffix?: () => string;
 }) {
   return {

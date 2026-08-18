@@ -13,11 +13,7 @@ import type { PublicSessionView, SessionProgress } from "@/lib/sessions";
 import type { SessionAnswer, SessionFile } from "@/lib/session-store";
 import { MarkdownBody } from "@/components/markdown-body";
 import { MoneyInput } from "@/components/money-input";
-import {
-  formatEntryValue,
-  formatKnownAmount,
-  resolveEntryCurrency,
-} from "@/lib/money";
+import { formatEntryValue, formatKnownAmount, resolveEntryCurrency } from "@/lib/money";
 import {
   entriesAreComplete,
   isShortPrompt,
@@ -32,19 +28,9 @@ import { AppearanceShell } from "@/components/appearance-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ThankYouScreen,
-  ExpiredLinkScreen,
-  CancelledScreen,
-} from "./status-screens";
+import { ThankYouScreen, ExpiredLinkScreen, CancelledScreen } from "./status-screens";
 
 type AnsweringFormProps = {
   sessionId: string;
@@ -61,10 +47,7 @@ type AnsweringFormProps = {
   onPlayAgain?: () => void;
 };
 
-function hasUsableAnswer(
-  question: Question,
-  answer: SessionAnswer | undefined,
-): boolean {
+function hasUsableAnswer(question: Question, answer: SessionAnswer | undefined): boolean {
   const kind = questionKind(question);
   if (kind === "items" || kind === "fields") {
     return entriesAreComplete(question, answer?.entries);
@@ -109,11 +92,7 @@ function firstOpenIndex(
   return Math.max(0, questions.length - 1);
 }
 
-function nextSelectedIds(
-  question: Question,
-  current: string[],
-  optionId: string,
-): string[] {
+function nextSelectedIds(question: Question, current: string[], optionId: string): string[] {
   if (!question.allowMultiple) {
     return [optionId];
   }
@@ -138,10 +117,7 @@ function shouldAdvanceOnChoice(question: Question): boolean {
   );
 }
 
-function answerSummary(
-  question: Question,
-  answer: SessionAnswer | undefined,
-): string {
+function answerSummary(question: Question, answer: SessionAnswer | undefined): string {
   const labels: string[] = [];
   for (const optionId of answer?.selectedOptionIds ?? []) {
     for (const option of question.options) {
@@ -215,30 +191,21 @@ export function AnsweringForm({
 }: AnsweringFormProps) {
   const [answers, setAnswers] = useState(initialAnswers);
   const [progress, setProgress] = useState(initialProgress);
-  const [stepIndex, setStepIndex] = useState(() =>
-    firstOpenIndex(questions, initialAnswers),
-  );
-  const [reviewing, setReviewing] = useState(() =>
-    startsOnReview(questions, initialAnswers),
-  );
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle",
-  );
+  const [stepIndex, setStepIndex] = useState(() => firstOpenIndex(questions, initialAnswers));
+  const [reviewing, setReviewing] = useState(() => startsOnReview(questions, initialAnswers));
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [expired, setExpired] = useState(
-    () => Date.parse(expiresAt) <= Date.now(),
-  );
+  const [expired, setExpired] = useState(() => Date.parse(expiresAt) <= Date.now());
   const [cancelled, setCancelled] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const textTimers = useRef<Record<string, number>>({});
 
   useEffect(() => {
-    void fetch(
-      `/api/v1/sessions/${sessionId}/opened?t=${encodeURIComponent(publicToken)}`,
-      { method: "POST" },
-    );
+    void fetch(`/api/v1/sessions/${sessionId}/opened?t=${encodeURIComponent(publicToken)}`, {
+      method: "POST",
+    });
   }, [sessionId, publicToken]);
 
   useEffect(() => {
@@ -515,11 +482,7 @@ export function AnsweringForm({
     }, 400);
   }
 
-  function onEntryChange(
-    currentQuestion: Question,
-    entryId: string,
-    value: string,
-  ) {
+  function onEntryChange(currentQuestion: Question, entryId: string, value: string) {
     const previous = answers[currentQuestion.id];
     const entries = { ...(previous?.entries ?? {}), [entryId]: value };
     const nextAnswer: SessionAnswer = {
@@ -574,9 +537,7 @@ export function AnsweringForm({
     );
   }
 
-  async function submitAnswers(
-    snapshot: Record<string, SessionAnswer | undefined> = answers,
-  ) {
+  async function submitAnswers(snapshot: Record<string, SessionAnswer | undefined> = answers) {
     if (missingRequiredIds(questions, snapshot).length > 0 || submitting) {
       return;
     }
@@ -658,9 +619,7 @@ export function AnsweringForm({
             {questions.map((item) => (
               <li key={item.id} className="flex flex-col gap-1">
                 <p className="text-sm text-muted-foreground">{item.prompt}</p>
-                <p className="text-sm text-foreground">
-                  {answerSummary(item, answers[item.id])}
-                </p>
+                <p className="text-sm text-foreground">{answerSummary(item, answers[item.id])}</p>
               </li>
             ))}
           </ul>
@@ -680,17 +639,14 @@ export function AnsweringForm({
 
   const selected = answers[question.id]?.selectedOptionIds ?? [];
   const showContinue = isLast
-    ? !shouldAdvanceOnChoice(question) ||
-      hasUsableAnswer(question, answers[question.id])
+    ? !shouldAdvanceOnChoice(question) || hasUsableAnswer(question, answers[question.id])
     : !shouldAdvanceOnChoice(question) || !question.required;
   const continueLabel = isLast
     ? "Review answers"
     : !question.required && !hasUsableAnswer(question, answers[question.id])
       ? "Skip"
       : "Continue";
-  const percent = reviewing
-    ? 100
-    : Math.round(((stepIndex + 1) / questions.length) * 100);
+  const percent = reviewing ? 100 : Math.round(((stepIndex + 1) / questions.length) * 100);
 
   const hasEvidence = !reviewing && questionHasEvidence(question);
   const form = (
@@ -797,9 +753,7 @@ export function AnsweringForm({
                   >
                     {index + 1}. {item.prompt}
                   </button>
-                  <p className="text-sm text-foreground">
-                    {answerSummary(item, answers[item.id])}
-                  </p>
+                  <p className="text-sm text-foreground">{answerSummary(item, answers[item.id])}</p>
                 </li>
               ))}
             </ul>
@@ -840,8 +794,7 @@ export function AnsweringForm({
                     }}
                     className="min-h-28"
                   />
-                ) : questionKind(question) === "items" ||
-                  questionKind(question) === "fields" ? (
+                ) : questionKind(question) === "items" || questionKind(question) === "fields" ? (
                   <div className="flex flex-col gap-3">
                     {questionEntries(question).map((row) => {
                       const currency = resolveEntryCurrency(row, question);
@@ -849,9 +802,7 @@ export function AnsweringForm({
                       return (
                         <label key={row.id} className="flex flex-col gap-1.5">
                           <span className="flex flex-wrap items-baseline justify-between gap-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {row.label}
-                            </span>
+                            <span className="text-sm font-medium text-foreground">{row.label}</span>
                             {shownAmount ? (
                               <span className="font-mono text-sm tabular-nums text-foreground">
                                 {shownAmount}
@@ -859,17 +810,13 @@ export function AnsweringForm({
                             ) : null}
                           </span>
                           {row.hint ? (
-                            <span className="text-xs text-muted-foreground">
-                              {row.hint}
-                            </span>
+                            <span className="text-xs text-muted-foreground">{row.hint}</span>
                           ) : null}
                           {row.input === "money" && currency ? (
                             <MoneyInput
                               currency={currency}
                               disabled={submitting}
-                              value={
-                                answers[question.id]?.entries?.[row.id] ?? ""
-                              }
+                              value={answers[question.id]?.entries?.[row.id] ?? ""}
                               onChange={(canonical) => {
                                 onEntryChange(question, row.id, canonical);
                               }}
@@ -877,16 +824,10 @@ export function AnsweringForm({
                           ) : (
                             <Input
                               disabled={submitting}
-                              value={
-                                answers[question.id]?.entries?.[row.id] ?? ""
-                              }
+                              value={answers[question.id]?.entries?.[row.id] ?? ""}
                               maxLength={ENTRY_ANSWER_MAX_CHARS}
                               onChange={(event) => {
-                                onEntryChange(
-                                  question,
-                                  row.id,
-                                  event.target.value,
-                                );
+                                onEntryChange(question, row.id, event.target.value);
                               }}
                             />
                           )}
@@ -898,8 +839,7 @@ export function AnsweringForm({
                   <div className="flex flex-col gap-2.5">
                     {question.options.map((option) => {
                       const isSelected = selected.includes(option.id);
-                      const isRecommended =
-                        question.recommendedOptionId === option.id;
+                      const isRecommended = question.recommendedOptionId === option.id;
                       return (
                         <Button
                           key={option.id}
@@ -981,11 +921,7 @@ export function AnsweringForm({
           ) : showContinue ? (
             <Button
               type="submit"
-              disabled={
-                submitting ||
-                cancelling ||
-                (isLast ? !canSubmit : !canLeaveCurrent)
-              }
+              disabled={submitting || cancelling || (isLast ? !canSubmit : !canLeaveCurrent)}
             >
               {continueLabel}
             </Button>

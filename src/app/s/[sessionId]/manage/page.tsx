@@ -6,13 +6,7 @@ import { isShortPrompt, questionEntries, questionKind } from "@/lib/question-pre
 import type { Question } from "@/lib/schema";
 import type { SessionAnswer } from "@/lib/session-store";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDefaultSessionService } from "@/lib/app-sessions";
 import { isSessionServiceError } from "@/lib/sessions";
 import { UnknownLinkScreen } from "../status-screens";
@@ -33,10 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function manageAnswerSummary(
-  question: Question,
-  answer: SessionAnswer,
-): string {
+function manageAnswerSummary(question: Question, answer: SessionAnswer): string {
   const bits: string[] = [];
   if (answer.selectedOptionIds.length > 0) {
     bits.push(answer.selectedOptionIds.join(", "));
@@ -104,9 +95,7 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
         <p className="text-sm text-muted-foreground">askmeatsack.com · private</p>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-heading text-2xl font-medium">
-            {view.title ?? "Questionnaire"}
-          </h1>
+          <h1 className="font-heading text-2xl font-medium">{view.title ?? "Questionnaire"}</h1>
           <Badge variant="secondary">{view.status}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -159,16 +148,10 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
               return (
                 <div key={question.id} className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-mono text-xs text-muted-foreground">
-                      {question.id}
-                    </p>
+                    <p className="font-mono text-xs text-muted-foreground">{question.id}</p>
                     <Badge variant="outline">{manageKindLabel(question)}</Badge>
-                    <Badge variant="outline">
-                      {question.required ? "Required" : "Optional"}
-                    </Badge>
-                    {question.allowFiles ? (
-                      <Badge variant="outline">Files</Badge>
-                    ) : null}
+                    <Badge variant="outline">{question.required ? "Required" : "Optional"}</Badge>
+                    {question.allowFiles ? <Badge variant="outline">Files</Badge> : null}
                   </div>
                   <MarkdownBody
                     source={question.prompt}
@@ -181,9 +164,7 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
                       {question.options.map((option) => (
                         <li key={option.id}>
                           {option.label}
-                          {question.recommendedOptionId === option.id
-                            ? " (recommended)"
-                            : ""}
+                          {question.recommendedOptionId === option.id ? " (recommended)" : ""}
                         </li>
                       ))}
                     </ul>

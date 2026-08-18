@@ -10,10 +10,7 @@ type RouteContext = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function PUT(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function PUT(request: Request, context: RouteContext): Promise<Response> {
   const { sessionId } = await context.params;
   let body: unknown;
   try {

@@ -89,9 +89,7 @@ describe("The host is resolved before delivery", () => {
   });
 
   it("refuses when the name does not resolve at all", async () => {
-    expect(
-      await callbackHostResolvesPublicly("nope.example.com", async () => []),
-    ).toBe(false);
+    expect(await callbackHostResolvesPublicly("nope.example.com", async () => [])).toBe(false);
     expect(
       await callbackHostResolvesPublicly("boom.example.com", async () => {
         throw new Error("SERVFAIL");

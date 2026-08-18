@@ -73,18 +73,12 @@ function sessionKey(id: string): string {
 }
 
 function redisTtlSeconds(session: Session, nowMs: number): number {
-  const ends = [
-    Date.parse(session.expiresAt) + SESSION_READ_WINDOW_SECONDS * 1000,
-  ];
+  const ends = [Date.parse(session.expiresAt) + SESSION_READ_WINDOW_SECONDS * 1000];
   if (session.submittedAt) {
-    ends.push(
-      Date.parse(session.submittedAt) + SESSION_READ_WINDOW_SECONDS * 1000,
-    );
+    ends.push(Date.parse(session.submittedAt) + SESSION_READ_WINDOW_SECONDS * 1000);
   }
   if (session.cancelledAt) {
-    ends.push(
-      Date.parse(session.cancelledAt) + SESSION_READ_WINDOW_SECONDS * 1000,
-    );
+    ends.push(Date.parse(session.cancelledAt) + SESSION_READ_WINDOW_SECONDS * 1000);
   }
   const until = Math.max(...ends);
   return Math.max(1, Math.ceil((until - nowMs) / 1000));

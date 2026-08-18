@@ -21,11 +21,7 @@ import { callbackUrlIsUsable } from "./callback-url";
 import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import { parseMoney, resolveEntryCurrency } from "./money";
-import {
-  entriesAreComplete,
-  questionEntries,
-  questionKind,
-} from "./question-presentation";
+import { entriesAreComplete, questionEntries, questionKind } from "./question-presentation";
 import type { Session, SessionAnswer, SessionFile, SessionStore } from "./session-store";
 
 export type SessionServiceError = {
@@ -146,12 +142,7 @@ export type HumanScreen =
   | "unknown_link";
 
 function isServiceError(value: unknown): value is SessionServiceError {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "code" in value &&
-    "status" in value
-  );
+  return typeof value === "object" && value !== null && "code" in value && "status" in value;
 }
 
 export function createToken(): string {
@@ -194,11 +185,7 @@ function progressFor(session: Session): SessionProgress {
 }
 
 function isTerminalStatus(status: Session["status"]): boolean {
-  return (
-    status === "submitted" ||
-    status === "expired" ||
-    status === "cancelled"
-  );
+  return status === "submitted" || status === "expired" || status === "cancelled";
 }
 
 const WAIT_POLL_MS = 50;
@@ -265,9 +252,7 @@ function publicView(session: Session): PublicSessionView {
   };
 }
 
-export function humanScreenFor(
-  view: PublicSessionView | SessionServiceError,
-): HumanScreen {
+export function humanScreenFor(view: PublicSessionView | SessionServiceError): HumanScreen {
   if (isServiceError(view)) {
     return "unknown_link";
   }
@@ -356,27 +341,20 @@ function downloadAnswersFrom(session: Session): DownloadAnswers {
 
 function sessionIsFrozen(session: Session): boolean {
   return (
-    session.status === "submitted" ||
-    session.status === "expired" ||
-    session.status === "cancelled"
+    session.status === "submitted" || session.status === "expired" || session.status === "cancelled"
   );
 }
 
 // Shared by canAcceptFile and attachFile so the pre-upload check and the
 // post-upload check can never drift apart. Returns the refusal, or null.
-function fileGuard(
-  session: Session,
-  questionId: string,
-): SessionServiceError | null {
+function fileGuard(session: Session, questionId: string): SessionServiceError | null {
   if (session.status === "expired") {
     return expiredError();
   }
   if (sessionIsFrozen(session)) {
     return frozenError();
   }
-  const question = session.questions.find(
-    (candidate) => candidate.id === questionId,
-  );
+  const question = session.questions.find((candidate) => candidate.id === questionId);
   if (!question || !question.allowFiles) {
     return {
       code: "invalid_answer",
@@ -395,10 +373,7 @@ function fileGuard(
   return null;
 }
 
-function readWindowEndsAtMs(
-  session: Session,
-  status: Session["status"],
-): number | null {
+function readWindowEndsAtMs(session: Session, status: Session["status"]): number | null {
   if (status === "submitted" && session.submittedAt) {
     return Date.parse(session.submittedAt) + SESSION_READ_WINDOW_SECONDS * 1000;
   }
@@ -531,10 +506,7 @@ export function createSessionService(deps: SessionServiceDeps) {
     return session;
   }
 
-  function invalidQuestionsError(
-    error: ZodError,
-    body: unknown,
-  ): SessionServiceError {
+  function invalidQuestionsError(error: ZodError, body: unknown): SessionServiceError {
     const issues = questionIssuesFromZod(error, body);
     return {
       code: "invalid_questions",
@@ -564,9 +536,7 @@ export function createSessionService(deps: SessionServiceDeps) {
     async create(body: unknown): Promise<CreateSessionResult | SessionServiceError> {
       const parsed = createSessionSchema.safeParse(body);
       if (!parsed.success) {
-        const appearanceIssue = parsed.error.issues.some(
-          (issue) => issue.path[0] === "appearance",
-        );
+        const appearanceIssue = parsed.error.issues.some((issue) => issue.path[0] === "appearance");
         if (appearanceIssue) {
           return {
             code: "invalid_appearance",
@@ -663,9 +633,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
       const parsed = editSessionSchema.safeParse(input.body);
       if (!parsed.success) {
-        const appearanceIssue = parsed.error.issues.some(
-          (issue) => issue.path[0] === "appearance",
-        );
+        const appearanceIssue = parsed.error.issues.some((issue) => issue.path[0] === "appearance");
         if (appearanceIssue) {
           return {
             code: "invalid_appearance",
@@ -673,9 +641,7 @@ export function createSessionService(deps: SessionServiceDeps) {
             status: 400,
           };
         }
-        if (
-          parsed.error.issues.some((issue) => issue.message === "Nothing to update")
-        ) {
+        if (parsed.error.issues.some((issue) => issue.message === "Nothing to update")) {
           return {
             code: "invalid_action",
             message: "Nothing to update",
@@ -708,9 +674,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       if (patch.expiresInSeconds !== undefined) {
         next = {
           ...next,
-          expiresAt: new Date(
-            deps.now().getTime() + patch.expiresInSeconds * 1000,
-          ).toISOString(),
+          expiresAt: new Date(deps.now().getTime() + patch.expiresInSeconds * 1000).toISOString(),
         };
       }
       await deps.store.save(next);
@@ -821,12 +785,9 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
 
       const previous = session.answers[input.questionId];
-      const selected =
-        parsed.data.selectedOptionIds ?? previous?.selectedOptionIds ?? [];
-      const text =
-        parsed.data.text !== undefined ? parsed.data.text : previous?.text;
-      let entries =
-        parsed.data.entries !== undefined ? parsed.data.entries : previous?.entries;
+      const selected = parsed.data.selectedOptionIds ?? previous?.selectedOptionIds ?? [];
+      const text = parsed.data.text !== undefined ? parsed.data.text : previous?.text;
+      let entries = parsed.data.entries !== undefined ? parsed.data.entries : previous?.entries;
 
       let files = previous?.files;
       if (parsed.data.fileIds !== undefined) {
@@ -963,8 +924,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
 
       const nextAnswer: SessionAnswer = {
-        selectedOptionIds:
-          isTextQuestion(question) || isEntryQuestion(question) ? [] : selected,
+        selectedOptionIds: isTextQuestion(question) || isEntryQuestion(question) ? [] : selected,
         answeredAt: deps.now().toISOString(),
       };
       if (text !== undefined && text.length > 0) {
@@ -1196,10 +1156,8 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
       const allowed =
         input.hasCreateCredential ||
-        (input.agentToken !== undefined &&
-          tokensMatch(input.agentToken, session.agentToken)) ||
-        (input.publicToken !== undefined &&
-          tokensMatch(input.publicToken, session.publicToken));
+        (input.agentToken !== undefined && tokensMatch(input.agentToken, session.agentToken)) ||
+        (input.publicToken !== undefined && tokensMatch(input.publicToken, session.publicToken));
       if (!allowed) {
         return unknownSessionError();
       }
@@ -1323,9 +1281,7 @@ export async function postCallbackJson(url: string, body: unknown): Promise<void
   }
 }
 
-export function isSessionServiceError(
-  value: unknown,
-): value is SessionServiceError {
+export function isSessionServiceError(value: unknown): value is SessionServiceError {
   return isServiceError(value);
 }
 
@@ -1337,9 +1293,7 @@ export function defaultSessionServiceDeps(store: SessionStore): SessionServiceDe
     createToken,
     publicBaseUrl: process.env.PUBLIC_BASE_URL ?? "http://localhost:3000",
     waitPollMs:
-      process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL
-        ? 400
-        : WAIT_POLL_MS,
+      process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL ? 400 : WAIT_POLL_MS,
     sleep: (ms) =>
       new Promise((resolve) => {
         setTimeout(resolve, ms);

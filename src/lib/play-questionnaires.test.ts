@@ -9,18 +9,14 @@ describe("kerry playground pack", () => {
       expect(question.prompt.length).toBeLessThanOrEqual(90);
       expect(question.detail && question.detail.length > 0).toBe(true);
     }
-    const bucks = kerryPlayQuestionnaire.questions.find(
-      (question) => question.id === "bucks",
-    );
+    const bucks = kerryPlayQuestionnaire.questions.find((question) => question.id === "bucks");
     expect((bucks?.items ?? []).length).toBe(6);
     expect(bucks?.currency).toBe("GBP");
     expect(bucks?.items?.[0]?.amount).toBe("2476.80");
     expect(bucks?.items?.[0]?.label.includes("2,476")).toBe(false);
     expect(bucks?.detail).toContain("mermaid");
     expect(bucks?.detail).toContain("https://www.buckinghamshire.gov.uk/");
-    const hmrc = kerryPlayQuestionnaire.questions.find(
-      (question) => question.id === "hmrc",
-    );
+    const hmrc = kerryPlayQuestionnaire.questions.find((question) => question.id === "hmrc");
     expect((hmrc?.fields ?? []).length).toBe(3);
     expect(hmrc?.currency).toBe("GBP");
     expect(hmrc?.fields?.[0]?.input).toBe("money");

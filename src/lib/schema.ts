@@ -46,11 +46,7 @@ export const questionEntrySchema = z.object({
   hint: z.string().min(1).max(200).optional(),
   input: z.enum(["text", "money"]).optional(),
   currency: isoCurrencySchema.optional(),
-  amount: z
-    .string()
-    .min(1)
-    .max(40)
-    .optional(),
+  amount: z.string().min(1).max(40).optional(),
 });
 
 export const appearanceThemeSchema = z.enum(["ask", "paper", "grove", "ember"]);
@@ -75,8 +71,7 @@ const QUESTION_ISSUE_MESSAGES: Record<string, string> = {
   options_min: "Choice questions need two to eight options",
   options_max: "Choice questions need two to eight options",
   invalid_currency: "Currency must be a three-letter ISO 4217 code",
-  comment_needs_shape:
-    "allowComment is only valid on a choice, items, or fields question",
+  comment_needs_shape: "allowComment is only valid on a choice, items, or fields question",
   mixed_shapes: "A question cannot mix options, items, and fields",
   money_needs_currency: "Money rows need a currency",
   amount_needs_currency: "An amount needs a currency",
@@ -93,21 +88,9 @@ export const questionSchema = z.object({
   id: z.string().min(1),
   prompt: z.string().min(1).max(PROMPT_MAX_CHARS),
   detail: z.string().max(QUESTION_DETAIL_MAX_CHARS).optional(),
-  options: z
-    .array(questionOptionSchema)
-    .max(QUESTION_OPTIONS_MAX)
-    .optional()
-    .default([]),
-  items: z
-    .array(questionEntrySchema)
-    .min(QUESTION_ITEMS_MIN)
-    .max(QUESTION_ITEMS_MAX)
-    .optional(),
-  fields: z
-    .array(questionEntrySchema)
-    .min(QUESTION_FIELDS_MIN)
-    .max(QUESTION_FIELDS_MAX)
-    .optional(),
+  options: z.array(questionOptionSchema).max(QUESTION_OPTIONS_MAX).optional().default([]),
+  items: z.array(questionEntrySchema).min(QUESTION_ITEMS_MIN).max(QUESTION_ITEMS_MAX).optional(),
+  fields: z.array(questionEntrySchema).min(QUESTION_FIELDS_MIN).max(QUESTION_FIELDS_MAX).optional(),
   allowMultiple: z.boolean().optional().default(false),
   required: z.boolean().optional().default(true),
   allowComment: z.boolean().optional().default(false),
@@ -152,9 +135,7 @@ function refineQuestionList(
     const items = question.items ?? [];
     const fields = question.fields ?? [];
     const shaped =
-      (options.length > 0 ? 1 : 0) +
-      (items.length > 0 ? 1 : 0) +
-      (fields.length > 0 ? 1 : 0);
+      (options.length > 0 ? 1 : 0) + (items.length > 0 ? 1 : 0) + (fields.length > 0 ? 1 : 0);
     if (shaped > 1) {
       addQuestionIssue(
         ctx,
@@ -166,13 +147,7 @@ function refineQuestionList(
     }
 
     if (options.length === 1) {
-      addQuestionIssue(
-        ctx,
-        index,
-        question.id,
-        "options_min",
-        QUESTION_ISSUE_MESSAGES.options_min,
-      );
+      addQuestionIssue(ctx, index, question.id, "options_min", QUESTION_ISSUE_MESSAGES.options_min);
     }
 
     if (options.length === 0 && items.length === 0 && fields.length === 0) {
@@ -276,10 +251,7 @@ function refineQuestionList(
       optionIds.add(option.id);
     }
 
-    if (
-      question.recommendedOptionId &&
-      !optionIds.has(question.recommendedOptionId)
-    ) {
+    if (question.recommendedOptionId && !optionIds.has(question.recommendedOptionId)) {
       addQuestionIssue(
         ctx,
         index,
@@ -349,10 +321,7 @@ function mappedIssueCode(issue: z.ZodIssue): string | undefined {
   return undefined;
 }
 
-export function questionIssuesFromZod(
-  error: z.ZodError,
-  input?: unknown,
-): QuestionIssue[] {
+export function questionIssuesFromZod(error: z.ZodError, input?: unknown): QuestionIssue[] {
   const issues: QuestionIssue[] = [];
   const seen = new Set<string>();
   const sorted = [...error.issues].sort((left, right) => {
@@ -371,8 +340,7 @@ export function questionIssuesFromZod(
     if (!code) {
       continue;
     }
-    const index =
-      typeof issue.path[1] === "number" ? issue.path[1] : undefined;
+    const index = typeof issue.path[1] === "number" ? issue.path[1] : undefined;
     const params = "params" in issue ? issue.params : undefined;
     const fromParams =
       params &&
@@ -412,17 +380,9 @@ export function invalidQuestionsMessage(issues: QuestionIssue[]): string {
 const sessionFieldsSchema = z.object({
   title: z.string().min(1).max(TITLE_MAX_CHARS).optional(),
   context: z.string().max(CONTEXT_MAX_CHARS).optional(),
-  expiresInSeconds: z
-    .number()
-    .int()
-    .positive()
-    .max(SESSION_MAX_TTL_SECONDS)
-    .optional(),
+  expiresInSeconds: z.number().int().positive().max(SESSION_MAX_TTL_SECONDS).optional(),
   metadata: z
-    .record(
-      z.string().max(METADATA_KEY_MAX_CHARS),
-      z.string().max(METADATA_VALUE_MAX_CHARS),
-    )
+    .record(z.string().max(METADATA_KEY_MAX_CHARS), z.string().max(METADATA_VALUE_MAX_CHARS))
     .refine((value) => Object.keys(value).length <= METADATA_KEYS_MAX, {
       message: `Metadata holds at most ${METADATA_KEYS_MAX} keys`,
     })
@@ -431,8 +391,7 @@ const sessionFieldsSchema = z.object({
     .string()
     .url()
     .refine((value) => callbackUrlIsUsable(value).ok, {
-      message:
-        "callbackUrl must be a public https address, not a private or loopback one",
+      message: "callbackUrl must be a public https address, not a private or loopback one",
     })
     .optional(),
   appearance: appearanceSchema.optional(),
@@ -491,9 +450,7 @@ export const saveAnswerSchema = z
     selectedOptionIds: z.array(z.string().min(1)).min(1).optional(),
     text: z.string().max(TEXT_ANSWER_MAX_CHARS).optional(),
     fileIds: z.array(z.string().min(1)).max(FILE_MAX_COUNT).optional(),
-    entries: z
-      .record(z.string().min(1), z.string().max(ENTRY_ANSWER_MAX_CHARS))
-      .optional(),
+    entries: z.record(z.string().min(1), z.string().max(ENTRY_ANSWER_MAX_CHARS)).optional(),
   })
   .superRefine((value, ctx) => {
     if (

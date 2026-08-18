@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import {
-  createSessionSchema,
-  questionIssuesFromZod,
-  questionSchema,
-} from "./schema";
+import { createSessionSchema, questionIssuesFromZod, questionSchema } from "./schema";
 
 describe("question create validation", () => {
   it("requires at least two items and two fields in the schema", () => {

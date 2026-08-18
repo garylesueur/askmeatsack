@@ -1,19 +1,12 @@
 import { wantsMarkdownDownload } from "@/lib/answers-download";
-import {
-  getDefaultSessionService,
-  jsonServiceError,
-  readPublicToken,
-} from "@/lib/app-sessions";
+import { getDefaultSessionService, jsonServiceError, readPublicToken } from "@/lib/app-sessions";
 import { isSessionServiceError } from "@/lib/sessions";
 
 type RouteContext = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function GET(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function GET(request: Request, context: RouteContext): Promise<Response> {
   const { sessionId } = await context.params;
   const publicToken = readPublicToken(request);
   const sessions = getDefaultSessionService();

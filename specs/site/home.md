@@ -83,21 +83,21 @@ page loses nothing they needed. Nothing important is only visible mid-animation.
 
 ## Decision Tables
 
-| Visitor | What the page must let them do |
-| --- | --- |
-| Has never heard of MCP | Understand what it does, from the words and the picture |
-| Wants to see it work | Answer a real questionnaire, without signing in |
-| Ready to connect an agent | Get the MCP URL, or one-click install |
-| Prefers the raw API | Copy a working `curl` |
-| Wants the code | Reach the repository |
-| Wants the other product | Reach showmeatsack.com |
-| Already has an account | Reach their account area on lanyard |
+| Visitor                   | What the page must let them do                          |
+| ------------------------- | ------------------------------------------------------- |
+| Has never heard of MCP    | Understand what it does, from the words and the picture |
+| Wants to see it work      | Answer a real questionnaire, without signing in         |
+| Ready to connect an agent | Get the MCP URL, or one-click install                   |
+| Prefers the raw API       | Copy a working `curl`                                   |
+| Wants the code            | Reach the repository                                    |
+| Wants the other product   | Reach showmeatsack.com                                  |
+| Already has an account    | Reach their account area on lanyard                     |
 
-| Client | Connecting |
-| --- | --- |
-| Supports one-click install | A button that does it |
-| Does not | Copy the MCP URL, with the instruction |
-| Cannot do either | Copy the `curl` |
+| Client                     | Connecting                             |
+| -------------------------- | -------------------------------------- |
+| Supports one-click install | A button that does it                  |
+| Does not                   | Copy the MCP URL, with the instruction |
+| Cannot do either           | Copy the `curl`                        |
 
 ## User Flows
 

@@ -66,10 +66,7 @@ function Dots({ className }: { className: string }) {
 
 function Wire({ label }: { label: string }) {
   return (
-    <div
-      aria-hidden="true"
-      className="relative h-16 w-auto lg:h-auto lg:w-[72px]"
-    >
+    <div aria-hidden="true" className="relative h-16 w-auto lg:h-auto lg:w-[72px]">
       <span className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-border to-transparent lg:inset-x-0 lg:left-0 lg:top-1/2 lg:bottom-auto lg:h-px lg:w-full lg:bg-gradient-to-r" />
       <span className="meatsack-pulse absolute size-[9px] rounded-full bg-primary shadow-[0_0_0_4px_color-mix(in_srgb,var(--primary)_22%,transparent)]" />
       <span className="absolute left-[calc(50%+18px)] top-1/2 -translate-y-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground lg:left-1/2 lg:top-[calc(50%-26px)] lg:-translate-x-1/2 lg:translate-y-0">
@@ -87,19 +84,12 @@ export function Steps({ steps }: { steps: Step[] }) {
   return (
     <div className="grid gap-7 md:grid-cols-3">
       {steps.map((step, index) => (
-        <div
-          key={step.n}
-          className={`border-t-2 pt-5 ${fade[index] ?? "border-t-border"}`}
-        >
+        <div key={step.n} className={`border-t-2 pt-5 ${fade[index] ?? "border-t-border"}`}>
           <span className="mb-2 block font-mono text-[11px] tracking-[0.1em] text-muted-foreground">
             {step.n}
           </span>
-          <h3 className="mb-1.5 text-[15px] font-semibold tracking-tight">
-            {step.heading}
-          </h3>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {step.body}
-          </p>
+          <h3 className="mb-1.5 text-[15px] font-semibold tracking-tight">{step.heading}</h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">{step.body}</p>
         </div>
       ))}
     </div>
@@ -124,12 +114,8 @@ export function UseCases({ cases }: { cases: UseCase[] }) {
           <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-primary">
             {item.tag}
           </span>
-          <h3 className="text-[15px] font-semibold tracking-tight">
-            {item.heading}
-          </h3>
-          <p className="text-[13.5px] leading-relaxed text-muted-foreground">
-            {item.body}
-          </p>
+          <h3 className="text-[15px] font-semibold tracking-tight">{item.heading}</h3>
+          <p className="text-[13.5px] leading-relaxed text-muted-foreground">{item.body}</p>
           {item.quote ? (
             <p className="mt-1 border-l-2 border-border pl-3 text-[12.5px] text-muted-foreground/80">
               {item.quote}

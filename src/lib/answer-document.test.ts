@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
-import {
-  machineQuestionnairePath,
-  wantsAnswerMarkdown,
-} from "./answer-document";
+import { machineQuestionnairePath, wantsAnswerMarkdown } from "./answer-document";
 
 describe("answer document negotiation", () => {
   it("does not treat a browser Accept as markdown", () => {
     expect(
-      wantsAnswerMarkdown(
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      ),
+      wantsAnswerMarkdown("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
     ).toBe(false);
     expect(wantsAnswerMarkdown("*/*")).toBe(false);
     expect(wantsAnswerMarkdown(null)).toBe(false);

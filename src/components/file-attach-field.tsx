@@ -140,10 +140,7 @@ export function FileAttachField({
           {files.map((file) => (
             <li key={file.id} className="text-sm text-foreground">
               {file.filename}
-              <span className="text-muted-foreground">
-                {" "}
-                · {formatFileSize(file.size)}
-              </span>
+              <span className="text-muted-foreground"> · {formatFileSize(file.size)}</span>
             </li>
           ))}
         </ul>

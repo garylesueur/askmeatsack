@@ -18,24 +18,13 @@ type RouteContext = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function POST(request: Request, context: RouteContext): Promise<Response> {
   if (!fileStoreAvailable()) {
-    return jsonError(
-      503,
-      "files_unavailable",
-      "File storage is not configured",
-    );
+    return jsonError(503, "files_unavailable", "File storage is not configured");
   }
   const limited = await limitCreateFromRequest(request);
   if (!limited.ok) {
-    return jsonError(
-      429,
-      "rate_limited",
-      "Too many uploads from this address. Try again later.",
-    );
+    return jsonError(429, "rate_limited", "Too many uploads from this address. Try again later.");
   }
 
   const { sessionId } = await context.params;
@@ -66,11 +55,7 @@ export async function POST(
     return jsonError(400, "invalid_answer", "file is required");
   }
   if (fileTooLarge(file.size)) {
-    return jsonError(
-      400,
-      "invalid_answer",
-      `File must be at most ${FILE_MAX_BYTES} bytes`,
-    );
+    return jsonError(400, "invalid_answer", `File must be at most ${FILE_MAX_BYTES} bytes`);
   }
 
   let stored: StoredFile;
@@ -83,15 +68,8 @@ export async function POST(
       contentType: file.type || "application/octet-stream",
     });
   } catch (error) {
-    console.error(
-      "R2 upload failed",
-      error instanceof Error ? error.message : "unknown error",
-    );
-    return jsonError(
-      502,
-      "files_unavailable",
-      "File storage refused the upload",
-    );
+    console.error("R2 upload failed", error instanceof Error ? error.message : "unknown error");
+    return jsonError(502, "files_unavailable", "File storage refused the upload");
   }
 
   const result = await service.attachFile({

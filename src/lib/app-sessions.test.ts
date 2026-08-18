@@ -41,8 +41,7 @@ describe("API error envelope", () => {
         {
           questionId: "villain",
           code: "comment_needs_shape",
-          message:
-            "allowComment is only valid on a choice, items, or fields question",
+          message: "allowComment is only valid on a choice, items, or fields question",
         },
       ],
     };
@@ -54,12 +53,7 @@ describe("API error envelope", () => {
         issues: error.issues,
       },
     });
-    const response = jsonError(
-      error.status,
-      error.code,
-      error.message,
-      error.issues,
-    );
+    const response = jsonError(error.status, error.code, error.message, error.issues);
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual(body);
   });

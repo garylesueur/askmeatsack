@@ -1,7 +1,4 @@
-export function machineQuestionnairePath(
-  sessionId: string,
-  publicToken?: string,
-): string {
+export function machineQuestionnairePath(sessionId: string, publicToken?: string): string {
   const path = `/s/${sessionId}.md`;
   if (!publicToken) {
     return path;

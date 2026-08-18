@@ -53,10 +53,7 @@ export function SiteNav({
         href="/"
         className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground"
       >
-        <span
-          aria-hidden="true"
-          className="size-[7px] shrink-0 rounded-full bg-primary"
-        />
+        <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-primary" />
         {wordmark}
       </Link>
 
@@ -129,11 +126,7 @@ export function SiteFooter({
           {sibling.name}
         </a>
         {docs.map((doc) => (
-          <a
-            key={doc.href}
-            href={doc.href}
-            className="transition-colors hover:text-primary"
-          >
+          <a key={doc.href} href={doc.href} className="transition-colors hover:text-primary">
             {doc.label}
           </a>
         ))}
@@ -142,10 +135,7 @@ export function SiteFooter({
   );
 }
 
-export function SiteShell({
-  children,
-  ...chrome
-}: SiteChromeProps & { children: ReactNode }) {
+export function SiteShell({ children, ...chrome }: SiteChromeProps & { children: ReactNode }) {
   const { wordmark, sibling, repoHref, docs, accountHref } = chrome;
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 sm:px-8">
