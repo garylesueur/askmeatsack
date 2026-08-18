@@ -2,15 +2,18 @@
 // Run with --check to fail instead of writing (used by the test suite).
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const SKILL = "askmeatsack";
 const CONSTANT = "ASKMEATSACK_SKILL_MARKDOWN";
 
-const root = join(dirname(new URL(import.meta.url).pathname), "..");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const source = join(root, "skills", SKILL, "SKILL.md");
 const check = process.argv.includes("--check");
 
-const raw = readFileSync(source, "utf8");
+const readText = (path) => readFileSync(path, "utf8").replace(/\r\n/g, "\n");
+
+const raw = readText(source);
 const match = raw.match(/^---\n([\s\S]*?)\n---\n+([\s\S]*)$/);
 if (!match) {
   throw new Error(`${source} is missing YAML frontmatter`);
@@ -35,7 +38,7 @@ let stale = false;
 for (const { path, contents } of outputs) {
   let current = null;
   try {
-    current = readFileSync(path, "utf8");
+    current = readText(path);
   } catch {}
   if (current === contents) continue;
   if (check) {
