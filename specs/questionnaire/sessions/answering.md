@@ -218,103 +218,103 @@ found to be infected is removed and never served.
 
 ### Session status
 
-| What happened                                                            | Status the agent sees                      |
-| ------------------------------------------------------------------------ | ------------------------------------------ |
-| Just created; no answer saved yet (page may or may not have been opened) | `pending`                                  |
-| Page running, still no answer saved                                      | `pending`, with opened time set            |
-| At least one answer saved, not submitted, not expired, not cancelled     | `in_progress`                              |
-| Human submitted successfully                                             | `submitted`                                |
-| Human or agent cancelled while open                                      | `cancelled` (answers so far still present) |
-| Expiry time has passed, never submitted or cancelled                     | `expired` (answers so far still present)   |
-| Submitted, expired, or cancelled, then the one-hour read window ended    | gone (agent can no longer read it)         |
+| What happened | Status the agent sees |
+| --- | --- |
+| Just created; no answer saved yet (page may or may not have been opened) | `pending` |
+| Page running, still no answer saved | `pending`, with opened time set |
+| At least one answer saved, not submitted, not expired, not cancelled | `in_progress` |
+| Human submitted successfully | `submitted` |
+| Human or agent cancelled while open | `cancelled` (answers so far still present) |
+| Expiry time has passed, never submitted or cancelled | `expired` (answers so far still present) |
+| Submitted, expired, or cancelled, then the one-hour read window ended | gone (agent can no longer read it) |
 
 ### What each doorway may do
 
-| Action                                                    | Human answer link                          | Agent status (askmeatsack.com tool or HTTP) | lanyard token              |
-| --------------------------------------------------------- | ------------------------------------------ | ------------------------------------------- | -------------------------- |
-| Start a questionnaire                                     | No                                         | No                                          | Yes (B35)                  |
-| See questions and save answers                            | Yes, that questionnaire only               | No                                          | No                         |
-| Mark opened                                               | Yes, that questionnaire only               | No                                          | No                         |
-| Submit                                                    | Yes, that questionnaire only               | No                                          | No                         |
-| Cancel while open                                         | Yes, that questionnaire only               | Yes, that questionnaire only                | Yes, that questionnaire    |
-| See status, progress, opened time, questions, and answers | No                                         | Yes, that questionnaire only                | Yes, that questionnaire    |
-| Open the manage summary                                   | No                                         | Yes, that questionnaire only                | Yes, that questionnaire    |
-| Edit questions and details                                | No                                         | Yes, while `pending`                        | Yes, while `pending`       |
-| Bounded wait                                              | No                                         | Yes, that questionnaire only                | Yes, that questionnaire    |
-| Download answers (Markdown or JSON)                       | Yes, after submit, that questionnaire only | No                                          | No                         |
-| See the agent status secret                               | No                                         | It _is_ the secret                          | Not via the answering page |
+| Action | Human answer link | Agent status (askmeatsack.com tool or HTTP) | lanyard token |
+| --- | --- | --- | --- |
+| Start a questionnaire | No | No | Yes (B35) |
+| See questions and save answers | Yes, that questionnaire only | No | No |
+| Mark opened | Yes, that questionnaire only | No | No |
+| Submit | Yes, that questionnaire only | No | No |
+| Cancel while open | Yes, that questionnaire only | Yes, that questionnaire only | Yes, that questionnaire |
+| See status, progress, opened time, questions, and answers | No | Yes, that questionnaire only | Yes, that questionnaire |
+| Open the manage summary | No | Yes, that questionnaire only | Yes, that questionnaire |
+| Edit questions and details | No | Yes, while `pending` | Yes, while `pending` |
+| Bounded wait | No | Yes, that questionnaire only | Yes, that questionnaire |
+| Download answers (Markdown or JSON) | Yes, after submit, that questionnaire only | No | No |
+| See the agent status secret | No | It *is* the secret | Not via the answering page |
 
 ### Saving an answer
 
-| Situation                                                                                          | Outcome                            |
-| -------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Option ids all belong to the question; one option on a single-choice question                      | Answer saved; progress updates     |
-| Several option ids on a single-choice question                                                     | Refused; previous answer unchanged |
-| An option id that is not on the question                                                           | Refused; previous answer unchanged |
-| Non-empty text on a text question, or a comment on a choice that allows it, within 2000 characters | Answer saved; progress updates     |
-| Text on a choice that does not allow a comment, or options on a text question                      | Refused; previous answer unchanged |
-| Text over 2000 characters                                                                          | Refused; previous answer unchanged |
-| Questionnaire already submitted, expired, or cancelled                                             | Refused; answers unchanged         |
-| Token does not match                                                                               | Refused; no questions shown        |
+| Situation | Outcome |
+| --- | --- |
+| Option ids all belong to the question; one option on a single-choice question | Answer saved; progress updates |
+| Several option ids on a single-choice question | Refused; previous answer unchanged |
+| An option id that is not on the question | Refused; previous answer unchanged |
+| Non-empty text on a text question, or a comment on a choice that allows it, within 2000 characters | Answer saved; progress updates |
+| Text on a choice that does not allow a comment, or options on a text question | Refused; previous answer unchanged |
+| Text over 2000 characters | Refused; previous answer unchanged |
+| Questionnaire already submitted, expired, or cancelled | Refused; answers unchanged |
+| Token does not match | Refused; no questions shown |
 
 ### Submit
 
-| Situation                                                   | Outcome                                                                  |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Situation | Outcome |
+| --- | --- |
 | Every required question has a valid answer, from the review | Submitted; answers freeze; agent sees `submitted`; callback fires if set |
-| A required choice has no option, or required text is empty  | Submit refused; human is told what is missing                            |
-| Already submitted                                           | Still success; same answers; callback not sent again                     |
-| Expired or cancelled                                        | Refused                                                                  |
+| A required choice has no option, or required text is empty | Submit refused; human is told what is missing |
+| Already submitted | Still success; same answers; callback not sent again |
+| Expired or cancelled | Refused |
 
 ### Cancel
 
-| Situation                        | Outcome                                            |
-| -------------------------------- | -------------------------------------------------- |
-| `pending` or `in_progress`       | `cancelled`; answers freeze; callback fires if set |
-| Already `cancelled`              | Still `cancelled`; same answers                    |
-| Already `submitted` or `expired` | Refused; existing terminal status unchanged        |
+| Situation | Outcome |
+| --- | --- |
+| `pending` or `in_progress` | `cancelled`; answers freeze; callback fires if set |
+| Already `cancelled` | Still `cancelled`; same answers |
+| Already `submitted` or `expired` | Refused; existing terminal status unchanged |
 
 ### Bounded wait
 
-| Situation within the bound                           | Outcome                                                        |
-| ---------------------------------------------------- | -------------------------------------------------------------- |
-| Becomes `submitted`, `expired`, or `cancelled`       | Wait returns that status and answers                           |
+| Situation within the bound | Outcome |
+| --- | --- |
+| Becomes `submitted`, `expired`, or `cancelled` | Wait returns that status and answers |
 | Still `pending` or `in_progress` when the bound ends | Wait returns current status and progress; agent may wait again |
-| Bound omitted or over the maximum                    | Refused; agent is told the allowed bound                       |
+| Bound omitted or over the maximum | Refused; agent is told the allowed bound |
 
 ### Appearance
 
-| Situation                                      | Outcome                                                                |
-| ---------------------------------------------- | ---------------------------------------------------------------------- |
-| No appearance sent                             | Human sees `ask` in their system light or dark                         |
+| Situation | Outcome |
+| --- | --- |
+| No appearance sent | Human sees `ask` in their system light or dark |
 | `theme` is `ask`, `paper`, `grove`, or `ember` | Answering page uses that palette, still following system light or dark |
-| `mode` is `light` or `dark`                    | That side is forced; the theme palette stays                           |
-| `accent` is a six-digit hex colour             | Buttons and selected answers use that colour on top of the theme       |
-| `theme`, `mode`, or `accent` is unusable       | Create refused; no answer link                                         |
+| `mode` is `light` or `dark` | That side is forced; the theme palette stays |
+| `accent` is a six-digit hex colour | Buttons and selected answers use that colour on top of the theme |
+| `theme`, `mode`, or `accent` is unusable | Create refused; no answer link |
 
 ### Machine answers
 
-| Situation                                                                 | Outcome                                                           |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| GET the answer path with `.md` and a matching public token                | Markdown of questions, options, save/submit URLs, and JSON Schema |
-| GET the ordinary answer path with `Accept: text/markdown` or `text/plain` | The same markdown as `.md`                                        |
-| GET `.md` with a bad token                                                | Refused; no questions                                             |
-| PUT JSON answers with a matching token                                    | Answers saved; optional submit in the same request                |
-| PUT JSON that fails the same rules as the browser                         | Refused; previous answers unchanged                               |
-| POST a file on a question that allows files, matching token               | File stored and attached                                          |
-| POST a file on a question that does not allow files                       | Refused                                                           |
+| Situation | Outcome |
+| --- | --- |
+| GET the answer path with `.md` and a matching public token | Markdown of questions, options, save/submit URLs, and JSON Schema |
+| GET the ordinary answer path with `Accept: text/markdown` or `text/plain` | The same markdown as `.md` |
+| GET `.md` with a bad token | Refused; no questions |
+| PUT JSON answers with a matching token | Answers saved; optional submit in the same request |
+| PUT JSON that fails the same rules as the browser | Refused; previous answers unchanged |
+| POST a file on a question that allows files, matching token | File stored and attached |
+| POST a file on a question that does not allow files | Refused |
 
 ### Manage and edit
 
-| Situation                                                          | Outcome                                                                   |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| GET the manage path with a matching agent token                    | Summary of title, status, questions, progress, and the public answer link |
-| GET manage with `.md` or `Accept: text/markdown`                   | The same summary as markdown                                              |
-| GET manage with the public answer token, or a bad token            | Refused; no questions                                                     |
-| PATCH while `pending`, usable fields, matching agent token         | Questionnaire updated; answer link unchanged                              |
-| PATCH with unusable questions                                      | Refused with the question id and the rule; questionnaire unchanged        |
-| PATCH after an answer is saved, or after submit, expiry, or cancel | Refused; questions unchanged                                              |
-| PATCH with nothing to change                                       | Refused                                                                   |
+| Situation | Outcome |
+| --- | --- |
+| GET the manage path with a matching agent token | Summary of title, status, questions, progress, and the public answer link |
+| GET manage with `.md` or `Accept: text/markdown` | The same summary as markdown |
+| GET manage with the public answer token, or a bad token | Refused; no questions |
+| PATCH while `pending`, usable fields, matching agent token | Questionnaire updated; answer link unchanged |
+| PATCH with unusable questions | Refused with the question id and the rule; questionnaire unchanged |
+| PATCH after an answer is saved, or after submit, expiry, or cancel | Refused; questions unchanged |
+| PATCH with nothing to change | Refused |
 
 ## User Flows
 

@@ -47,11 +47,11 @@ The repository root is an Agent Plugin: a client that understands [Agent Plugins
 
 ## Decision Tables
 
-| GET `/mcp` looks like                                                           | Response           |
-| ------------------------------------------------------------------------------- | ------------------ |
-| Browser HTML Accept                                                             | Short HTML guide   |
-| `text/markdown`, `text/plain`, missing Accept, or `*/*` only                    | Markdown API guide |
-| `mcp-protocol-version`, `application/json` without HTML, or `text/event-stream` | MCP protocol       |
+| GET `/mcp` looks like | Response |
+| --- | --- |
+| Browser HTML Accept | Short HTML guide |
+| `text/markdown`, `text/plain`, missing Accept, or `*/*` only | Markdown API guide |
+| `mcp-protocol-version`, `application/json` without HTML, or `text/event-stream` | MCP protocol |
 
 ## User Flows
 

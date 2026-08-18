@@ -24,17 +24,17 @@ server. Leave Redis empty to stay on in-memory stores; file uploads need R2.
 
 ## Commands
 
-| Command                                 | Does                                                        |
-| --------------------------------------- | ----------------------------------------------------------- |
-| `pnpm dev`                              | Dev server, reads `.env.local`                              |
-| `pnpm dev:op`                           | Dev server with secrets in-process, nothing written to disk |
-| `pnpm env`                              | Write `.env.local` from the Development item                |
-| `pnpm env:op-items`                     | Create the three 1Password items if missing                 |
-| `pnpm env:vercel [preview\|production]` | Push template → Vercel (default: both)                      |
-| `pnpm typecheck`                        | TypeScript                                                  |
-| `pnpm lint`                             | ESLint                                                      |
-| `pnpm test`                             | Vitest                                                      |
-| `pnpm build`                            | Production build                                            |
+| Command | Does |
+| --- | --- |
+| `pnpm dev` | Dev server, reads `.env.local` |
+| `pnpm dev:op` | Dev server with secrets in-process, nothing written to disk |
+| `pnpm env` | Write `.env.local` from the Development item |
+| `pnpm env:op-items` | Create the three 1Password items if missing |
+| `pnpm env:vercel [preview\|production]` | Push template → Vercel (default: both) |
+| `pnpm typecheck` | TypeScript |
+| `pnpm lint` | ESLint |
+| `pnpm test` | Vitest |
+| `pnpm build` | Production build |
 
 `pnpm typecheck`, `pnpm lint`, and `pnpm test` are the merge gates — see
 `.engineering/config.yaml`.
@@ -52,16 +52,16 @@ Production are pushed to Vercel and are not for a laptop.
 
 ## Where things live
 
-| Path                          | What                                                                 |
-| ----------------------------- | -------------------------------------------------------------------- |
-| `specs/`                      | Product intent. Start at `specs/questionnaire/sessions/answering.md` |
-| `src/app/api/v1/sessions/`    | The HTTP API                                                         |
-| `src/app/mcp/`                | The MCP server                                                       |
-| `src/app/s/[sessionId]/`      | The page a person actually answers on                                |
-| `src/lib/sessions.ts`         | Session service — creation, answering, submission                    |
-| `.engineering/config.yaml`    | Toolchain contract that calm-craft skills read                       |
-| `skills/askmeatsack/`         | The Agent Plugin skill                                               |
-| `.cursor/skills/askmeatsack/` | The same instructions for Cursor                                     |
+| Path | What |
+| --- | --- |
+| `specs/` | Product intent. Start at `specs/questionnaire/sessions/answering.md` |
+| `src/app/api/v1/sessions/` | The HTTP API |
+| `src/app/mcp/` | The MCP server |
+| `src/app/s/[sessionId]/` | The page a person actually answers on |
+| `src/lib/sessions.ts` | Session service — creation, answering, submission |
+| `.engineering/config.yaml` | Toolchain contract that calm-craft skills read |
+| `skills/askmeatsack/` | The Agent Plugin skill |
+| `.cursor/skills/askmeatsack/` | The same instructions for Cursor |
 
 ## calm-craft
 
