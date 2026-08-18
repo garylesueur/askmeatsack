@@ -50,7 +50,7 @@ A choice that is not one of that question’s options is refused. Several option
 
 ### B10 — The two links have different powers 🟢
 
-The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. Creating a questionnaire is open: there is no shared API key.
+The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. Creating a questionnaire needs a lanyard token — see B35.
 
 ### B11 — After submit, the human can close the tab 🟢
 
@@ -146,6 +146,38 @@ A question may ask for something the device can capture besides a file: the pers
 
 The skill tells an agent that is filling records or chasing missing facts — HR fields, identity documents, files, an ID — to create one questionnaire per person. Each ask is unique to what is still missing for that person. Opaque metadata holds the record key so answers can be matched when they come back; the human does not see it. The agent puts `answerUrl` wherever it already reaches them, then waits via callback, poll, or a later bounded wait — not only by pasting into the current chat. Two people never share one answer link. The product is the same as the live-chat path; the agent does not invent a second form because the run is automated.
 
+### B35 — Starting a questionnaire needs an account 🔵 future
+
+An agent must present a lanyard token to create a questionnaire. A call without one is refused
+and told where to authorise, so an agent that can complete that journey recovers on its own.
+The token identifies the account the questionnaire belongs to; it does not appear in the answer
+link and the human answering never needs one.
+
+### B36 — Trying it on the home page needs no account 🔵 future
+
+Anyone can try a questionnaire from the home page without signing in. The trial uses
+questionnaires this service already holds — a visitor cannot put their own words on an
+askmeatsack.com link — so the worst a stranger can do is use capacity. Trial questionnaires are
+short-lived and limited by calling address.
+
+### B37 — A flood from one account is refused 🔵 future
+
+Creating far more questionnaires than a person plausibly would, from one account, is refused
+for a while. The refusal says to wait. Nothing already created is affected, and answering an
+existing questionnaire is never rate limited.
+
+### B38 — A callback only reaches the public internet 🔵 future
+
+A `callbackUrl` must be an ordinary public HTTPS address. An address that resolves inside a
+private network, or one that redirects to somewhere it was not, is refused at create — not
+quietly dropped later, so the agent learns while it can still fix it.
+
+### B39 — An attached file is checked before anyone can read it 🔵 future
+
+A file attached to an answer is checked for malware before it can be downloaded. Until there is
+an answer, the file cannot be read and whoever asks is told it is still being checked. A file
+found to be infected is removed and never served.
+
 ## Rules (Invariants)
 
 - A choice question has at least two and at most eight options. A text question has no options, items, or fields. An item question has two to sixteen rows. A field question has two to eight named boxes. A question cannot mix options, items, and fields. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required. `allowComment` is only valid when the question already has options, items, or fields. Free text already is the comment; a photo-only question cannot add a comment without a shape.
@@ -163,7 +195,19 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 - The agent tool is named **askmeatsack.com**. Answer links are on `https://askmeatsack.com`.
 - A bounded wait never exceeds the time the agent asked for, and never more than 60 seconds per call.
 - An opened signal comes only from the running answering page, never from a mere fetch of the link.
-- Text answers are at most 2000 characters. Question `detail` is at most 8000 characters.
+- Text answers are at most 2000 characters. Question `detail` is at most 8000 characters. A
+  title is at most 200 characters, `context` at most 4000, and a prompt at most 1000. Metadata
+  holds at most 20 keys, each key and value at most 200 characters.
+- Creating needs a lanyard token. Answering never does — the human is not asked to sign in, and
+  the answer link works for someone with no account.
+- A questionnaire belongs to the account that created it. Deleting that account does not reach
+  back into questionnaires already answered.
+- Rate limits count against the account. The home-page trial has no account, so it counts
+  against the calling address instead, and only ever creates questionnaires this service
+  already holds.
+- A `callbackUrl` is public HTTPS. Private, loopback, and link-local addresses are refused, and
+  a redirect away from the address given is not followed.
+- An attached file is not downloadable until it has been checked. Infected files are removed.
 - A callback, when present, is invoked once per terminal status (`submitted`, `expired`, `cancelled`).
 - User-facing copy calls the product **askmeatsack.com**.
 - Appearance is optional. Missing appearance is the `ask` theme in the person’s system light or dark. Named themes are `ask`, `paper`, `grove`, and `ember`, each with both modes. `mode` may be `dark` or `light` to force one side. Accent, when present, is a `#` plus six hex digits.
@@ -186,9 +230,9 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 
 ### What each doorway may do
 
-| Action | Human answer link | Agent status (askmeatsack.com tool or HTTP) | Optional shared key |
+| Action | Human answer link | Agent status (askmeatsack.com tool or HTTP) | lanyard token |
 | --- | --- | --- | --- |
-| Start a questionnaire | No | Yes (create is open) | Not required |
+| Start a questionnaire | No | No | Yes (B35) |
 | See questions and save answers | Yes, that questionnaire only | No | No |
 | Mark opened | Yes, that questionnaire only | No | No |
 | Submit | Yes, that questionnaire only | No | No |
@@ -293,7 +337,7 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 - **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Recorded as B1 and B20.
 - **Withdrawn:** Email from this service (B21). Giving `answerUrl` is the calling agent’s job; this service does not send mail.
 - **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
-- **Settled:** Create is public. There is no shared bearer to hand out. Agent status still needs that questionnaire’s agent token (the `pollUrl`). Recorded as B10.
+- **Reversed:** Create was public, with no shared bearer to hand out. It now needs a lanyard token. Open create had no benefit to us and let anyone put their own words on an askmeatsack.com link. Agent status still needs that questionnaire’s own agent token (the `pollUrl`) — a lanyard token does not replace it. Recorded as B10 and B35.
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.
@@ -316,7 +360,9 @@ The skill tells an agent that is filling records or chasing missing facts — HR
 ## Out of Scope
 
 - Sending email.
-- Sign-in, accounts, or identifying the human.
+- Identifying the human who answers. They never sign in and the service does not learn who
+  they are.
+- Running our own sign-in. Accounts live in lanyard; this service only verifies its tokens.
 - Wiring into Cursor’s own product APIs or the native AskQuestion UI.
 - Long-term storage or search of past questionnaires.
 - Posting the answer link to Slack or any other chat. The calling agent does that with the URL this service already returns.
