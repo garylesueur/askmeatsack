@@ -270,7 +270,9 @@ export function AnsweringForm({
     question !== undefined &&
     (!question.required || hasUsableAnswer(question, answers[question.id]));
   const canSubmit = missing.length === 0;
-  const downloadHref = `/api/v1/sessions/${sessionId}/download?t=${encodeURIComponent(publicToken)}`;
+  const downloadQuery = `t=${encodeURIComponent(publicToken)}`;
+  const downloadHref = `/api/v1/sessions/${sessionId}/download?${downloadQuery}`;
+  const markdownHref = `${downloadHref}&format=md`;
 
   function goToStep(index: number) {
     setReviewing(false);
@@ -638,6 +640,7 @@ export function AnsweringForm({
     return (
       <ThankYouScreen
         downloadHref={downloadHref}
+        markdownHref={markdownHref}
         appearance={appearance}
       />
     );

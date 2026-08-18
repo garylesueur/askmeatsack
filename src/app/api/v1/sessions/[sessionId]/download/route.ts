@@ -1,3 +1,4 @@
+import { wantsMarkdownDownload } from "@/lib/answers-download";
 import {
   getDefaultSessionService,
   jsonServiceError,
@@ -14,9 +15,26 @@ export async function GET(
   context: RouteContext,
 ): Promise<Response> {
   const { sessionId } = await context.params;
-  const result = await getDefaultSessionService().downloadForPublic({
+  const publicToken = readPublicToken(request);
+  const sessions = getDefaultSessionService();
+  if (wantsMarkdownDownload(request)) {
+    const result = await sessions.downloadMarkdownForPublic({
+      sessionId,
+      publicToken,
+    });
+    if (isSessionServiceError(result)) {
+      return jsonServiceError(result);
+    }
+    return new Response(result, {
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="answers.md"',
+      },
+    });
+  }
+  const result = await sessions.downloadForPublic({
     sessionId,
-    publicToken: readPublicToken(request),
+    publicToken,
   });
   if (isSessionServiceError(result)) {
     return jsonServiceError(result);

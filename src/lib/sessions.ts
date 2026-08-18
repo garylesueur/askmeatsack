@@ -15,6 +15,7 @@ import {
   type CreateSessionInput,
   type QuestionIssue,
 } from "./schema";
+import { answersDownloadMarkdown } from "./answers-download";
 import { callbackHostResolvesPublicly } from "./callback-dns";
 import { callbackUrlIsUsable } from "./callback-url";
 import { manageMarkdown } from "./manage-markdown";
@@ -490,6 +491,24 @@ export function createSessionService(deps: SessionServiceDeps) {
     }
     if (!publicToken || !tokensMatch(publicToken, session.publicToken)) {
       return unknownSessionError();
+    }
+    return session;
+  }
+
+  async function loadSubmittedForPublic(input: {
+    sessionId: string;
+    publicToken?: string;
+  }): Promise<Session | SessionServiceError> {
+    const session = await loadForPublic(input.sessionId, input.publicToken);
+    if (isServiceError(session)) {
+      return session;
+    }
+    if (session.status !== "submitted") {
+      return {
+        code: "not_available",
+        message: "Download is only available after submit",
+        status: 409,
+      };
     }
     return session;
   }
@@ -1211,19 +1230,22 @@ export function createSessionService(deps: SessionServiceDeps) {
       sessionId: string;
       publicToken?: string;
     }): Promise<DownloadAnswers | SessionServiceError> {
-      const session = await loadForPublic(input.sessionId, input.publicToken);
+      const session = await loadSubmittedForPublic(input);
       if (isServiceError(session)) {
         return session;
       }
-      if (session.status !== "submitted") {
-        return {
-          code: "not_available",
-          message: "Download is only available after submit",
-          status: 409,
-        };
-      }
-
       return downloadAnswersFrom(session);
+    },
+
+    async downloadMarkdownForPublic(input: {
+      sessionId: string;
+      publicToken?: string;
+    }): Promise<string | SessionServiceError> {
+      const session = await loadSubmittedForPublic(input);
+      if (isServiceError(session)) {
+        return session;
+      }
+      return answersDownloadMarkdown(downloadAnswersFrom(session), session.questions);
     },
 
     async wait(input: {

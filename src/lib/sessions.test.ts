@@ -1227,6 +1227,32 @@ describe("B19 — Human can download the answers", () => {
     });
     expect(refused).toMatchObject({ code: "not_available", status: 409 });
   });
+
+  it("After submit, markdown download is a readable copy without the agent secret", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ title: "Naming", questions: mixedQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q1",
+      publicToken,
+      body: { selectedOptionIds: ["1"] },
+    });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q2",
+      publicToken,
+      body: { text: "Ship it" },
+    });
+    await sessions.submit({ sessionId: "session-1", publicToken });
+    const markdown = await sessions.downloadMarkdownForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(markdown).toContain("# Naming");
+    expect(markdown).toContain("askmeatsack.com");
+    expect(markdown).toContain("Ship it");
+    expect(markdown).not.toContain(agentToken);
+  });
 });
 
 describe("B13 — Agent can wait a bounded time", () => {

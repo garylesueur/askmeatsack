@@ -56,9 +56,11 @@ export default async function AnsweringPage({ params, searchParams }: PageProps)
     return <UnknownLinkScreen />;
   }
   if (screen === "submitted_view") {
+    const downloadQuery = `t=${encodeURIComponent(publicToken ?? "")}`;
     return (
       <SubmittedScreen
-        downloadHref={`/api/v1/sessions/${sessionId}/download?t=${encodeURIComponent(publicToken ?? "")}`}
+        downloadHref={`/api/v1/sessions/${sessionId}/download?${downloadQuery}`}
+        markdownHref={`/api/v1/sessions/${sessionId}/download?${downloadQuery}&format=md`}
         appearance={view.appearance}
       />
     );
