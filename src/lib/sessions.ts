@@ -15,6 +15,10 @@ import {
   type CreateSessionInput,
   type QuestionIssue,
 } from "./schema";
+import {
+  callbackHostResolvesPublicly,
+  callbackUrlIsUsable,
+} from "./callback-url";
 import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import { parseMoney, resolveEntryCurrency } from "./money";
@@ -1265,17 +1269,33 @@ export function createSessionService(deps: SessionServiceDeps) {
 }
 
 export async function postCallbackJson(url: string, body: unknown): Promise<void> {
+  // Re-checked at delivery, not just at create: the name may resolve somewhere
+  // else by now, and this is the moment the request actually goes out.
+  const checked = callbackUrlIsUsable(url);
+  if (!checked.ok) {
+    return;
+  }
+  if (!(await callbackHostResolvesPublicly(checked.url.hostname))) {
+    return;
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
   }, 3000);
   try {
-    await fetch(url, {
+    const response = await fetch(checked.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: controller.signal,
+      // A redirect is a second destination the agent never named, and it would
+      // not go through the checks above.
+      redirect: "manual",
     });
+    // Read nothing back. The body is not wanted and reading it is a way to be
+    // held open by a slow responder.
+    void response.status;
   } catch {
     return;
   } finally {

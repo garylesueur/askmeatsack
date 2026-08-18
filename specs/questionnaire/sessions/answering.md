@@ -166,7 +166,7 @@ Creating far more questionnaires than a person plausibly would, from one account
 for a while. The refusal says to wait. Nothing already created is affected, and answering an
 existing questionnaire is never rate limited.
 
-### B38 — A callback only reaches the public internet 🔵 future
+### B38 — A callback only reaches the public internet 🟢
 
 A `callbackUrl` must be an ordinary public HTTPS address. An address that resolves inside a
 private network, or one that redirects to somewhere it was not, is refused at create — not

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { callbackUrlIsUsable } from "./callback-url";
 import { isIsoCurrency, parseMoney } from "./money";
 
 export const SESSION_DEFAULT_TTL_SECONDS = 86_400;
@@ -13,6 +14,12 @@ export const WAIT_MAX_SECONDS = 60;
 export const FILE_MAX_BYTES = 4 * 1024 * 1024;
 export const FILE_MAX_COUNT = 5;
 export const QUESTION_OPTIONS_MAX = 8;
+export const TITLE_MAX_CHARS = 200;
+export const CONTEXT_MAX_CHARS = 4_000;
+export const PROMPT_MAX_CHARS = 1_000;
+export const METADATA_KEYS_MAX = 20;
+export const METADATA_KEY_MAX_CHARS = 200;
+export const METADATA_VALUE_MAX_CHARS = 200;
 export const QUESTION_OPTIONS_MIN = 2;
 export const QUESTION_ITEMS_MIN = 2;
 export const QUESTION_FIELDS_MIN = 2;
@@ -84,7 +91,7 @@ const QUESTION_ISSUE_MESSAGES: Record<string, string> = {
 
 export const questionSchema = z.object({
   id: z.string().min(1),
-  prompt: z.string().min(1),
+  prompt: z.string().min(1).max(PROMPT_MAX_CHARS),
   detail: z.string().max(QUESTION_DETAIL_MAX_CHARS).optional(),
   options: z
     .array(questionOptionSchema)
@@ -403,16 +410,31 @@ export function invalidQuestionsMessage(issues: QuestionIssue[]): string {
 }
 
 const sessionFieldsSchema = z.object({
-  title: z.string().min(1).optional(),
-  context: z.string().optional(),
+  title: z.string().min(1).max(TITLE_MAX_CHARS).optional(),
+  context: z.string().max(CONTEXT_MAX_CHARS).optional(),
   expiresInSeconds: z
     .number()
     .int()
     .positive()
     .max(SESSION_MAX_TTL_SECONDS)
     .optional(),
-  metadata: z.record(z.string(), z.string()).optional(),
-  callbackUrl: z.string().url().optional(),
+  metadata: z
+    .record(
+      z.string().max(METADATA_KEY_MAX_CHARS),
+      z.string().max(METADATA_VALUE_MAX_CHARS),
+    )
+    .refine((value) => Object.keys(value).length <= METADATA_KEYS_MAX, {
+      message: `Metadata holds at most ${METADATA_KEYS_MAX} keys`,
+    })
+    .optional(),
+  callbackUrl: z
+    .string()
+    .url()
+    .refine((value) => callbackUrlIsUsable(value).ok, {
+      message:
+        "callbackUrl must be a public https address, not a private or loopback one",
+    })
+    .optional(),
   appearance: appearanceSchema.optional(),
 });
 
