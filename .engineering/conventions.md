@@ -26,13 +26,13 @@ lints it because a test in the wrong place is visible in review.
 
 You do not need to remember these. They fail.
 
-| Rule                                 | Where                                                          |
-| ------------------------------------ | -------------------------------------------------------------- |
-| No `any`                             | `@typescript-eslint/no-explicit-any`, via `eslint-config-next` |
-| `type`, never `interface`            | `no-restricted-syntax`, `eslint.config.mjs`                    |
-| No `@/` imports inside `src/lib`     | `no-restricted-imports`, `eslint.config.mjs`                   |
-| Formatting                           | `oxfmt`, `.oxfmtrc.json`                                       |
-| No package published in the last day | `minimumReleaseAge`, `pnpm-workspace.yaml`                     |
+| Rule                                 | Where                                                      |
+| ------------------------------------ | ---------------------------------------------------------- |
+| No `any`                             | `typescript/no-explicit-any`, `.oxlintrc.json`             |
+| `type`, never `interface`            | `typescript/consistent-type-definitions`, `.oxlintrc.json` |
+| No `@/` imports inside `src/lib`     | `scripts/check-import-layers.mjs`, run by `pnpm lint`      |
+| Formatting                           | `oxfmt`, `.oxfmtrc.json`                                   |
+| No package published in the last day | `minimumReleaseAge`, `pnpm-workspace.yaml`                 |
 
 Two of those are worth a sentence, because the reason is not obvious from the
 rule:

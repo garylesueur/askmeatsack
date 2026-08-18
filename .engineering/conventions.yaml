@@ -28,36 +28,37 @@ decisions:
     answer: banned
     status: decided
     tier: enforced
-    enforcement: "@typescript-eslint/no-explicit-any, already an error via eslint-config-next/typescript"
+    enforcement: "typescript/no-explicit-any in .oxlintrc.json"
     note: >-
       Recorded from evidence rather than asked: zero occurrences across both
-      production codebases. Already enforced before this interview, so nothing
-      was added — pointing at the existing rule instead of duplicating it.
+      production codebases.
 
   - id: type-over-interface
     axis: type-discipline
     answer: type
     status: decided
     tier: enforced
-    enforcement: "no-restricted-syntax on TSInterfaceDeclaration, eslint.config.mjs"
+    enforcement: "typescript/consistent-type-definitions in .oxlintrc.json"
     note: >-
       Recorded from evidence: 90 `type` declarations to 0 `interface` across
-      both repos, so this could be an error from the day it landed. Expressed
-      with core ESLint rather than adding typescript-eslint as a direct
-      dependency for a single syntax ban.
+      both repos, so this could be an error from the day it landed. oxlint has
+      it as a first-class rule, with a better message than the ESLint syntax
+      ban it replaced.
 
   - id: import-layer-signal
     axis: import-discipline
     answer: relative-within-lib
     status: decided
     tier: enforced
-    enforcement: "no-restricted-imports scoped to src/lib/**, eslint.config.mjs"
+    enforcement: "scripts/check-import-layers.mjs, run by pnpm lint"
     note: >-
       Inside src/lib a relative import means "same layer", so reaching for the
       alias there hides a boundary that does not exist. src/app is deliberately
       left alone — crossing into lib is exactly what the alias is for. Three
       violations existed and were fixed when the rule landed, so it is an error
-      rather than a warning.
+      rather than a warning. A script rather than a lint rule because oxlint's
+      no-restricted-imports matches exact module names, not globs, and a
+      hand-listed set of modules goes stale the first time someone adds a file.
 
   - id: file-size
     axis: file-and-unit-size
@@ -81,6 +82,19 @@ decisions:
       A package published less than a day ago will not install. Compromised
       releases are usually caught within hours. One day rather than seven, so
       the gate does not sit on security patches when they are wanted quickly.
+
+  - id: linter
+    axis: formatting
+    answer: oxlint
+    status: decided
+    tier: enforced
+    enforcement: .oxlintrc.json
+    note: >-
+      Replaced ESLint and eslint-config-next. The switch found four errors
+      ESLint was not reporting: three real accessibility problems in the file
+      attach field and a redundant spread fallback. The cost is losing
+      eslint-config-next's Next.js-specific checks, which have no oxlint
+      equivalent yet.
 
   - id: install-scripts
     axis: dependencies

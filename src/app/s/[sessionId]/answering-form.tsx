@@ -484,7 +484,7 @@ export function AnsweringForm({
 
   function onEntryChange(currentQuestion: Question, entryId: string, value: string) {
     const previous = answers[currentQuestion.id];
-    const entries = { ...(previous?.entries ?? {}), [entryId]: value };
+    const entries = { ...previous?.entries, [entryId]: value };
     const nextAnswer: SessionAnswer = {
       selectedOptionIds: previous?.selectedOptionIds ?? [],
       answeredAt: new Date().toISOString(),
