@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -56,13 +57,20 @@ describe("site agent documents", () => {
     ).toBe("protocol");
   });
 
-  it("publishes the same skill as the Cursor skill file", () => {
-    const onDisk = readFileSync(
-      join(process.cwd(), ".cursor/skills/askmeatsack/SKILL.md"),
-      "utf8",
-    );
+  it("publishes the skill that skills/askmeatsack/SKILL.md defines", () => {
+    const source = readFileSync(join(process.cwd(), "skills/askmeatsack/SKILL.md"), "utf8");
+    const body = source.match(/^---\n[\s\S]*?\n---\n+([\s\S]*)$/)?.[1];
     expect(skillMarkdown()).toBe(ASKMEATSACK_SKILL_MARKDOWN);
-    expect(onDisk).toBe(ASKMEATSACK_SKILL_MARKDOWN);
+    expect(skillMarkdown()).toBe(body);
+  });
+
+  it("has no stale generated copies of the skill", () => {
+    const result = spawnSync("node", ["scripts/sync-skill.mjs", "--check"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    expect(result.stderr).toBe("");
+    expect(result.status).toBe(0);
   });
 
   it("llms.txt and the MCP guide point at the skill and the markdown URL", () => {

@@ -60,8 +60,9 @@ Production are pushed to Vercel and are not for a laptop.
 | `src/app/s/[sessionId]/` | The page a person actually answers on |
 | `src/lib/sessions.ts` | Session service — creation, answering, submission |
 | `.engineering/config.yaml` | Toolchain contract that calm-craft skills read |
-| `skills/askmeatsack/` | The Agent Plugin skill |
-| `.cursor/skills/askmeatsack/` | The same instructions for Cursor |
+| `skills/askmeatsack/` | The skill — **the source of truth**, edit this one |
+| `.cursor/skills/askmeatsack/` | Generated copy for Cursor (`pnpm sync:skill`) |
+| `src/lib/askmeatsack-skill.ts` | Generated constant the site and MCP serve |
 
 ## calm-craft
 
@@ -99,13 +100,25 @@ in config we own, so updating the plugin never clobbers our choices.
 > convention decisions, and `paths.conventions` points at a file that does not
 > exist.
 
-## Agent Plugin
+## Install
 
-This repository is itself an [Agent Plugin](https://agent-plugins.org/):
-`plugin.json`, `mcp.json`, and `skills/`. `.mcp.json` exists for
+This repository is itself an [Agent Plugin](https://agent-plugins.org/) — the
+open standard for packaging agent tooling: `plugin.json`, `mcp.json`, and
+`skills/` in one installable unit. `.mcp.json` exists for
 [cursor.directory](https://cursor.directory/plugins/new) detection.
 
-Install the MCP server directly at `https://askmeatsack.com/mcp`.
+**Install the plugin.** This is the one you want. The plugin carries the MCP
+server *and* `skills/askmeatsack/SKILL.md`, so your agent gets the tool and the
+instructions for when to reach for it:
+
+```
+https://github.com/garylesueur/askmeatsack
+```
+
+**Or install the MCP server on its own** at `https://askmeatsack.com/mcp`. The
+tool works, and the server sends the same skill as its MCP `instructions`, so
+most clients still get the full brief. Clients that ignore `instructions` see
+only the tool description — prefer the plugin where you can.
 
 ## Licence
 

@@ -8,11 +8,12 @@
     "env": "op inject -i .env.development.tpl -o .env.local",
     "env:op-items": "bash scripts/ensure-op-items.sh",
     "env:vercel": "bash scripts/sync-vercel-env.sh",
-    "build": "next build",
+    "build": "node scripts/sync-skill.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sync:skill": "node scripts/sync-skill.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
