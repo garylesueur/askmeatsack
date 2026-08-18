@@ -10,6 +10,7 @@ import {
   storeAnswerFile,
   type StoredFile,
 } from "@/lib/answer-files";
+import { limitCreateFromRequest } from "@/lib/create-rate-limit";
 import { FILE_MAX_BYTES } from "@/lib/schema";
 import { isSessionServiceError } from "@/lib/sessions";
 
@@ -28,6 +29,15 @@ export async function POST(
       "File storage is not configured",
     );
   }
+  const limited = await limitCreateFromRequest(request);
+  if (!limited.ok) {
+    return jsonError(
+      429,
+      "rate_limited",
+      "Too many uploads from this address. Try again later.",
+    );
+  }
+
   const { sessionId } = await context.params;
   const url = new URL(request.url);
   const questionId = url.searchParams.get("questionId") ?? "";
