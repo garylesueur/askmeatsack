@@ -35,6 +35,21 @@ export async function POST(
     return jsonError(400, "invalid_answer", "questionId is required");
   }
 
+  // Authorise before a single byte reaches storage. The invariant in
+  // specs/questionnaire/sessions/answering.md is "Files use the public answer
+  // token"; storing first and checking afterwards left the bucket writable by
+  // anyone who could guess a URL.
+  const service = getDefaultSessionService();
+  const publicToken = readPublicToken(request);
+  const refused = await service.canAcceptFile({
+    sessionId,
+    publicToken,
+    questionId,
+  });
+  if (refused) {
+    return jsonServiceError(refused);
+  }
+
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File)) {
@@ -69,9 +84,9 @@ export async function POST(
     );
   }
 
-  const result = await getDefaultSessionService().attachFile({
+  const result = await service.attachFile({
     sessionId,
-    publicToken: readPublicToken(request),
+    publicToken,
     questionId,
     filename: file.name || "upload",
     contentType: file.type || "application/octet-stream",
