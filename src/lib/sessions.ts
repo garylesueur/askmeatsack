@@ -15,10 +15,8 @@ import {
   type CreateSessionInput,
   type QuestionIssue,
 } from "./schema";
-import {
-  callbackHostResolvesPublicly,
-  callbackUrlIsUsable,
-} from "./callback-url";
+import { callbackHostResolvesPublicly } from "./callback-dns";
+import { callbackUrlIsUsable } from "./callback-url";
 import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import { parseMoney, resolveEntryCurrency } from "./money";
