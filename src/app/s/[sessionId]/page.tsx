@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { machineQuestionnairePath } from "@/lib/answer-document";
 import { getDefaultSessionService } from "@/lib/app-sessions";
 import { humanScreenFor, isSessionServiceError } from "@/lib/sessions";
+import { previewTokenFor } from "@/lib/preview-token";
+import { previewFromPublicView, previewSummary } from "@/lib/session-preview";
+import { publicOrigin } from "@/lib/public-origin";
 import { AnsweringForm } from "./answering-form";
 import {
   CancelledScreen,
@@ -21,7 +24,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const { sessionId } = await params;
   const query = await searchParams;
   const publicToken = query.t ?? query.token;
-  return {
+  const base: Metadata = {
     robots: {
       index: false,
       follow: false,
@@ -30,6 +33,39 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       types: {
         "text/markdown": machineQuestionnairePath(sessionId, publicToken),
       },
+    },
+  };
+
+  // Only someone already holding the public token can be handed a card URL, and
+  // the card URL cannot be turned back into the public token.
+  if (!publicToken) {
+    return base;
+  }
+  const view = await getDefaultSessionService().getForPublic({ sessionId, publicToken });
+  if (isSessionServiceError(view)) {
+    return base;
+  }
+  const preview = previewFromPublicView(view);
+  const imageUrl = `${publicOrigin()}/s/${sessionId}/opengraph-image?p=${previewTokenFor({
+    sessionId,
+    publicToken,
+  })}`;
+
+  return {
+    ...base,
+    title: preview.title,
+    description: previewSummary(preview),
+    openGraph: {
+      type: "website",
+      title: preview.title,
+      description: previewSummary(preview),
+      images: [{ url: imageUrl, width: 1200, height: 630, type: "image/png" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: preview.title,
+      description: previewSummary(preview),
+      images: [imageUrl],
     },
   };
 }

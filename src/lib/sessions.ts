@@ -16,6 +16,8 @@ import {
   type QuestionIssue,
 } from "./schema";
 import { answersDownloadMarkdown } from "./answers-download";
+import { previewTokenMatches } from "./preview-token";
+import { sessionPreview, type SessionPreview } from "./session-preview";
 import { callbackHostResolvesPublicly } from "./callback-dns";
 import { callbackUrlIsUsable } from "./callback-url";
 import { manageMarkdown } from "./manage-markdown";
@@ -690,6 +692,29 @@ export function createSessionService(deps: SessionServiceDeps) {
         return session;
       }
       return publicView(session);
+    },
+
+    /**
+     * For a link-preview crawler, which has no public token. The preview token
+     * proves the caller was handed the answer link without carrying the token
+     * that opens it, and SessionPreview cannot express an answer.
+     */
+    async getForPreview(input: {
+      sessionId: string;
+      previewToken?: string;
+    }): Promise<SessionPreview | SessionServiceError> {
+      const session = await loadById(input.sessionId);
+      if (isServiceError(session)) {
+        return session;
+      }
+      const matches = previewTokenMatches(
+        { sessionId: session.id, publicToken: session.publicToken },
+        input.previewToken,
+      );
+      if (!matches) {
+        return unknownSessionError();
+      }
+      return sessionPreview(session, deps.now());
     },
 
     async markdownForPublic(input: {

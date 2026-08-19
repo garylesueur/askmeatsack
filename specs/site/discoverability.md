@@ -38,10 +38,23 @@ An answering URL tells crawlers not to index it. The sitemap does not list quest
 
 The repository root is an Agent Plugin: a client that understands [Agent Plugins](https://agent-plugins.org/) can install it and get the hosted askmeatsack.com MCP server plus the skill. The plugin skill instructions match `/skill.md`.
 
+### B8 — An answer link previews the ask, never the answers 🟢
+
+Pasting an answer link into Slack or another app that fetches a link preview shows a card describing the ask: the questionnaire title, its context, how many questions there are, roughly how long it takes, and when the link expires. Once a link is submitted, cancelled, or expired the card says so instead of describing the ask.
+
+The card never shows an answer, a question prompt, or an uploaded file, whether or not anyone has started answering.
+
+The card is drawn from the questionnaire's own fields. It is never a screenshot of the answering page, because that page shows whatever has been typed so far.
+
+A crawler arrives with no public token, so the card's URL carries a preview token derived from the session's public token. Someone holding only a session id cannot fetch the card, someone holding the card URL cannot turn it back into the public token, and the public token is not accepted in the preview token's place. A card fetched without a usable preview token names nobody's questionnaire.
+
+
 ## Rules (Invariants)
 
 - Public copy always calls the product **askmeatsack.com**. The tool is named `askmeatsack.com`.
 - Questionnaire URLs (`/s/…`) are not in the sitemap and are not offered for indexing.
+- A link preview is built only from a questionnaire's title, context, question count, state, and expiry. Answers, prompts, and uploads never reach it.
+- The public token never appears in an `og:image` URL, which crawlers, image proxies, and CDNs retain.
 - POST to `/mcp` remains the MCP protocol. A documentation GET must not replace a request that is clearly the protocol (MCP version header, JSON, or event-stream Accept).
 - The Agent Plugin skill body matches the published `/skill.md` skill.
 
@@ -63,7 +76,6 @@ _None._
 
 ## Future Considerations
 
-- Per-questionnaire Open Graph cards (title only, no answers) if sharing an answer link in Slack becomes common.
 - Official Cursor Marketplace listing after the public GitHub repo exists.
 
 ## Out of Scope
