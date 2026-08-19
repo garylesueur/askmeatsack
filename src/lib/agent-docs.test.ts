@@ -18,8 +18,7 @@ describe("site agent documents", () => {
     const kind = mcpGetDocumentKind(
       new Request("https://askmeatsack.com/mcp", {
         headers: {
-          accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         },
       }),
     );
@@ -34,9 +33,7 @@ describe("site agent documents", () => {
         }),
       ),
     ).toBe("markdown");
-    expect(
-      mcpGetDocumentKind(new Request("https://askmeatsack.com/mcp")),
-    ).toBe("markdown");
+    expect(mcpGetDocumentKind(new Request("https://askmeatsack.com/mcp"))).toBe("markdown");
   });
 
   it("leaves MCP protocol GET alone", () => {
@@ -57,10 +54,7 @@ describe("site agent documents", () => {
   });
 
   it("publishes the same skill as the Cursor skill file", () => {
-    const onDisk = readFileSync(
-      join(process.cwd(), ".cursor/skills/askmeatsack/SKILL.md"),
-      "utf8",
-    );
+    const onDisk = readFileSync(join(process.cwd(), ".cursor/skills/askmeatsack/SKILL.md"), "utf8");
     expect(skillMarkdown()).toBe(ASKMEATSACK_SKILL_MARKDOWN);
     expect(onDisk).toBe(ASKMEATSACK_SKILL_MARKDOWN);
   });
@@ -87,9 +81,7 @@ describe("site agent documents", () => {
     expect(html).toContain('href="https://github.com/garylesueur/askmeatsack"');
     expect(html).toContain('property="og:image"');
     expect(html).toContain('name="twitter:card"');
-    expect(escapeHtml('<script>"x"</script>')).toBe(
-      "&lt;script&gt;&quot;x&quot;&lt;/script&gt;",
-    );
+    expect(escapeHtml('<script>"x"</script>')).toBe("&lt;script&gt;&quot;x&quot;&lt;/script&gt;");
   });
 
   it("names the product in JSON-LD for search and answer engines", () => {
@@ -117,13 +109,9 @@ describe("site agent documents", () => {
 
   it("builds Cursor install URLs for the hosted MCP server", () => {
     const mcpUrl = "https://askmeatsack.com/mcp";
-    expect(cursorInstallHref(mcpUrl)).toContain(
-      "cursor://anysphere.cursor-deeplink/mcp/install?",
-    );
+    expect(cursorInstallHref(mcpUrl)).toContain("cursor://anysphere.cursor-deeplink/mcp/install?");
     expect(cursorInstallHref(mcpUrl)).toContain("name=askmeatsack.com");
-    expect(cursorInstallPageHref(mcpUrl)).toContain(
-      "https://cursor.com/en/install-mcp?",
-    );
+    expect(cursorInstallPageHref(mcpUrl)).toContain("https://cursor.com/en/install-mcp?");
     expect(cursorInstallPageHref(mcpUrl)).toContain("name=askmeatsack.com");
   });
 });

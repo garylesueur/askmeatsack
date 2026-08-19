@@ -38,17 +38,21 @@ jobs:
       # Each gate runs even when an earlier one fails, so one push reports
       # everything that is wrong rather than only the first thing.
       - name: typecheck
-        if: '!cancelled()'
+        if: "!cancelled()"
         run: pnpm typecheck
 
+      - name: format
+        if: "!cancelled()"
+        run: pnpm format:check
+
       - name: lint
-        if: '!cancelled()'
+        if: "!cancelled()"
         run: pnpm lint
 
       - name: test
-        if: '!cancelled()'
+        if: "!cancelled()"
         run: pnpm test
 
       - name: build
-        if: '!cancelled()'
+        if: "!cancelled()"
         run: pnpm build

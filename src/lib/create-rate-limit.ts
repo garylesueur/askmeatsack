@@ -22,9 +22,7 @@ import { createUpstashRedisFromEnv } from "./upstash-kv";
 export const CREATE_RATE_LIMIT_MAX = 30;
 export const CREATE_RATE_LIMIT_WINDOW_SECONDS = 60 * 60;
 
-export type CreateRateLimitResult =
-  | { ok: true }
-  | { ok: false; retryAfterSeconds: number };
+export type CreateRateLimitResult = { ok: true } | { ok: false; retryAfterSeconds: number };
 
 export type CreateRateLimiter = {
   hit(clientKey: string): Promise<CreateRateLimitResult>;
@@ -63,9 +61,7 @@ export function getCreateRateLimiter(): CreateRateLimiter {
   }
   const redis = createUpstashRedisFromEnv();
   const limiter = createCreateRateLimiter({
-    store: redis
-      ? createRedisCounterStore(redis)
-      : createMemoryCounterStore(),
+    store: redis ? createRedisCounterStore(redis) : createMemoryCounterStore(),
   });
   if (process.env.NODE_ENV !== "production") {
     globalForLimit.askmeatsackCreateRateLimiter = limiter;

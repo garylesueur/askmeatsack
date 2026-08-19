@@ -47,11 +47,7 @@ export function parseVercelSecretTarget(value: string): VercelSecretEnv {
   );
 }
 
-export function opSecretReference(
-  vault: string,
-  item: string,
-  key: string,
-): string {
+export function opSecretReference(vault: string, item: string, key: string): string {
   return `op://${vault}/${item}/${key}`;
 }
 

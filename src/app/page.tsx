@@ -1,22 +1,9 @@
 import { CurlBlock, HomeLanding } from "@/app/home-landing";
-import {
-  AGENT_SAMPLE,
-  HERO,
-  SEAM_QUESTION,
-  USE_CASES,
-} from "@/app/home-content";
-import {
-  SectionLabel,
-  Seam,
-  Steps,
-  UseCases,
-} from "@/components/home-sections";
+import { AGENT_SAMPLE, HERO, SEAM_QUESTION, USE_CASES } from "@/app/home-content";
+import { SectionLabel, Seam, Steps, UseCases } from "@/components/home-sections";
 import { SiteShell } from "@/components/site-chrome";
 import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/agent-docs";
-import {
-  CURSOR_PLUGIN_HREF,
-  cursorInstallPageHref,
-} from "@/lib/cursor-install";
+import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "@/lib/cursor-install";
 import { publicOrigin } from "@/lib/public-origin";
 
 const SIBLING = {
@@ -80,21 +67,15 @@ export default function Home() {
           ))}
           person={
             <>
-              <p className="mb-1 text-[15px] font-semibold tracking-tight">
-                {SEAM_QUESTION.title}
-              </p>
-              <p className="mb-4 text-sm text-muted-foreground">
-                {SEAM_QUESTION.prompt}
-              </p>
+              <p className="mb-1 text-[15px] font-semibold tracking-tight">{SEAM_QUESTION.title}</p>
+              <p className="mb-4 text-sm text-muted-foreground">{SEAM_QUESTION.prompt}</p>
               {SEAM_QUESTION.options.map((option) => {
                 const picked = option.id === SEAM_QUESTION.picked;
                 return (
                   <div
                     key={option.id}
                     className={`mb-2 flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
-                      picked
-                        ? "border-primary bg-primary/[0.07]"
-                        : "border-border bg-background"
+                      picked ? "border-primary bg-primary/[0.07]" : "border-border bg-background"
                     }`}
                   >
                     <span

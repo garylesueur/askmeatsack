@@ -16,10 +16,7 @@ export function proxy(request: NextRequest) {
 
   const markdownPath = `${pathname}.md${search}`;
   const response = NextResponse.next();
-  response.headers.set(
-    "Link",
-    `<${markdownPath}>; rel="alternate"; type="text/markdown"`,
-  );
+  response.headers.set("Link", `<${markdownPath}>; rel="alternate"; type="text/markdown"`);
   return response;
 }
 

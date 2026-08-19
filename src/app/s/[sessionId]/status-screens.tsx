@@ -1,13 +1,7 @@
 import type { Appearance } from "@/lib/schema";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 function StatusScreen({
   title,
@@ -55,12 +49,7 @@ function StatusScreen({
 }
 
 export function UnknownLinkScreen() {
-  return (
-    <StatusScreen
-      title="This link is unknown"
-      body="No questionnaire is available here."
-    />
-  );
+  return <StatusScreen title="This link is unknown" body="No questionnaire is available here." />;
 }
 
 export function ExpiredLinkScreen({ appearance }: { appearance?: Appearance }) {

@@ -6,8 +6,7 @@ type DemoPack = z.input<typeof createSessionSchema>;
 export const demoQuestionnaires: DemoPack[] = [
   {
     title: "A small interrogation",
-    context:
-      "This is a real questionnaire. Submit and you will see what the agent would get back.",
+    context: "This is a real questionnaire. Submit and you will see what the agent would get back.",
     expiresInSeconds: 3600,
     metadata: { demo: "homepage" },
     questions: [
@@ -143,8 +142,7 @@ export const demoQuestionnaires: DemoPack[] = [
       {
         id: "flexipay",
         prompt: "Which FlexiPay figure should I use?",
-        detail:
-          "You said **6500** is left. The three dated repayments add to **6758.50**.",
+        detail: "You said **6500** is left. The three dated repayments add to **6758.50**.",
         options: [
           { id: "6500", label: "6500 outstanding" },
           { id: "6758", label: "The three repayments (6758.50)" },
@@ -156,9 +154,7 @@ export const demoQuestionnaires: DemoPack[] = [
   },
 ];
 
-export function pickDemoQuestionnaire(
-  random: () => number = Math.random,
-): CreateSessionInput {
+export function pickDemoQuestionnaire(random: () => number = Math.random): CreateSessionInput {
   const index = Math.floor(random() * demoQuestionnaires.length);
   const picked = demoQuestionnaires[index] ?? demoQuestionnaires[0];
   return createSessionSchema.parse(picked);

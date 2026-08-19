@@ -14,8 +14,7 @@ import { addressFamily, isBlockedAddress } from "./callback-url";
  */
 export async function callbackHostResolvesPublicly(
   hostname: string,
-  resolve: (host: string) => Promise<{ address: string }[]> = (host) =>
-    lookup(host, { all: true }),
+  resolve: (host: string) => Promise<{ address: string }[]> = (host) => lookup(host, { all: true }),
 ): Promise<boolean> {
   const host = hostname.replace(/^\[|\]$/g, "");
   if (addressFamily(host) !== 0) {

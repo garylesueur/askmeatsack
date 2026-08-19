@@ -38,18 +38,10 @@ describe("money", () => {
 
   it("formats known amounts and money answers without converting", () => {
     const gbpQuestion = { currency: "GBP" };
-    expect(
-      formatKnownAmount({ amount: "2476.80" }, gbpQuestion),
-    ).toBe("£2,476.80");
-    expect(
-      formatKnownAmount({ amount: "1499", currency: "USD" }, gbpQuestion),
-    ).toBe("US$1,499.00");
-    expect(
-      formatEntryValue({ input: "money" }, gbpQuestion, "6500"),
-    ).toBe("£6,500.00");
-    expect(
-      formatEntryValue({ input: "text" }, gbpQuestion, "rent"),
-    ).toBe("rent");
+    expect(formatKnownAmount({ amount: "2476.80" }, gbpQuestion)).toBe("£2,476.80");
+    expect(formatKnownAmount({ amount: "1499", currency: "USD" }, gbpQuestion)).toBe("US$1,499.00");
+    expect(formatEntryValue({ input: "money" }, gbpQuestion, "6500")).toBe("£6,500.00");
+    expect(formatEntryValue({ input: "text" }, gbpQuestion, "rent")).toBe("rent");
     expect(
       entryRowCaption(
         {
@@ -61,10 +53,7 @@ describe("money", () => {
       ),
     ).toBe("Feb / Mar 2025 — £2,476.80 — Direct debit");
     expect(
-      entryRowCaption(
-        { label: "PAYE", input: "money", hint: "After the letter" },
-        gbpQuestion,
-      ),
+      entryRowCaption({ label: "PAYE", input: "money", hint: "After the letter" }, gbpQuestion),
     ).toBe("PAYE — money GBP — After the letter");
   });
 });

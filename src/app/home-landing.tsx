@@ -20,11 +20,7 @@ type HomeLandingProps = {
 };
 
 /** The interactive parts of the hero: connect, try, or curl it. */
-export function HomeLanding({
-  mcpUrl,
-  cursorHref,
-  pluginHref,
-}: HomeLandingProps) {
+export function HomeLanding({ mcpUrl, cursorHref, pluginHref }: HomeLandingProps) {
   const [copied, setCopied] = useState<"mcp" | null>(null);
   const [tryOpen, setTryOpen] = useState(false);
 
@@ -57,9 +53,7 @@ export function HomeLanding({
                 A real questionnaire. Submit and you will see what the agent gets.
               </DialogDescription>
             </DialogHeader>
-            <div className="min-h-0 overflow-y-auto">
-              {tryOpen ? <HomeDemo /> : null}
-            </div>
+            <div className="min-h-0 overflow-y-auto">{tryOpen ? <HomeDemo /> : null}</div>
           </DialogContent>
         </Dialog>
 
@@ -93,10 +87,7 @@ export function HomeLanding({
 
       <p className="mt-3 text-sm text-muted-foreground">
         Paste that into any MCP client.{" "}
-        <a
-          href={pluginHref}
-          className="underline underline-offset-4 hover:text-foreground"
-        >
+        <a href={pluginHref} className="underline underline-offset-4 hover:text-foreground">
           Cursor plugin
         </a>
         {" · "}
@@ -109,19 +100,12 @@ export function HomeLanding({
           Grok connectors
         </a>
       </p>
-
     </>
   );
 }
 
 /** The raw API, for anyone who would rather not connect an agent at all. */
-export function CurlBlock({
-  endpoint,
-  curl,
-}: {
-  endpoint: string;
-  curl: string;
-}) {
+export function CurlBlock({ endpoint, curl }: { endpoint: string; curl: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {

@@ -40,7 +40,7 @@
   --chart-5: oklch(0.4 0.03 55);
   --radius: 0.75rem;
   --machine: oklch(0.26 0.012 250);
-  --machine-raised: oklch(0.30 0.012 250);
+  --machine-raised: oklch(0.3 0.012 250);
   --machine-foreground: oklch(0.88 0.012 250);
   --machine-muted: oklch(0.66 0.015 250);
   --machine-rule: oklch(0.36 0.014 250);
@@ -539,23 +539,63 @@ html.dark .theme-ember,
 }
 
 @keyframes meatsack-travel-x {
-  0%   { left: -4px; opacity: 0; }
-  8%   { opacity: 1; }
-  42%  { left: calc(100% - 5px); opacity: 1; }
-  50%  { left: calc(100% - 5px); opacity: 0; }
-  58%  { left: calc(100% - 5px); opacity: 1; }
-  92%  { left: -4px; opacity: 1; }
-  100% { left: -4px; opacity: 0; }
+  0% {
+    left: -4px;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  42% {
+    left: calc(100% - 5px);
+    opacity: 1;
+  }
+  50% {
+    left: calc(100% - 5px);
+    opacity: 0;
+  }
+  58% {
+    left: calc(100% - 5px);
+    opacity: 1;
+  }
+  92% {
+    left: -4px;
+    opacity: 1;
+  }
+  100% {
+    left: -4px;
+    opacity: 0;
+  }
 }
 
 @keyframes meatsack-travel-y {
-  0%   { top: -4px; opacity: 0; }
-  8%   { opacity: 1; }
-  42%  { top: calc(100% - 5px); opacity: 1; }
-  50%  { top: calc(100% - 5px); opacity: 0; }
-  58%  { top: calc(100% - 5px); opacity: 1; }
-  92%  { top: -4px; opacity: 1; }
-  100% { top: -4px; opacity: 0; }
+  0% {
+    top: -4px;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  42% {
+    top: calc(100% - 5px);
+    opacity: 1;
+  }
+  50% {
+    top: calc(100% - 5px);
+    opacity: 0;
+  }
+  58% {
+    top: calc(100% - 5px);
+    opacity: 1;
+  }
+  92% {
+    top: -4px;
+    opacity: 1;
+  }
+  100% {
+    top: -4px;
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

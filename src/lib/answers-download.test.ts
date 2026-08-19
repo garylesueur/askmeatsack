@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  answersDownloadMarkdown,
-  wantsMarkdownDownload,
-} from "./answers-download";
+import { answersDownloadMarkdown, wantsMarkdownDownload } from "./answers-download";
 import type { Question } from "./schema";
 
 const questions: Question[] = [

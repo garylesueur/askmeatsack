@@ -1,0 +1,130 @@
+version: 1
+
+# The decisions, and where each one is actually enforced. This file is the
+# source of truth: change a decision here first, then regenerate the rule that
+# implements it.
+#
+# `status` separates a real decision from an accepted default, so
+# `conventions-revisit` can surface untouched defaults later without
+# relitigating anything anyone actually chose.
+#
+# Decided 18 August 2026, through conventions-decide.
+
+decisions:
+  - id: formatting-authority
+    axis: formatting
+    answer: oxfmt
+    status: decided
+    tier: enforced
+    enforcement: .oxfmtrc.json
+    note: >-
+      Nothing owned formatting before this. Both codebases were perfectly
+      consistent by habit alone — 48 of 48 sampled imports on double quotes —
+      which is the fragile kind of consistent. calm-craft uses oxfmt, so the
+      estate now matches its own tooling.
+
+  - id: no-explicit-any
+    axis: type-discipline
+    answer: banned
+    status: decided
+    tier: enforced
+    enforcement: "typescript/no-explicit-any in .oxlintrc.json"
+    note: >-
+      Recorded from evidence rather than asked: zero occurrences across both
+      production codebases.
+
+  - id: type-over-interface
+    axis: type-discipline
+    answer: type
+    status: decided
+    tier: enforced
+    enforcement: "typescript/consistent-type-definitions in .oxlintrc.json"
+    note: >-
+      Recorded from evidence: 90 `type` declarations to 0 `interface` across
+      both repos, so this could be an error from the day it landed. oxlint has
+      it as a first-class rule, with a better message than the ESLint syntax
+      ban it replaced.
+
+  - id: import-layer-signal
+    axis: import-discipline
+    answer: relative-within-lib
+    status: decided
+    tier: enforced
+    enforcement: "scripts/check-import-layers.mjs, run by pnpm lint"
+    note: >-
+      Inside src/lib a relative import means "same layer", so reaching for the
+      alias there hides a boundary that does not exist. src/app is deliberately
+      left alone — crossing into lib is exactly what the alias is for. Three
+      violations existed and were fixed when the rule landed, so it is an error
+      rather than a warning. A script rather than a lint rule because oxlint's
+      no-restricted-imports matches exact module names, not globs, and a
+      hand-listed set of modules goes stale the first time someone adds a file.
+
+  - id: file-size
+    axis: file-and-unit-size
+    answer: 800
+    status: decided
+    tier: ambient
+    enforcement: none
+    note: >-
+      A guideline, not a lint rule, chosen deliberately. sessions.ts is 1,349
+      lines and has a reason to be long; a hard rule would have meant splitting
+      the session service before this could land. 800 means the next large file
+      gets a conversation rather than a build failure.
+
+  - id: dependency-cooldown
+    axis: dependencies
+    answer: one-day
+    status: decided
+    tier: enforced
+    enforcement: "minimumReleaseAge: 1440 in pnpm-workspace.yaml"
+    note: >-
+      A package published less than a day ago will not install. Compromised
+      releases are usually caught within hours. One day rather than seven, so
+      the gate does not sit on security patches when they are wanted quickly.
+
+  - id: linter
+    axis: formatting
+    answer: oxlint
+    status: decided
+    tier: enforced
+    enforcement: .oxlintrc.json
+    note: >-
+      Replaced ESLint and eslint-config-next. The switch found four errors
+      ESLint was not reporting: three real accessibility problems in the file
+      attach field and a redundant spread fallback. The cost is losing
+      eslint-config-next's Next.js-specific checks, which have no oxlint
+      equivalent yet.
+
+  - id: install-scripts
+    axis: dependencies
+    answer: partial-blocklist
+    status: defaulted
+    tier: enforced
+    enforcement: "allowBuilds in pnpm-workspace.yaml"
+    note: >-
+      Two packages are blocked from running install scripts by name. A full
+      allowlist was offered and not taken, so this stays as it was found.
+
+  - id: test-location
+    axis: tests
+    answer: colocated
+    status: decided
+    tier: documented
+    enforcement: none
+    note: >-
+      Already recorded in .engineering/config.yaml as tests.location, and true
+      of every test in the repo. Nothing lints it because nothing needs to —
+      a test that is not next to its module is visible in review.
+
+  - id: named-exports
+    axis: module-boundaries
+    answer: named-preferred
+    status: decided
+    tier: ambient
+    enforcement: none
+    note: >-
+      400 named exports to 13 default across both repos, and every one of those
+      13 is a Next.js page, layout or route, which has no choice. Not linted
+      because the rule would have to carve out exactly those framework files,
+      and the carve-out would be longer than the convention.

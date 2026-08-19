@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import {
-  SITE_DESCRIPTION,
-  SITE_TAGLINE,
-  SITE_TITLE,
-  siteJsonLd,
-} from "@/lib/agent-docs";
+import { SITE_DESCRIPTION, SITE_TAGLINE, SITE_TITLE, siteJsonLd } from "@/lib/agent-docs";
 import { ColorSchemeSync } from "@/components/color-scheme-sync";
 import { publicOrigin } from "@/lib/public-origin";
 import { Analytics } from "@vercel/analytics/next";
@@ -33,13 +28,7 @@ export const metadata: Metadata = {
   },
   description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   applicationName: SITE_TITLE,
-  keywords: [
-    "askmeatsack.com",
-    "MCP",
-    "questionnaire",
-    "agent",
-    "human in the loop",
-  ],
+  keywords: ["askmeatsack.com", "MCP", "questionnaire", "agent", "human in the loop"],
   authors: [{ name: SITE_TITLE, url: origin }],
   alternates: {
     canonical: "/",
@@ -80,9 +69,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <script
-          dangerouslySetInnerHTML={{ __html: SYSTEM_DARK_SCRIPT }}
-        />
+        <script dangerouslySetInnerHTML={{ __html: SYSTEM_DARK_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

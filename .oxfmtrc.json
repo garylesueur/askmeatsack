@@ -1,0 +1,12 @@
+{
+  "ignorePatterns": [
+    "**/*.md",
+    ".mcp.json",
+    ".next/**",
+    "build/**",
+    "mcp.json",
+    "out/**",
+    "plugin.json",
+    "pnpm-lock.yaml"
+  ]
+}

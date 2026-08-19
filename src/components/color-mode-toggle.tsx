@@ -3,13 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function ColorModeToggle({
-  isDark,
-  onToggle,
-}: {
-  isDark: boolean;
-  onToggle: () => void;
-}) {
+export function ColorModeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
   return (
     <Button
       type="button"

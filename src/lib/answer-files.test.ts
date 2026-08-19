@@ -22,9 +22,7 @@ const usableEnv = {
 describe("R2 file store config", () => {
   it("is missing until account, keys, and bucket are all set", () => {
     expect(fileStoreAvailable({})).toBe(false);
-    expect(fileStoreAvailable({ ...usableEnv, R2_PUBLIC_BASE_URL: "" })).toBe(
-      true,
-    );
+    expect(fileStoreAvailable({ ...usableEnv, R2_PUBLIC_BASE_URL: "" })).toBe(true);
     expect(fileStoreAvailable(usableEnv)).toBe(true);
   });
 
@@ -164,8 +162,8 @@ describe("stored file keys", () => {
         url: "https://acct123.r2.cloudflarestorage.com/askmeatsack/sess/photo/ab12-desk.jpg",
       }),
     ).toBe("askmeatsack/sess/photo/ab12-desk.jpg");
-    expect(
-      contentDispositionFilename('nasty"name.pdf'),
-    ).toBe('attachment; filename="nasty_name.pdf"');
+    expect(contentDispositionFilename('nasty"name.pdf')).toBe(
+      'attachment; filename="nasty_name.pdf"',
+    );
   });
 });
