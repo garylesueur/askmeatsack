@@ -1,0 +1,54 @@
+name: Gates
+
+# The four gates from .engineering/config.yaml, enforced rather than merely
+# configured. `build` is here because a change once passed typecheck, lint and
+# every test and still broke main: a server-only import reached the browser
+# bundle, which nothing but a real build can see.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm before Node, so setup-node can find it for its cache.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Each gate runs even when an earlier one fails, so one push reports
+      # everything that is wrong rather than only the first thing.
+      - name: typecheck
+        if: '!cancelled()'
+        run: pnpm typecheck
+
+      - name: lint
+        if: '!cancelled()'
+        run: pnpm lint
+
+      - name: test
+        if: '!cancelled()'
+        run: pnpm test
+
+      - name: build
+        if: '!cancelled()'
+        run: pnpm build
