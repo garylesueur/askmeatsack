@@ -32,7 +32,12 @@ export function FileAttachField({
 
   return (
     <div className="flex flex-col gap-2">
-      <div
+      {/* A fieldset rather than role="group": the same semantics, from the
+          element that actually means it. The click handler below is a mouse
+          convenience — the keyboard path is the "Choose files" button inside,
+          so no one is shut out by the drop zone not being focusable. */}
+      {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
+      <fieldset
         onDragEnter={(event) => {
           event.preventDefault();
           if (!disabled && !full) {
@@ -59,8 +64,6 @@ export function FileAttachField({
           }
           onAdd(filesFromList(event.dataTransfer.files));
         }}
-        role="group"
-        aria-label="Attach files"
         onClick={(event) => {
           if (disabled || full) {
             return;
@@ -76,6 +79,7 @@ export function FileAttachField({
           disabled || full ? "" : "cursor-pointer",
         )}
       >
+        <legend className="sr-only">Attach files</legend>
         <p className="text-sm text-muted-foreground">
           {full
             ? `That is ${FILE_MAX_COUNT} files, the most on one question.`
@@ -134,16 +138,13 @@ export function FileAttachField({
             event.target.value = "";
           }}
         />
-      </div>
+      </fieldset>
       {files.length > 0 ? (
         <ul className="flex flex-col gap-1">
           {files.map((file) => (
             <li key={file.id} className="text-sm text-foreground">
               {file.filename}
-              <span className="text-muted-foreground">
-                {" "}
-                · {formatFileSize(file.size)}
-              </span>
+              <span className="text-muted-foreground"> · {formatFileSize(file.size)}</span>
             </li>
           ))}
         </ul>

@@ -16,9 +16,7 @@ describe("Agent Plugin package", () => {
       name: string;
       homepage: string;
     };
-    expect(manifest.$schema).toBe(
-      "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-    );
+    expect(manifest.$schema).toBe("https://agent-plugins.org/schemas/1.0.0/plugin.schema.json");
     expect(manifest.name).toBe("askmeatsack.com");
     expect(manifest.homepage).toBe("https://askmeatsack.com");
   });
@@ -30,9 +28,7 @@ describe("Agent Plugin package", () => {
         "askmeatsack.com": { type: string; url: string };
       };
     };
-    expect(mcp.$schema).toBe(
-      "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
-    );
+    expect(mcp.$schema).toBe("https://agent-plugins.org/schemas/1.0.0/mcp.schema.json");
     expect(mcp.mcpServers["askmeatsack.com"]).toEqual({
       type: "streamable-http",
       url: "https://askmeatsack.com/mcp",
@@ -46,16 +42,11 @@ describe("Agent Plugin package", () => {
     const mcp = readJson("mcp.json") as {
       mcpServers: { "askmeatsack.com": { url: string } };
     };
-    expect(directory.mcpServers["askmeatsack.com"].url).toBe(
-      mcp.mcpServers["askmeatsack.com"].url,
-    );
+    expect(directory.mcpServers["askmeatsack.com"].url).toBe(mcp.mcpServers["askmeatsack.com"].url);
   });
 
   it("ships the plugin skill with the same instructions as /skill.md", () => {
-    const onDisk = readFileSync(
-      join(root, "skills/askmeatsack/SKILL.md"),
-      "utf8",
-    );
+    const onDisk = readFileSync(join(root, "skills/askmeatsack/SKILL.md"), "utf8");
     expect(onDisk.startsWith("---\n")).toBe(true);
     expect(onDisk).toContain("name: askmeatsack\n");
     const body = onDisk.replace(/^---\n[\s\S]*?\n---\n\n/, "");

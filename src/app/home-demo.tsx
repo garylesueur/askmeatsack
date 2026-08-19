@@ -131,27 +131,25 @@ export function HomeDemo() {
       showModeToggle={false}
     >
       <AnsweringForm
-      key={session.sessionId}
-      sessionId={session.sessionId}
-      publicToken={session.publicToken}
-      title={session.title}
-      context={session.context}
-      appearance={session.appearance}
-      questions={session.questions}
-      initialAnswers={{}}
-      initialProgress={{
-        ...emptyProgress,
-        totalCount: session.questions.length,
-        requiredCount: session.questions.filter(
-          (question) => question.required !== false,
-        ).length,
-      }}
-      expiresAt={session.expiresAt}
-      layout="embed"
-      onPlayAgain={() => {
-        void start();
-      }}
-    />
+        key={session.sessionId}
+        sessionId={session.sessionId}
+        publicToken={session.publicToken}
+        title={session.title}
+        context={session.context}
+        appearance={session.appearance}
+        questions={session.questions}
+        initialAnswers={{}}
+        initialProgress={{
+          ...emptyProgress,
+          totalCount: session.questions.length,
+          requiredCount: session.questions.filter((question) => question.required !== false).length,
+        }}
+        expiresAt={session.expiresAt}
+        layout="embed"
+        onPlayAgain={() => {
+          void start();
+        }}
+      />
     </AppearanceShell>
   );
 }

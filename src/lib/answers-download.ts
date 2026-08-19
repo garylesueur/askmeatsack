@@ -15,10 +15,7 @@ export type AnswersDownload = {
   }>;
 };
 
-function questionFor(
-  questions: Question[],
-  questionId: string,
-): Question | undefined {
+function questionFor(questions: Question[], questionId: string): Question | undefined {
   for (const question of questions) {
     if (question.id === questionId) {
       return question;
@@ -27,17 +24,9 @@ function questionFor(
   return undefined;
 }
 
-export function answersDownloadMarkdown(
-  download: AnswersDownload,
-  questions: Question[],
-): string {
+export function answersDownloadMarkdown(download: AnswersDownload, questions: Question[]): string {
   const title = download.title?.trim() || "Questionnaire";
-  const lines: string[] = [
-    `# ${title}`,
-    "",
-    "Your answers from askmeatsack.com",
-    "",
-  ];
+  const lines: string[] = [`# ${title}`, "", "Your answers from askmeatsack.com", ""];
 
   for (const row of download.answers) {
     lines.push(`## ${row.prompt}`);
@@ -57,9 +46,7 @@ export function answersDownloadMarkdown(
         for (const entry of questionEntries(question)) {
           const value = row.entries[entry.id];
           if (value) {
-            lines.push(
-              `- ${entry.label}: ${formatEntryValue(entry, question, value)}`,
-            );
+            lines.push(`- ${entry.label}: ${formatEntryValue(entry, question, value)}`);
             wrote = true;
           }
         }

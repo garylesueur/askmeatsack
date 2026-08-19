@@ -22,11 +22,7 @@ const markdownComponents: Components = {
         </code>
       );
     }
-    return (
-      <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-        {children}
-      </code>
-    );
+    return <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">{children}</code>;
   },
   a({ href, children }) {
     return (
@@ -47,35 +43,23 @@ const markdownComponents: Components = {
     return (
       // Creator-supplied markdown may point at any URL.
       // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={alt ?? ""}
-        className="my-3 max-w-full rounded-md"
-      />
+      <img src={src} alt={alt ?? ""} className="my-3 max-w-full rounded-md" />
     );
   },
   table({ children }) {
     return (
       <div className="my-3 overflow-x-auto">
-        <table className="w-full border-collapse text-left text-sm">
-          {children}
-        </table>
+        <table className="w-full border-collapse text-left text-sm">{children}</table>
       </div>
     );
   },
   th({ children }) {
     return (
-      <th className="border-b border-border px-2 py-1.5 font-medium text-foreground">
-        {children}
-      </th>
+      <th className="border-b border-border px-2 py-1.5 font-medium text-foreground">{children}</th>
     );
   },
   td({ children }) {
-    return (
-      <td className="border-b border-border/60 px-2 py-1.5 align-top">
-        {children}
-      </td>
-    );
+    return <td className="border-b border-border/60 px-2 py-1.5 align-top">{children}</td>;
   },
 };
 

@@ -145,9 +145,7 @@ export function KerryPlay() {
       initialProgress={{
         ...emptyProgress,
         totalCount: session.questions.length,
-        requiredCount: session.questions.filter(
-          (question) => question.required !== false,
-        ).length,
+        requiredCount: session.questions.filter((question) => question.required !== false).length,
       }}
       expiresAt={session.expiresAt}
       onPlayAgain={() => {

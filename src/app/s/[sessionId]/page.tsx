@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import { machineQuestionnairePath } from "@/lib/answer-document";
-import {
-  getDefaultSessionService,
-} from "@/lib/app-sessions";
-import {
-  humanScreenFor,
-  isSessionServiceError,
-} from "@/lib/sessions";
+import { getDefaultSessionService } from "@/lib/app-sessions";
+import { humanScreenFor, isSessionServiceError } from "@/lib/sessions";
 import { AnsweringForm } from "./answering-form";
 import {
   CancelledScreen,
@@ -22,10 +17,7 @@ type PageProps = {
   searchParams: Promise<{ t?: string; token?: string }>;
 };
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { sessionId } = await params;
   const query = await searchParams;
   const publicToken = query.t ?? query.token;

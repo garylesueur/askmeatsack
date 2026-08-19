@@ -1,18 +1,11 @@
-import {
-  getDefaultSessionService,
-  jsonServiceError,
-  readPublicToken,
-} from "@/lib/app-sessions";
+import { getDefaultSessionService, jsonServiceError, readPublicToken } from "@/lib/app-sessions";
 import { isSessionServiceError } from "@/lib/sessions";
 
 type RouteContext = {
   params: Promise<{ sessionId: string }>;
 };
 
-export async function POST(
-  request: Request,
-  context: RouteContext,
-): Promise<Response> {
+export async function POST(request: Request, context: RouteContext): Promise<Response> {
   const { sessionId } = await context.params;
   const result = await getDefaultSessionService().markOpened({
     sessionId,

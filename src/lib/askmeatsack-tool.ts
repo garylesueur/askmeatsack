@@ -13,13 +13,7 @@ import {
 
 export const ASKMEATSACK_TOOL_NAME = "askmeatsack.com";
 
-export const askmeatsackToolActions = [
-  "create",
-  "status",
-  "wait",
-  "cancel",
-  "edit",
-] as const;
+export const askmeatsackToolActions = ["create", "status", "wait", "cancel", "edit"] as const;
 
 export type AskmeatsackToolAction = (typeof askmeatsackToolActions)[number];
 
@@ -29,12 +23,7 @@ export const askmeatsackToolInputShape = {
   seconds: z.number().int().positive().max(WAIT_MAX_SECONDS).optional(),
   title: z.string().min(1).optional(),
   context: z.string().optional(),
-  expiresInSeconds: z
-    .number()
-    .int()
-    .positive()
-    .max(SESSION_MAX_TTL_SECONDS)
-    .optional(),
+  expiresInSeconds: z.number().int().positive().max(SESSION_MAX_TTL_SECONDS).optional(),
   metadata: z.record(z.string(), z.string()).optional(),
   callbackUrl: z.string().url().optional(),
   appearance: appearanceSchema.optional(),
@@ -127,8 +116,6 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
   };
 }
 
-export function isAskmeatsackToolError(
-  value: unknown,
-): value is SessionServiceError {
+export function isAskmeatsackToolError(value: unknown): value is SessionServiceError {
   return isSessionServiceError(value);
 }

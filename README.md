@@ -32,12 +32,15 @@ server. Leave Redis empty to stay on in-memory stores; file uploads need R2.
 | `pnpm env:op-items` | Create the three 1Password items if missing |
 | `pnpm env:vercel [preview\|production]` | Push template → Vercel (default: both) |
 | `pnpm typecheck` | TypeScript |
-| `pnpm lint` | ESLint |
+| `pnpm lint` | oxlint, plus the import-layer check |
+| `pnpm format` | oxfmt |
+| `pnpm format` | oxfmt |
 | `pnpm test` | Vitest |
 | `pnpm build` | Production build |
 
-`pnpm typecheck`, `pnpm lint`, and `pnpm test` are the merge gates — see
-`.engineering/config.yaml`.
+`pnpm typecheck`, `pnpm format:check`, `pnpm lint`, `pnpm test` and `pnpm build`
+are the merge gates — see `.engineering/config.yaml`, and
+`.engineering/conventions.md` for the conventions they enforce.
 
 ## Secrets
 

@@ -34,29 +34,17 @@ describe("secret environments", () => {
 
   it("maps Vercel targets to their own items and refuses Development", () => {
     expect(itemForVercelTarget("preview")).toBe("askmeatsack.com Preview");
-    expect(itemForVercelTarget("production")).toBe(
-      "askmeatsack.com Production",
-    );
+    expect(itemForVercelTarget("production")).toBe("askmeatsack.com Production");
     expect(parseVercelSecretTarget("preview")).toBe("preview");
     expect(parseVercelSecretTarget("production")).toBe("production");
-    expect(() => parseVercelSecretTarget("development")).toThrow(
-      /Development stays in 1Password/,
-    );
+    expect(() => parseVercelSecretTarget("development")).toThrow(/Development stays in 1Password/);
   });
 
   it("builds op:// references without embedding values", () => {
-    expect(
-      opSecretReference(
-        OP_VAULT_DEFAULT,
-        "askmeatsack.com Preview",
-        "AGENT_API_KEY",
-      ),
-    ).toBe(
+    expect(opSecretReference(OP_VAULT_DEFAULT, "askmeatsack.com Preview", "AGENT_API_KEY")).toBe(
       "op://mep374l3cpdtzwibf5fswsimbi/askmeatsack.com Preview/AGENT_API_KEY",
     );
-    expect(
-      opTemplateReference(secretEnvItems.development, "AGENT_API_KEY"),
-    ).toBe(
+    expect(opTemplateReference(secretEnvItems.development, "AGENT_API_KEY")).toBe(
       "op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/askmeatsack.com Development/AGENT_API_KEY",
     );
     expect(secretKeys).toContain("AGENT_API_KEY");

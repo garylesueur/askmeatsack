@@ -61,11 +61,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
   }, [chart, reactId, dark]);
 
   if (failed) {
-    return (
-      <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs">
-        {chart}
-      </pre>
-    );
+    return <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs">{chart}</pre>;
   }
 
   if (!svg) {

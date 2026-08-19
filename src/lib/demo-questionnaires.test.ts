@@ -18,9 +18,7 @@ describe("homepage demo packs", () => {
 
   it("builds an Open in Cursor install link", () => {
     const href = cursorInstallHref("https://askmeatsack.com/mcp");
-    expect(href.startsWith("cursor://anysphere.cursor-deeplink/mcp/install?")).toBe(
-      true,
-    );
+    expect(href.startsWith("cursor://anysphere.cursor-deeplink/mcp/install?")).toBe(true);
     expect(href).toContain("name=askmeatsack.com");
     expect(href).toContain("config=");
   });

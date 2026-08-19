@@ -26,9 +26,7 @@ const mcpHandler = createMcpHandler(
       async (args) => {
         const tool = createAskmeatsackTool(getDefaultSessionService());
         const result = await tool.invoke(args);
-        const text = JSON.stringify(
-          isAskmeatsackToolError(result) ? apiErrorBody(result) : result,
-        );
+        const text = JSON.stringify(isAskmeatsackToolError(result) ? apiErrorBody(result) : result);
         if (isAskmeatsackToolError(result)) {
           return {
             content: [{ type: "text" as const, text }],
@@ -65,10 +63,7 @@ function withMcpCors(response: Response): Response {
     "Access-Control-Allow-Headers",
     "Content-Type, Accept, Authorization, mcp-session-id, mcp-protocol-version, Last-Event-ID",
   );
-  headers.set(
-    "Access-Control-Expose-Headers",
-    "mcp-session-id, mcp-protocol-version",
-  );
+  headers.set("Access-Control-Expose-Headers", "mcp-session-id, mcp-protocol-version");
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

@@ -27,17 +27,13 @@ describe("questionnaire appearance", () => {
     expect(resolveTheme({ mode: "light" })).toBe("ask");
     expect(resolveMode({ mode: "light" })).toBe("light");
     expect(appearanceClassName({ mode: "light" })).toBe("light theme-ask");
-    expect(appearanceClassName({ mode: "dark", theme: "grove" })).toBe(
-      "dark theme-grove",
-    );
+    expect(appearanceClassName({ mode: "dark", theme: "grove" })).toBe("dark theme-grove");
   });
 
   it("uses a named theme in both modes", () => {
     expect(resolveTheme({ theme: "grove" })).toBe("grove");
     expect(appearanceClassName({ theme: "ember" })).toBe("theme-ember");
-    expect(appearanceClassName({ theme: "paper", mode: "dark" })).toBe(
-      "dark theme-paper",
-    );
+    expect(appearanceClassName({ theme: "paper", mode: "dark" })).toBe("dark theme-paper");
   });
 
   it("still tints primary from a hex accent", () => {

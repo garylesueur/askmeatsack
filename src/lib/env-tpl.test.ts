@@ -37,25 +37,17 @@ describe("1Password env templates", () => {
   });
 
   it("points each template at its own 1Password item", () => {
-    const development = readFileSync(
-      join(root, envTemplateFiles.development),
-      "utf8",
-    );
+    const development = readFileSync(join(root, envTemplateFiles.development), "utf8");
     expect(development).toContain("PUBLIC_BASE_URL=http://localhost:3000");
     expect(development).toContain(secretEnvItems.development);
     expect(development).toContain(secretEnvItems.preview);
     expect(development).toContain(secretEnvItems.production);
     for (const key of secretKeys) {
-      expect(development).toContain(
-        `${key}=${opTemplateReference(itemForLocalDev(), key)}`,
-      );
+      expect(development).toContain(`${key}=${opTemplateReference(itemForLocalDev(), key)}`);
     }
 
     const preview = readFileSync(join(root, envTemplateFiles.preview), "utf8");
-    const production = readFileSync(
-      join(root, envTemplateFiles.production),
-      "utf8",
-    );
+    const production = readFileSync(join(root, envTemplateFiles.production), "utf8");
     expect(production).toContain("PUBLIC_BASE_URL=https://askmeatsack.com");
     for (const key of secretKeys) {
       expect(preview).toContain(

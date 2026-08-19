@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  currencySymbol,
-  formatMoneyInput,
-  parseMoney,
-} from "@/lib/money";
+import { currencySymbol, formatMoneyInput, parseMoney } from "@/lib/money";
 
 export function MoneyInput({
   currency,

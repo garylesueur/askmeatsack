@@ -102,12 +102,10 @@ export const AGENT_SAMPLE: [string, string][] = [
   [PUNCT, ",\n    "],
   [KEY, '"options"'],
   [PUNCT, ": ["],
-  ...SEAM_QUESTION.options.flatMap(
-    (option, index): [string, string][] => [
-      [PUNCT, `\n      { "id": "${option.id}", "label": `],
-      [VALUE, `"${option.label}"`],
-      [PUNCT, index === SEAM_QUESTION.options.length - 1 ? " }" : " },"],
-    ],
-  ),
+  ...SEAM_QUESTION.options.flatMap((option, index): [string, string][] => [
+    [PUNCT, `\n      { "id": "${option.id}", "label": `],
+    [VALUE, `"${option.label}"`],
+    [PUNCT, index === SEAM_QUESTION.options.length - 1 ? " }" : " },"],
+  ]),
   [PUNCT, "\n    ]\n  }]\n}"],
 ];

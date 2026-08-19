@@ -74,8 +74,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
     if (question.options.length > 0) {
       lines.push("", "Options:");
       for (const option of question.options) {
-        const recommended =
-          question.recommendedOptionId === option.id ? " — recommended" : "";
+        const recommended = question.recommendedOptionId === option.id ? " — recommended" : "";
         lines.push(`- \`${option.id}\`: ${option.label}${recommended}`);
       }
     }

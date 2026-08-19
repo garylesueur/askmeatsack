@@ -8,9 +8,7 @@ import {
 
 describe("isShortPrompt", () => {
   it("treats a one-line ask as a heading", () => {
-    expect(isShortPrompt("Which invoices clear in the next 14 days?")).toBe(
-      true,
-    );
+    expect(isShortPrompt("Which invoices clear in the next 14 days?")).toBe(true);
   });
 
   it("does not treat a jammed brief as a heading", () => {
@@ -64,12 +62,8 @@ describe("questionKind", () => {
         { id: "paye", label: "PAYE", input: "money" as const },
       ],
     };
-    expect(entriesAreComplete(question, { vat: "100", paye: "not money" })).toBe(
-      false,
-    );
-    expect(entriesAreComplete(question, { vat: "£100", paye: "1,200.5" })).toBe(
-      true,
-    );
+    expect(entriesAreComplete(question, { vat: "100", paye: "not money" })).toBe(false);
+    expect(entriesAreComplete(question, { vat: "£100", paye: "1,200.5" })).toBe(true);
   });
 });
 

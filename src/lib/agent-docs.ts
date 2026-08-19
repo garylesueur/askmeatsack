@@ -1,9 +1,6 @@
-import { ASKMEATSACK_SKILL_MARKDOWN } from "@/lib/askmeatsack-skill";
-import {
-  CURSOR_PLUGIN_HREF,
-  cursorInstallPageHref,
-} from "@/lib/cursor-install";
-import { publicOrigin } from "@/lib/public-origin";
+import { ASKMEATSACK_SKILL_MARKDOWN } from "./askmeatsack-skill";
+import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "./cursor-install";
+import { publicOrigin } from "./public-origin";
 
 export const SITE_TITLE = "askmeatsack.com";
 export const SITE_TAGLINE = "An agent asks. A human answers.";

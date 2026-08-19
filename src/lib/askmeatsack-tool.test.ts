@@ -65,8 +65,7 @@ describe("B1 — Tool create matches HTTP", () => {
       sessionId: "session-1",
       status: "pending",
       expiresAt: "2026-08-17T20:00:00.000Z",
-      answerUrl:
-        "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       pollUrl:
         "https://askmeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       manageUrl:
@@ -119,8 +118,7 @@ describe("B1 — Tool create matches HTTP", () => {
           {
             questionId: "villain",
             code: "comment_needs_shape",
-            message:
-              "allowComment is only valid on a choice, items, or fields question",
+            message: "allowComment is only valid on a choice, items, or fields question",
           },
         ],
       },

@@ -5,9 +5,7 @@ export function isIsoCurrency(code: string): boolean {
     return false;
   }
   try {
-    new Intl.NumberFormat("en-GB", { style: "currency", currency: code }).format(
-      1,
-    );
+    new Intl.NumberFormat("en-GB", { style: "currency", currency: code }).format(1);
     return true;
   } catch {
     return false;
