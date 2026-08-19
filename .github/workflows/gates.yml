@@ -41,6 +41,10 @@ jobs:
         if: "!cancelled()"
         run: pnpm typecheck
 
+      - name: format
+        if: "!cancelled()"
+        run: pnpm format:check
+
       - name: lint
         if: "!cancelled()"
         run: pnpm lint

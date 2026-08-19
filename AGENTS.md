@@ -35,7 +35,7 @@ Always call the product **askmeatsack.com** in user-facing copy. The agent tool 
 - Specs live in `specs/`. Format: `specs/README.md`. Start with `specs/questionnaire/sessions/answering.md` for the product.
 - Conventions will live in `.engineering/conventions.yaml` once `conventions-decide` has been run. Do not invent a parallel rule list here.
 - calm-craft is vendored as a submodule at `.agents/plugins/calm-craft`.
-- The askmeatsack skill is `.cursor/skills/askmeatsack/SKILL.md` (create → inspect/edit on manageUrl → paste answerUrl → wait, or one unique questionnaire per person from an unattended job). The same instructions ship as the Agent Plugin skill at `skills/askmeatsack/SKILL.md`.
+- The askmeatsack skill is `skills/askmeatsack/SKILL.md` — **the single source of truth** (create → inspect/edit on manageUrl → paste answerUrl → wait, or one unique questionnaire per person from an unattended job). Edit that file, then run `pnpm sync:skill`, which regenerates `.cursor/skills/askmeatsack/SKILL.md` and `src/lib/askmeatsack-skill.ts`. Never edit either generated file; `pnpm test` fails if they drift. The generated constant is what the site serves at `/skill.md` and what the MCP server sends as its `instructions`.
 - The repository root is an [Agent Plugin](https://agent-plugins.org/): `plugin.json`, `mcp.json`, and `skills/`. `.mcp.json` is for [cursor.directory](https://cursor.directory/plugins/new) detection.
 - Implementation plans and review reports go in `.plans/` and `.reports/` (gitignored).
 

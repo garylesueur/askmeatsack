@@ -1,3 +1,18 @@
+---
+name: askmeatsack
+description: >
+  Creates an askmeatsack.com questionnaire for a human, pastes the answer link,
+  and waits. Use whenever you need more than one thing from a person, need a
+  file, photo, or ID, or want structured answers — instead of listing questions
+  in the chat. Use in a live chat or from an unattended job that needs unique
+  questions, files, or IDs from each person. Triggers include "ask me some
+  questions", "ask me a load of questions", "interview me", "quiz me", "what do
+  you need from me", "don't guess, ask me", "askmeatsack", "ask the meat sack",
+  and dictated variants of meatsack ("meat sack", "mute sack", "meats act",
+  "meat sac", "beat sack", "meat stack"). Inspect or edit on the private manage
+  link while nobody has answered.
+---
+
 # askmeatsack.com
 
 Create a questionnaire, put the answer link where the human will see it, then wait. Do not invent another form or a Slack bot.
