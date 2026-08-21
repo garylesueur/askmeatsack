@@ -140,7 +140,7 @@ A row or field may be money: `input: "money"` plus an ISO 4217 `currency` on the
 
 ### B33 — A question may ask for device capture 🔵 future
 
-A question may ask for something the device can capture besides a file: the person’s location, a live camera shot that is not just “pick an image”, and similar. File questions already cover choose, drop, and take a photo (B25). This is for typed capture that is not “here is a file”.
+A question may ask for something the device can capture besides a file: the person’s location, a live camera shot that is not just “pick an image”, and similar. File questions already cover choose, drop, and take a photo (B25). This is for typed capture that is not “here is a file”. Guided photography — a named set of shots, each with its own guidance and each returned labelled — is specified separately in [asking somebody for photographs](../questions/photos.md).
 
 ### B34 — Unattended job can collect from many people 🟢
 
@@ -178,6 +178,18 @@ A file attached to an answer is checked for malware before it can be downloaded.
 an answer, the file cannot be read and whoever asks is told it is still being checked. A file
 found to be infected is removed and never served.
 
+### B40 — A diagram can be opened bigger 🔵 future
+
+A diagram in the material beside a question can be opened larger and closed again, on any screen
+size. Nothing else about the question changes while it is open, and a part-typed answer is still
+there afterwards. A flow worth asking about is usually drawn too small to read.
+
+### B41 — A card number is never stored in an answer 🔵 future
+
+A text answer that looks like a payment card number is refused and not stored, and the person is
+told not to put card details into a questionnaire. This holds whether or not payments are ever
+built — see [taking a payment as part of answering](../questions/payments.md).
+
 ## Rules (Invariants)
 
 - A choice question has at least two and at most eight options. A text question has no options, items, or fields. An item question has two to sixteen rows. A field question has two to eight named boxes. A question cannot mix options, items, and fields. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required. `allowComment` is only valid when the question already has options, items, or fields. Free text already is the comment; a photo-only question cannot add a comment without a shape.
@@ -186,10 +198,12 @@ found to be infected is removed and never served.
 - Saved answers freeze at submit, expiry, or cancel. They do not change afterwards.
 - Default life is 24 hours from creation. The creator may ask for shorter or longer, never more than 7 days.
 - After submit, expiry, or cancel, the agent can still read status and answers for one hour. After that the questionnaire is gone. The human cannot save or submit once it has expired or been cancelled.
+- A diagram anywhere in a questionnaire can be opened larger and closed again, without disturbing an answer in progress.
 - Prompts and optional question `detail` may be formatted as markdown, including mermaid diagrams and tables. The prompt is the ask; `detail` is the situation shown in the evidence rail. Option labels are plain text. Raw HTML from the creator is not rendered. The service does not score answers.
 - The agent’s status secret never appears in the answering page, the JSON download, or anything the browser is given to run. It may appear in the manage URL, which is only for the owner.
 - Questions can be replaced only while status is `pending`. The public answer token does not change when the owner edits.
 - Opaque metadata the agent attaches (repo, branch, run id) is stored and returned to the agent; the human does not need it to answer.
+- Card details are never stored in an answer, by any route, whether or not payments exist.
 - Sessions are ephemeral. This product does not keep a long-term archive of answers.
 - Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out. Refused questions use the same error body on both: the first rule in the message, and a list of issues with question id and rule.
 - The agent tool is named **askmeatsack.com**. Answer links are on `https://askmeatsack.com`.
