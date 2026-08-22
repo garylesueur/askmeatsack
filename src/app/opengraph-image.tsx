@@ -36,7 +36,7 @@ export default function Image() {
         {SITE_TAGLINE}
       </div>
       <div style={{ display: "flex", marginTop: 28, fontSize: 28, color: "#9aa3b2" }}>
-        No accounts. No API key.
+        No API key. Free to create.
       </div>
     </div>,
     { ...size },

@@ -19,7 +19,7 @@ Create a questionnaire, put the answer link where the human will see it, then wa
 
 The product is **askmeatsack.com**. The tool is named `askmeatsack.com`. HTTP and the tool are the same questionnaire. Answer links look like `https://askmeatsack.com/s/…`.
 
-There is no API key and no account. Create is open. After create, keep `pollUrl` (or its `token`) and `manageUrl` for status, wait, cancel, inspect, and edit.
+There is no API key. Create is open today. Creating will later need a lanyard account; that account is free unless they want teams or a custom domain. The person answering never signs in. After create, keep `pollUrl` (or its `token`) and `manageUrl` for status, wait, cancel, inspect, and edit.
 
 Use this in a live chat, or from an unattended job that still needs facts, files, or an ID from a person.
 
