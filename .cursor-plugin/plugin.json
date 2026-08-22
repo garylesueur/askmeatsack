@@ -1,11 +1,10 @@
 {
-  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "askmeatsack.com",
+  "displayName": "askmeatsack.com",
   "version": "0.1.0",
   "description": "An agent asks a human questions. Create a questionnaire, inspect or edit it on the private manage link, paste the answer link, and wait. No accounts. No API key.",
   "author": {
-    "name": "Gary Le Sueur",
-    "url": "https://gaz.dev"
+    "name": "Gary Le Sueur"
   },
   "homepage": "https://askmeatsack.com",
   "repository": "https://github.com/garylesueur/askmeatsack",
@@ -16,5 +15,7 @@
     "mcp",
     "human-in-the-loop",
     "forms"
-  ]
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json"
 }

@@ -6,6 +6,7 @@
     "build/**",
     "mcp.json",
     "out/**",
+    ".cursor-plugin/plugin.json",
     "plugin.json",
     "pnpm-lock.yaml"
   ]

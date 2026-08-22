@@ -15,10 +15,27 @@ describe("Agent Plugin package", () => {
       $schema: string;
       name: string;
       homepage: string;
+      author: { name: string; url: string };
     };
     expect(manifest.$schema).toBe("https://agent-plugins.org/schemas/1.0.0/plugin.schema.json");
     expect(manifest.name).toBe("askmeatsack.com");
     expect(manifest.homepage).toBe("https://askmeatsack.com");
+    expect(manifest.author).toEqual({
+      name: "Gary Le Sueur",
+      url: "https://gaz.dev",
+    });
+  });
+
+  it("declares a Cursor plugin so the clone can be added from a local folder", () => {
+    const cursor = readJson(".cursor-plugin/plugin.json") as {
+      name: string;
+      skills: string;
+      mcpServers: string;
+    };
+    const portable = readJson("plugin.json") as { name: string };
+    expect(cursor.name).toBe(portable.name);
+    expect(cursor.skills).toBe("./skills/");
+    expect(cursor.mcpServers).toBe("./mcp.json");
   });
 
   it("points Agent Plugins MCP at the hosted Streamable HTTP server", () => {
