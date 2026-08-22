@@ -2,7 +2,7 @@
   "name": "askmeatsack.com",
   "displayName": "askmeatsack.com",
   "version": "0.1.0",
-  "description": "An agent asks a human questions. Create a questionnaire, inspect or edit it on the private manage link, paste the answer link, and wait. No accounts. No API key.",
+  "description": "An agent asks a human questions. Create a questionnaire, inspect or edit it on the private manage link, paste the answer link, and wait. No API key. Free to create; teams and custom domains are paid.",
   "author": {
     "name": "Gary Le Sueur"
   },

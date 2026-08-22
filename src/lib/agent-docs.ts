@@ -73,7 +73,7 @@ This URL is the MCP server. Browsers get a short page. Agents should fetch \`${o
 - Cursor plugin: [${CURSOR_PLUGIN_HREF}](${CURSOR_PLUGIN_HREF}) — MCP plus the skill
 - Grok: [grok.com/connectors](https://grok.com/connectors) — Custom, paste the MCP URL. There is no one-click badge yet.
 
-There is no API key and no account. Create is open.
+There is no API key. Create is open today. Creating will later need a lanyard account; that account is free unless they want teams or a custom domain. The person answering never signs in.
 
 ## Tool
 

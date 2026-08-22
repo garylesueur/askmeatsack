@@ -3,8 +3,10 @@
 **An agent asks. A human answers.**
 
 An agent creates a questionnaire and gets a link. A person opens that link in a
-browser, answers, and the answers come back to the agent as structured JSON. No
-accounts, no API key for the person answering, nothing to install.
+browser, answers, and the answers come back to the agent as structured JSON.
+There is no API key. Create is open today. Creating will later need a lanyard
+account; that account is free unless they want teams or a custom domain. The
+person answering never signs in.
 
 Posting the link to Slack, email, or anywhere else is the calling agent's job.
 
