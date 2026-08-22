@@ -36,7 +36,7 @@ An answering URL tells crawlers not to index it. The sitemap does not list quest
 
 ### B7 — The repository is an Agent Plugin 🟢
 
-The repository root is an Agent Plugin: a client that understands [Agent Plugins](https://agent-plugins.org/) can install it and get the hosted askmeatsack.com MCP server plus the skill. The plugin skill instructions match `/skill.md`.
+The repository root is an Agent Plugin: a client that understands [Agent Plugins](https://agent-plugins.org/) can install it and get the hosted askmeatsack.com MCP server plus the skill. `.cursor-plugin/plugin.json` is present so Cursor can add this clone as an Open Plugin from the local folder. The plugin skill instructions match `/skill.md`.
 
 ### B8 — An answer link previews the ask, never the answers 🟢
 
