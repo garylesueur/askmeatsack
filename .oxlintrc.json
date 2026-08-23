@@ -19,6 +19,10 @@
     "next-env.d.ts",
     ".agents/**",
     ".plans/**",
-    ".reports/**"
+    ".reports/**",
+    "brand/**",
+    "src/app/brand.generated.css",
+    "src/components/site-chrome.tsx",
+    "src/components/home-sections.tsx"
   ]
 }

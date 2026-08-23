@@ -70,6 +70,15 @@ describe("site agent documents", () => {
     expect(result.status).toBe(0);
   });
 
+  it("has no stale generated copies of the brand", () => {
+    const result = spawnSync("node", ["brand/scripts/sync-brand.mjs", "--check"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    expect(result.stderr).toBe("");
+    expect(result.status).toBe(0);
+  });
+
   it("llms.txt and the MCP guide point at the skill and the markdown URL", () => {
     const origin = "https://askmeatsack.com";
     const index = llmsTxt(origin);

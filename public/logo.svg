@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">askmeatsack.com</title>
+  <desc id="description">The word ask above meatsack.com on a warm square plate.</desc>
+  <rect width="512" height="512" rx="80" fill="#f6f1e7"/>
+  <path d="M72 88h368v8H72z" fill="#a04f32"/>
+  <text
+    x="64"
+    y="274"
+    fill="#563323"
+    font-family="Geist, Inter, Arial, sans-serif"
+    font-size="176"
+    font-weight="700"
+    letter-spacing="-10"
+  >ask</text>
+  <text
+    x="70"
+    y="342"
+    fill="#50423b"
+    font-family="Geist Mono, SFMono-Regular, Consolas, monospace"
+    font-size="43"
+    font-weight="600"
+    letter-spacing="-2"
+  >meatsack.com</text>
+  <circle cx="416" cy="414" r="28" fill="#a04f32"/>
+  <path
+    d="M407 406c0-7 5-12 13-12 7 0 12 4 12 10 0 5-3 8-8 11-5 3-7 6-7 11v2m0 12h1"
+    fill="none"
+    stroke="#f6f1e7"
+    stroke-linecap="round"
+    stroke-width="7"
+  />
+</svg>

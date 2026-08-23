@@ -1,9 +1,17 @@
+/**
+ * Generated from meatsack-brand. Do not edit.
+ * Canonical source: components/home-sections.tsx
+ */
+
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 /**
- * The three sections both home pages share: the seam, the sequence, and the
- * use cases. Content comes in as props — the shape lives here so the two
- * products cannot drift apart, per the invariant in `site/home.md`.
+ * The sections both home pages share: the hero scene, the seam, the sequence,
+ * and the use cases. Content comes in as props — the shape lives here so the
+ * two products cannot drift apart, per the invariant in `site/home.md`.
+ *
+ * Canonical source: meatsack-brand `components/home-sections.tsx`.
  */
 
 export function SectionLabel({ children }: { children: ReactNode }) {
@@ -11,6 +19,49 @@ export function SectionLabel({ children }: { children: ReactNode }) {
     <h2 className="mb-7 border-b border-border pb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
       {children}
     </h2>
+  );
+}
+
+export type HeroSceneProps = {
+  src: string;
+  alt: string;
+  eyebrow: ReactNode;
+  title: ReactNode;
+  description: ReactNode;
+  children?: ReactNode;
+};
+
+/**
+ * Homepage hero: product copy over the character scene. On a narrow screen the
+ * words sit above the picture. On a wide screen they occupy the quiet left of
+ * the illustration. The picture never contains live text.
+ */
+export function HeroScene({ src, alt, eyebrow, title, description, children }: HeroSceneProps) {
+  return (
+    <div className="grid items-start md:grid-cols-12">
+      <div className="relative z-10 md:col-span-6 md:col-start-1 md:row-start-1 md:p-10">
+        <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground md:text-[#5d594f]">
+          {eyebrow}
+        </p>
+        <h1 className="max-w-[15ch] font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance text-foreground sm:text-6xl md:text-[#28251f]">
+          {title}
+        </h1>
+        <p className="mt-5 max-w-[46ch] text-lg leading-relaxed text-muted-foreground md:text-[#5d594f]">
+          {description}
+        </p>
+        {children}
+      </div>
+      <figure className="relative mt-10 aspect-[3/2] overflow-hidden rounded-2xl border border-border bg-[#f4efe2] shadow-sm md:col-span-full md:col-start-1 md:row-start-1 md:mt-0">
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          priority
+          sizes="(min-width: 1024px) 960px, calc(100vw - 48px)"
+          className="object-cover"
+        />
+      </figure>
+    </div>
   );
 }
 
