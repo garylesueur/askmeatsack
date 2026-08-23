@@ -1,6 +1,6 @@
 import { CurlBlock, HomeLanding } from "@/app/home-landing";
 import { AGENT_SAMPLE, HERO, SEAM_QUESTION, USE_CASES } from "@/app/home-content";
-import { SectionLabel, Seam, Steps, UseCases } from "@/components/home-sections";
+import { HeroScene, SectionLabel, Seam, Steps, UseCases } from "@/components/home-sections";
 import { SiteShell } from "@/components/site-chrome";
 import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/agent-docs";
 import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "@/lib/cursor-install";
@@ -41,21 +41,19 @@ export default function Home() {
       ]}
     >
       <header className="pt-16 sm:pt-20">
-        <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-          {HERO.eyebrow}
-        </p>
-        <h1 className="max-w-[15ch] font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance text-foreground sm:text-6xl">
-          {SITE_TAGLINE}
-        </h1>
-        <p className="mt-5 max-w-[46ch] text-lg leading-relaxed text-muted-foreground">
-          {SITE_DESCRIPTION}
-        </p>
-
-        <HomeLanding
-          mcpUrl={mcpUrl}
-          cursorHref={cursorInstallPageHref(mcpUrl)}
-          pluginHref={CURSOR_PLUGIN_HREF}
-        />
+        <HeroScene
+          src="/brand/hero.jpg"
+          alt="Silicon pauses a rocket build to ask a meat sack a few questions."
+          eyebrow={HERO.eyebrow}
+          title={SITE_TAGLINE}
+          description={SITE_DESCRIPTION}
+        >
+          <HomeLanding
+            mcpUrl={mcpUrl}
+            cursorHref={cursorInstallPageHref(mcpUrl)}
+            pluginHref={CURSOR_PLUGIN_HREF}
+          />
+        </HeroScene>
 
         <Seam
           wireLabel="one link"

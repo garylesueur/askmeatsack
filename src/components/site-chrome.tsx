@@ -1,13 +1,18 @@
+/**
+ * Generated from meatsack-brand. Do not edit.
+ * Canonical source: components/site-chrome.tsx
+ */
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
  * Nav and footer, shared by both meatsack products.
  *
- * `site/home.md` makes it an invariant that the two home pages are the same
- * structure — only the accent and the words differ. Keeping this file
- * byte-identical in both repos is how that stays true: drift shows up as a
- * diff rather than as two pages that slowly stop looking related.
+ * Canonical source: meatsack-brand `components/site-chrome.tsx`. Product
+ * repos receive a generated copy. `site/home.md` makes it an invariant that
+ * the two home pages are the same structure — only the accent and the words
+ * differ.
  */
 
 export type SiblingSite = {

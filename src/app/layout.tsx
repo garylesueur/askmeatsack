@@ -28,6 +28,9 @@ export const metadata: Metadata = {
   },
   description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   applicationName: SITE_TITLE,
+  icons: {
+    icon: "/logo.svg",
+  },
   keywords: ["askmeatsack.com", "MCP", "questionnaire", "agent", "human in the loop"],
   authors: [{ name: SITE_TITLE, url: origin }],
   alternates: {

@@ -1,3 +1,6 @@
 [submodule ".agents/plugins/calm-craft"]
 	path = .agents/plugins/calm-craft
 	url = https://github.com/calmtechltd/calm-craft.git
+[submodule "brand"]
+	path = brand
+	url = https://github.com/garylesueur/meatsack-brand.git

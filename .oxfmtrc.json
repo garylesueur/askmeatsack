@@ -8,6 +8,10 @@
     "out/**",
     ".cursor-plugin/plugin.json",
     "plugin.json",
-    "pnpm-lock.yaml"
+    "pnpm-lock.yaml",
+    "brand/**",
+    "src/app/brand.generated.css",
+    "src/components/site-chrome.tsx",
+    "src/components/home-sections.tsx"
   ]
 }
