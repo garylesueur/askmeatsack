@@ -146,21 +146,18 @@ before somebody starts rather than discovered on the last one. The existing limi
 
 ## Open Questions
 
-- **Blocks B12:** How long is a photograph of a person or a document kept? Asked on
-  21 Aug 2026 and answered "90 days", which **cannot be recorded as settled** because it
-  contradicts three things already written down: B12 itself says a photograph is kept no
-  longer than the questionnaire needs it; a questionnaire lives 24 hours by default and
-  7 days at the most; and the answering spec's invariants say sessions are ephemeral, the
-  questionnaire is *gone* an hour after submit, expiry or cancel, and this product keeps no
-  long-term archive of answers. Ninety days is also exactly lanyard's maximum token life,
-  which is what makes it look like a number reached for by analogy.
+- **Settled 22 Aug 2026 — a photograph dies with the questionnaire that asked for it.**
+  No separate retention period, and nothing survives the session. A questionnaire lives 24
+  hours by default and 7 days at the very most, and is gone an hour after submit, expiry or
+  cancel — so a photograph's outside life is 7 days and an hour, and its usual life is a day.
+  B12 needed no change to say this; it already said *kept no longer than the questionnaire
+  needs it*, and this makes that the whole answer rather than a gesture at one.
 
-  The real choice is narrower than it looks. Either a photograph dies with the questionnaire
-  that asked for it — at most 7 days and 1 hour, and B12 needs no change — or photographs
-  become the one thing this product retains beyond a session, which is a change to what
-  askmeatsack *is* and needs the ephemerality invariant rewritten rather than quietly
-  contradicted. **Still blocking. The most sensitive thing the product would hold should not
-  acquire a retention period by accident.**
+  Ninety days was considered and rejected. It would have made photographs the one thing
+  askmeatsack retains beyond a session, which contradicts the ephemerality invariants in
+  [answering](../sessions/answering.md) rather than extending them, and it would have applied
+  the longest life in the estate to the most sensitive thing in it.
+
 - **Blocks B1:** Can one shot hold several photographs — *the damage, from three angles* —
   or is each angle its own named shot? Named shots are clearer for the agent and longer for
   the person.

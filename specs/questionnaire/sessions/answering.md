@@ -178,13 +178,13 @@ A file attached to an answer is checked for malware before it can be downloaded.
 an answer, the file cannot be read and whoever asks is told it is still being checked. A file
 found to be infected is removed and never served.
 
-### B40 — A diagram can be opened bigger 🔵 future
+### B42 — A diagram can be opened bigger 🔵 future
 
 A diagram in the material beside a question can be opened larger and closed again, on any screen
 size. Nothing else about the question changes while it is open, and a part-typed answer is still
 there afterwards. A flow worth asking about is usually drawn too small to read.
 
-### B41 — A card number is never stored in an answer 🔵 future
+### B43 — A card number is never stored in an answer 🔵 future
 
 A text answer that looks like a payment card number is refused and not stored, and the person is
 told not to put card details into a questionnaire. This holds whether or not payments are ever

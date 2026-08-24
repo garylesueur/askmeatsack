@@ -1,6 +1,7 @@
 {
   "ignorePatterns": [
     "**/*.md",
+    ".agents/**",
     ".agents/plugins/**",
     ".mcp.json",
     ".next/**",
