@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_TAGLINE, SITE_TITLE, siteJsonLd } from "@/lib/agent-docs";
 import { ColorSchemeSync } from "@/components/color-scheme-sync";
+import { COLOR_MODE_BOOT_SCRIPT } from "@/lib/color-mode";
 import { publicOrigin } from "@/lib/public-origin";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-
-const SYSTEM_DARK_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark');}}catch(e){}})();`;
 
 const geist = Geist({
   subsets: ["latin"],
@@ -72,7 +71,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
-        <script dangerouslySetInnerHTML={{ __html: SYSTEM_DARK_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: COLOR_MODE_BOOT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

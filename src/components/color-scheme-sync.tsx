@@ -9,7 +9,8 @@ function syncSystemDark(): void {
   }
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   root.classList.toggle("dark", systemDark);
-  root.classList.remove("light");
+  root.classList.toggle("light", !systemDark);
+  root.setAttribute("data-theme", systemDark ? "dark" : "light");
 }
 
 export function ColorSchemeSync() {

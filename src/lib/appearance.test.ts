@@ -23,6 +23,10 @@ describe("questionnaire appearance", () => {
     expect(resolveEffectiveMode(undefined, null)).toBe("system");
   });
 
+  it("lets a stored Auto follow the device, not the agent's last hint", () => {
+    expect(resolveEffectiveMode({ mode: "dark" }, "auto")).toBe("system");
+  });
+
   it("keeps mode as a light or dark override, not a different theme", () => {
     expect(resolveTheme({ mode: "light" })).toBe("ask");
     expect(resolveMode({ mode: "light" })).toBe("light");
