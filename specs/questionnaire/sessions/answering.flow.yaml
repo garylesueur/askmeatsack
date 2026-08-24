@@ -77,14 +77,14 @@ flows:
         event: Submit
         to: thank_you
         guard: Every required question has a valid answer.
-        covers: [B5, B6, B19]
+        covers: [B5, B6, B19, B40]
       - id: F1.T8
         from: review
         event: Submit
         to: review
         outcome: Submit is refused. The human is told what is missing.
         guard: A required question has no valid answer.
-        covers: [B6]
+        covers: [B6, B40]
       - id: F1.T9
         from: answering
         event: Time runs out
@@ -143,6 +143,20 @@ flows:
         to: answering
         outcome: The chosen question is shown. Saved answers are still there.
         covers: [B2, B3]
+      - id: F1.T21
+        from: answering
+        event: Draw
+        to: answering
+        outcome: The sketch is saved.
+        guard: The question is a sketch and the scene is usable.
+        covers: [B3, B40]
+      - id: F1.T22
+        from: answering
+        event: Draw
+        to: answering
+        outcome: The sketch is refused. Any previous answer on that question is unchanged.
+        guard: The question is not a sketch, or the scene is not usable.
+        covers: [B9, B40]
       - id: F1.T19
         from: review
         event: Time runs out

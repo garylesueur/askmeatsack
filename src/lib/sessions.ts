@@ -1,8 +1,10 @@
 import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { after } from "next/server";
 import type { ZodError } from "zod";
 import {
   SESSION_DEFAULT_TTL_SECONDS,
   SESSION_READ_WINDOW_SECONDS,
+  WAIT_BUDGET_SECONDS,
   WAIT_MAX_SECONDS,
   createSessionSchema,
   editSessionSchema,
@@ -16,6 +18,7 @@ import {
   type QuestionIssue,
 } from "./schema";
 import { answersDownloadMarkdown } from "./answers-download";
+import { parseSketchBackground } from "./sketch-background";
 import { previewTokenMatches } from "./preview-token";
 import { sessionPreview, type SessionPreview } from "./session-preview";
 import { callbackHostResolvesPublicly } from "./callback-dns";
@@ -40,7 +43,15 @@ export type SessionServiceDeps = {
   createToken: () => string;
   publicBaseUrl: string;
   sleep: (ms: number) => Promise<void>;
-  postCallback: (url: string, body: unknown) => Promise<void>;
+  /** Resolves true only when the callback was actually delivered. */
+  postCallback: (url: string, body: unknown) => Promise<boolean>;
+  /**
+   * Runs work after the response has gone back to the caller. Callback delivery
+   * is retried, and the person who just pressed submit should not be made to
+   * wait through those retries. Defaults to running inline, which is what tests
+   * and any non-serverless host want.
+   */
+  scheduleAfterResponse?: (task: () => Promise<void>) => void;
   waitPollMs?: number;
 };
 
@@ -107,6 +118,32 @@ export type AgentSessionView = {
   questions: Session["questions"];
   answerUrl: string;
   manageUrl: string;
+  /** Only present when a callbackUrl was set, so absent never reads as failed. */
+  callback?: CallbackDelivery;
+};
+
+/**
+ * What became of the one callback POST. A hook that quietly failed has to look
+ * different from a hook that was never configured, or the agent cannot know to
+ * fall back to polling.
+ */
+export type CallbackDelivery = {
+  url: string;
+  attemptedAt: string | null;
+  delivered: boolean | null;
+};
+
+/**
+ * A bounded wait that ran out of time still returns the session, so the shape
+ * carries the fact that nothing has arrived and what to do about it. Without
+ * this, a timed-out wait is byte-identical to a status read and an agent has no
+ * reason to call again.
+ */
+export type WaitResult = AgentSessionView & {
+  timedOut: boolean;
+  waitedSeconds: number;
+  nextAction?: "wait";
+  hint?: string;
 };
 
 export type PublicSessionView = {
@@ -133,6 +170,8 @@ export type DownloadAnswers = {
     text?: string;
     entries?: Record<string, string>;
     files?: SessionFile[];
+    sketch?: SessionAnswer["sketch"];
+    previewUrl?: string;
   }>;
 };
 
@@ -191,6 +230,18 @@ function isTerminalStatus(status: Session["status"]): boolean {
 }
 
 const WAIT_POLL_MS = 50;
+/**
+ * Three tries, ~5s of waiting between them. One cold receiver used to lose the
+ * hook for good; this runs after the response, so it costs the person who
+ * pressed submit nothing.
+ */
+const CALLBACK_BACKOFF_MS = [0, 1_000, 4_000];
+/** Was 3s, which failed receivers that were merely cold rather than broken. */
+const CALLBACK_TIMEOUT_MS = 8_000;
+
+function isSketchQuestion(question: Session["questions"][number]): boolean {
+  return questionKind(question) === "sketch";
+}
 
 function isTextQuestion(question: Session["questions"][number]): boolean {
   return questionKind(question) === "text";
@@ -211,12 +262,27 @@ function questionIsAnswered(
   if (isEntryQuestion(question)) {
     return entriesAreComplete(question, answer.entries);
   }
+  if (isSketchQuestion(question)) {
+    return (answer.sketch?.shapes.length ?? 0) > 0;
+  }
   if (isTextQuestion(question)) {
     const hasText = Boolean(answer.text && answer.text.trim().length > 0);
     const hasFiles = Boolean(question.allowFiles && (answer.files?.length ?? 0) > 0);
     return hasText || hasFiles;
   }
   return answer.selectedOptionIds.length > 0;
+}
+
+/**
+ * Why an agent that just timed out should go again. A person taking a long time
+ * is the normal case, not a fault, and the reply is the only place left to say
+ * so by the time the agent reads it.
+ */
+function waitHint(session: Session): string {
+  const opened = session.openedAt
+    ? "They have opened the link but have not submitted yet."
+    : "Nobody has opened the link yet.";
+  return `${opened} Call wait again with the same sessionId to keep waiting — a person may take minutes or hours, and the questionnaire stays answerable until ${session.expiresAt}. If you cannot keep looping, set a callbackUrl and stop waiting.`;
 }
 
 function agentView(
@@ -237,6 +303,15 @@ function agentView(
     questions: session.questions,
     answerUrl: urls.answerUrl,
     manageUrl: urls.manageUrl,
+    ...(session.callbackUrl
+      ? {
+          callback: {
+            url: session.callbackUrl,
+            attemptedAt: session.callbackAttemptedAt ?? null,
+            delivered: session.callbackDelivered ?? null,
+          },
+        }
+      : {}),
   };
 }
 
@@ -331,6 +406,15 @@ function downloadAnswersFrom(session: Session): DownloadAnswers {
     if (answer?.files && answer.files.length > 0) {
       row.files = answer.files;
     }
+    if (answer?.sketch) {
+      row.sketch = answer.sketch;
+    }
+    if (answer?.previewFileId) {
+      const preview = session.uploads?.[answer.previewFileId];
+      if (preview?.url) {
+        row.previewUrl = preview.url;
+      }
+    }
     answers.push(row);
   }
   return {
@@ -357,7 +441,17 @@ function fileGuard(session: Session, questionId: string): SessionServiceError | 
     return frozenError();
   }
   const question = session.questions.find((candidate) => candidate.id === questionId);
-  if (!question || !question.allowFiles) {
+  if (!question) {
+    return {
+      code: "invalid_answer",
+      message: "This question does not allow files",
+      status: 400,
+    };
+  }
+  if (isSketchQuestion(question)) {
+    return null;
+  }
+  if (!question.allowFiles) {
     return {
       code: "invalid_answer",
       message: "This question does not allow files",
@@ -422,6 +516,43 @@ export function createSessionService(deps: SessionServiceDeps) {
 
   function fileUrlFor(session: Session, fileId: string): string {
     return `${baseUrl}/api/v1/sessions/${session.id}/files/${encodeURIComponent(fileId)}?t=${encodeURIComponent(session.publicToken)}`;
+  }
+
+  function applySketchBackgrounds(
+    questions: Session["questions"],
+    session: Session,
+    previous?: Session,
+  ): { questions: Session["questions"]; uploads: Record<string, SessionFile> } {
+    const uploads = { ...(previous?.uploads ?? session.uploads) };
+    const nextQuestions: Session["questions"] = [];
+    for (const question of questions) {
+      const stored = { ...question };
+      delete stored.background;
+      if (question.background && question.sketch) {
+        const parsed = parseSketchBackground(question.background);
+        if (parsed.ok) {
+          const fileId = randomUUID();
+          const file: SessionFile = {
+            id: fileId,
+            questionId: question.id,
+            filename: parsed.filename,
+            contentType: parsed.contentType,
+            size: parsed.bytes.length,
+            key: `inline:${parsed.bytes.toString("base64")}`,
+            url: fileUrlFor(session, fileId),
+          };
+          uploads[fileId] = file;
+          stored.backgroundFileId = fileId;
+        }
+      } else if (!stored.backgroundFileId && previous) {
+        const prior = previous.questions.find((candidate) => candidate.id === question.id);
+        if (prior?.backgroundFileId && question.sketch) {
+          stored.backgroundFileId = prior.backgroundFileId;
+        }
+      }
+      nextQuestions.push(stored);
+    }
+    return { questions: nextQuestions, uploads };
   }
 
   async function hydrate(session: Session): Promise<Session | SessionServiceError> {
@@ -522,16 +653,48 @@ export function createSessionService(deps: SessionServiceDeps) {
     if (!session.callbackUrl || session.callbackSent) {
       return;
     }
-    await deps.store.save({ ...session, callbackSent: true });
-    try {
-      await deps.postCallback(session.callbackUrl, {
-        sessionId: session.id,
-        status: session.status,
-        answers: session.answers,
-      });
-    } catch {
+    const url = session.callbackUrl;
+    const body = {
+      sessionId: session.id,
+      status: session.status,
+      answers: session.answers,
+    };
+    // Claim the attempt before making it, so two terminal writes racing each
+    // other cannot both deliver. What came of it is written back afterwards.
+    const claimed: Session = {
+      ...session,
+      callbackSent: true,
+      callbackAttemptedAt: deps.now().toISOString(),
+    };
+    await deps.store.save(claimed);
+
+    const deliver = async (): Promise<void> => {
+      let delivered = false;
+      for (const backoffMs of CALLBACK_BACKOFF_MS) {
+        if (backoffMs > 0) {
+          await deps.sleep(backoffMs);
+        }
+        try {
+          delivered = await deps.postCallback(url, body);
+        } catch {
+          delivered = false;
+        }
+        if (delivered) {
+          break;
+        }
+      }
+      // Re-read rather than writing `claimed` back: the retries may have been
+      // running for half a minute, and answers are not worth losing to that.
+      const latest = await deps.store.getById(session.id);
+      await deps.store.save({ ...(latest ?? claimed), callbackDelivered: delivered });
+    };
+
+    const schedule = deps.scheduleAfterResponse;
+    if (schedule) {
+      schedule(deliver);
       return;
     }
+    await deliver();
   }
 
   const service = {
@@ -568,6 +731,9 @@ export function createSessionService(deps: SessionServiceDeps) {
         metadata: input.metadata,
         callbackUrl: input.callbackUrl,
       };
+      const withBackgrounds = applySketchBackgrounds(input.questions, session);
+      session.questions = withBackgrounds.questions;
+      session.uploads = withBackgrounds.uploads;
       await deps.store.save(session);
       const urls = urlsFor(session);
       const created: CreateSessionResult = {
@@ -662,7 +828,12 @@ export function createSessionService(deps: SessionServiceDeps) {
         next = { ...next, context: patch.context };
       }
       if (patch.questions !== undefined) {
-        next = { ...next, questions: patch.questions };
+        const withBackgrounds = applySketchBackgrounds(patch.questions, next, session);
+        next = {
+          ...next,
+          questions: withBackgrounds.questions,
+          uploads: withBackgrounds.uploads,
+        };
       }
       if (patch.appearance !== undefined) {
         next = { ...next, appearance: patch.appearance };
@@ -806,6 +977,79 @@ export function createSessionService(deps: SessionServiceDeps) {
           code: "invalid_answer",
           message: "This question does not allow files",
           status: 400,
+        };
+      }
+
+      if (isSketchQuestion(question)) {
+        if (
+          parsed.data.selectedOptionIds !== undefined ||
+          parsed.data.text !== undefined ||
+          parsed.data.entries !== undefined ||
+          parsed.data.fileIds !== undefined
+        ) {
+          return {
+            code: "invalid_answer",
+            message: "Sketch questions only take a scene",
+            status: 400,
+          };
+        }
+        const previous = session.answers[input.questionId];
+        const sketch = parsed.data.sketch ?? previous?.sketch;
+        if (!sketch && parsed.data.previewFileId === undefined) {
+          return {
+            code: "invalid_answer",
+            message: "Sketch is not usable",
+            status: 400,
+          };
+        }
+        let previewFileId = parsed.data.previewFileId ?? previous?.previewFileId;
+        if (parsed.data.previewFileId !== undefined) {
+          const uploaded = session.uploads?.[parsed.data.previewFileId];
+          if (!uploaded || uploaded.questionId !== input.questionId) {
+            return {
+              code: "invalid_answer",
+              message: "File is not on this question",
+              status: 400,
+            };
+          }
+          previewFileId = parsed.data.previewFileId;
+        }
+        if (!sketch || sketch.shapes.length === 0) {
+          const { [input.questionId]: _removed, ...rest } = session.answers;
+          const next: Session = {
+            ...session,
+            answers: rest,
+            status:
+              Object.keys(rest).length === 0 && session.status === "in_progress"
+                ? "pending"
+                : session.status,
+          };
+          await deps.store.save(next);
+          return {
+            questionId: input.questionId,
+            progress: progressFor(next),
+          };
+        }
+        const nextAnswer: SessionAnswer = {
+          selectedOptionIds: [],
+          answeredAt: deps.now().toISOString(),
+          sketch,
+        };
+        if (previewFileId) {
+          nextAnswer.previewFileId = previewFileId;
+        }
+        const next: Session = {
+          ...session,
+          status: session.status === "pending" ? "in_progress" : session.status,
+          answers: {
+            ...session.answers,
+            [input.questionId]: nextAnswer,
+          },
+        };
+        await deps.store.save(next);
+        return {
+          questionId: input.questionId,
+          progress: progressFor(next),
         };
       }
 
@@ -1068,6 +1312,27 @@ export function createSessionService(deps: SessionServiceDeps) {
         url: fileUrlFor(session, fileId),
       };
       const previous = session.answers[input.questionId];
+      const question = session.questions.find((candidate) => candidate.id === input.questionId);
+      const nextUploads = { ...session.uploads, [file.id]: file };
+      if (question && isSketchQuestion(question)) {
+        const nextAnswer: SessionAnswer | undefined = previous?.sketch
+          ? {
+              selectedOptionIds: [],
+              answeredAt: deps.now().toISOString(),
+              sketch: previous.sketch,
+              previewFileId: file.id,
+            }
+          : previous;
+        const next: Session = {
+          ...session,
+          uploads: nextUploads,
+          answers: nextAnswer
+            ? { ...session.answers, [input.questionId]: nextAnswer }
+            : session.answers,
+        };
+        await deps.store.save(next);
+        return { file, progress: progressFor(next) };
+      }
       const nextAnswer: SessionAnswer = {
         selectedOptionIds: previous?.selectedOptionIds ?? [],
         answeredAt: deps.now().toISOString(),
@@ -1236,7 +1501,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       agentToken?: string;
       hasCreateCredential: boolean;
       body: unknown;
-    }): Promise<AgentSessionView | SessionServiceError> {
+    }): Promise<WaitResult | SessionServiceError> {
       const parsed = waitSchema.safeParse(input.body);
       if (!parsed.success) {
         return {
@@ -1246,7 +1511,13 @@ export function createSessionService(deps: SessionServiceDeps) {
         };
       }
 
-      const deadline = deps.now().getTime() + parsed.data.seconds * 1000;
+      // Sit for the bound the agent asked for, but never past the budget: the
+      // function is killed at WAIT_FUNCTION_MAX_SECONDS, and a loop that runs
+      // to the wire dies before it can answer. Returning early is inside the
+      // contract; returning a 504 is not.
+      const startedAt = deps.now().getTime();
+      const waitSeconds = Math.min(parsed.data.seconds, WAIT_BUDGET_SECONDS);
+      const deadline = startedAt + waitSeconds * 1000;
       const pollMs = deps.waitPollMs ?? WAIT_POLL_MS;
       while (true) {
         const session = await loadForAgent({
@@ -1257,12 +1528,26 @@ export function createSessionService(deps: SessionServiceDeps) {
         if (isServiceError(session)) {
           return session;
         }
+        const waitedSeconds = Math.round((deps.now().getTime() - startedAt) / 1000);
         if (isTerminalStatus(session.status)) {
-          return agentView(session, urlsFor(session));
+          return {
+            ...agentView(session, urlsFor(session)),
+            timedOut: false,
+            waitedSeconds,
+          };
         }
         const remaining = deadline - deps.now().getTime();
         if (remaining <= 0) {
-          return agentView(session, urlsFor(session));
+          // The instruction has to travel in the payload. By now the agent is a
+          // long way from whatever told it to loop, and a bare pending status
+          // is indistinguishable from a status read it already has.
+          return {
+            ...agentView(session, urlsFor(session)),
+            timedOut: true,
+            waitedSeconds,
+            nextAction: "wait",
+            hint: waitHint(session),
+          };
         }
         await deps.sleep(Math.min(pollMs, remaining));
       }
@@ -1271,21 +1556,21 @@ export function createSessionService(deps: SessionServiceDeps) {
   return service;
 }
 
-export async function postCallbackJson(url: string, body: unknown): Promise<void> {
+export async function postCallbackJson(url: string, body: unknown): Promise<boolean> {
   // Re-checked at delivery, not just at create: the name may resolve somewhere
   // else by now, and this is the moment the request actually goes out.
   const checked = callbackUrlIsUsable(url);
   if (!checked.ok) {
-    return;
+    return false;
   }
   if (!(await callbackHostResolvesPublicly(checked.url.hostname))) {
-    return;
+    return false;
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
-  }, 3000);
+  }, CALLBACK_TIMEOUT_MS);
   try {
     const response = await fetch(checked.url, {
       method: "POST",
@@ -1297,10 +1582,11 @@ export async function postCallbackJson(url: string, body: unknown): Promise<void
       redirect: "manual",
     });
     // Read nothing back. The body is not wanted and reading it is a way to be
-    // held open by a slow responder.
-    void response.status;
+    // held open by a slow responder. The status is the whole answer: anything
+    // outside 2xx is a receiver that did not take it, and worth another try.
+    return response.status >= 200 && response.status < 300;
   } catch {
-    return;
+    return false;
   } finally {
     clearTimeout(timer);
   }
@@ -1324,5 +1610,11 @@ export function defaultSessionServiceDeps(store: SessionStore): SessionServiceDe
         setTimeout(resolve, ms);
       }),
     postCallback: postCallbackJson,
+    // Retries run after the response, so pressing submit stays instant even
+    // when the receiving end is down. `after` is bounded by the route's own
+    // maxDuration, which is why the submit route names one.
+    scheduleAfterResponse: (task) => {
+      after(task);
+    },
   };
 }

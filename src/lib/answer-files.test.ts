@@ -5,6 +5,8 @@ import {
   createAnswerFileStore,
   fileObjectKey,
   fileStoreAvailable,
+  bytesFromInlineKey,
+  inlineStorageKey,
   publicFileUrl,
   r2ObjectUrl,
   readR2Config,
@@ -165,5 +167,13 @@ describe("stored file keys", () => {
     expect(contentDispositionFilename('nasty"name.pdf')).toBe(
       'attachment; filename="nasty_name.pdf"',
     );
+  });
+});
+
+describe("inline file keys", () => {
+  it("round-trips bytes through the inline storage key", () => {
+    const payload = Buffer.from("png-bytes");
+    const key = inlineStorageKey(payload);
+    expect(bytesFromInlineKey(key)?.equals(payload)).toBe(true);
   });
 });

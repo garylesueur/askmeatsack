@@ -31,10 +31,10 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
     `- Submit: \`POST ${input.submitUrl}\``,
   );
 
-  const needsFiles = input.questions.some((question) => question.allowFiles);
+  const needsFiles = input.questions.some((question) => question.allowFiles || question.sketch);
   if (needsFiles) {
     lines.push(
-      `- Upload a file: \`POST ${input.filesUrl}\` as multipart field \`file\` with query \`questionId\`. Same public token. Then put the returned \`id\` in \`fileIds\`.`,
+      `- Upload a file: \`POST ${input.filesUrl}\` as multipart field \`file\` with query \`questionId\`. Same public token. Then put the returned \`id\` in \`fileIds\` (or \`previewFileId\` for a sketch snapshot).`,
     );
   }
 
@@ -63,6 +63,14 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
     const kind = questionKind(question);
     if (kind === "text") {
       lines.push("", "Free text (max 2000 characters).");
+    } else if (kind === "sketch") {
+      lines.push(
+        "",
+        "Sketch. Draw with pen, line, rectangle, ellipse, arrow, or text. Answer with `sketch` (shapes on a 0–1 board). Upload a PNG snapshot of the board, then set `previewFileId`.",
+      );
+      if (question.backgroundFileId) {
+        lines.push("This question has a background picture. The scene is only what they drew.");
+      }
     } else if (kind === "items" || kind === "fields") {
       lines.push("", kind === "items" ? "Rows:" : "Fields:");
       const rows = questionEntries(question);

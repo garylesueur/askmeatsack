@@ -27,8 +27,9 @@ Use this in a live chat, or from an unattended job that still needs facts, files
 
 1. Call `askmeatsack.com` with action `create` (or `POST /api/v1/sessions`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or `appearance` (`theme`: `ask`, `paper`, `grove`, or `ember`). Omit `appearance` to follow the person’s system light or dark. Each theme has both modes. Set `mode` to `light` or `dark` only if you must force one. Set `allowFiles` on a question if they should attach files (they can choose, drop, or take a photo; at most five, 4 MB each). The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
 2. You always get `answerUrl`, `machineUrl`, `pollUrl`, and `manageUrl` immediately. Paste **`answerUrl` into this conversation** so the person answering can open it. Keep `manageUrl` for yourself: open it, or fetch it as markdown, to see the questions and status. The manage page is a stacked owner summary — it is not what the human sees. While nobody has answered, action `edit` (or `PATCH` the session) can change title, context, questions, appearance, or expiry. The answer link stays the same. If the respondent is an agent, they can fetch `answerUrl` with `Accept: text/markdown`, or `machineUrl`, then PUT answers as JSON. Do not wait for them to ask for the link.
-3. Wait with action `wait` (pass `sessionId` and `agentToken` from `pollUrl`; at most 60 seconds per call; loop if you need longer), poll `status` the same way, or use `callbackUrl` if you set one. On a terminal status the service POSTs `{ sessionId, status, answers }` to that URL once. A failed POST does not undo the status.
-4. When status is `submitted`, continue with the answers. `expired` and `cancelled` are finished too — do not keep asking.
+3. Wait with action `wait` (pass `sessionId` and `agentToken` from `pollUrl`). One call sits for up to 50 seconds. That is how long a request may hang, not how long the person has — the questionnaire stays answerable until it expires, 24 hours by default. If nothing has been submitted yet the reply says `timedOut: true` and `nextAction: "wait"`: **call `wait` again, and keep calling.** Someone taking ten minutes or two hours is the normal case, not a fault. Poll `status` the same way if you would rather not hold the line.
+4. If you cannot sit in that loop, set `callbackUrl` at create instead. On a terminal status the service POSTs `{ sessionId, status, answers }` to it once, retrying a few times if the receiver is down. `status` and `wait` then report `callback.delivered`, so a hook that failed does not read like one you never set. A failed POST does not undo the status.
+5. When status is `submitted`, continue with the answers. `expired` and `cancelled` are finished too — do not keep asking.
 
 ## When you are running a job
 
@@ -38,7 +39,7 @@ One person, one questionnaire. Each ask is unique to what you still need from th
 
 Put their record key (employee id, ticket, email) in `metadata` so you can match the answers when they come back. The human never sees that metadata.
 
-Put `answerUrl` wherever you already reach them — chat, mail, or anything else you can already send. This service does not send mail. Set `callbackUrl` if you will not sit waiting in a conversation; you can still poll `status` or `wait` later. On a terminal status the service POSTs `{ sessionId, status, answers }` once. Then continue the job with those answers.
+Put `answerUrl` wherever you already reach them — chat, mail, or anything else you can already send. This service does not send mail. Set `callbackUrl` if you will not sit waiting in a conversation; you can still poll `status` or `wait` later. On a terminal status the service POSTs `{ sessionId, status, answers }` once, retrying a few times if the receiver is down, and records the outcome in `callback.delivered`. Check it — if delivery failed, fall back to polling rather than waiting for a hook that will not arrive. Then continue the job with those answers.
 
 ## What a question can carry
 
@@ -51,6 +52,8 @@ Use that when you need more than a tap: leftover invoices, a sketch of a situati
 Do not use “I will answer in the comment” when the human should fill in known rows or named amounts. Use `items` (two to sixteen rows, each with `id`, `label`, optional `hint`) or `fields` (two to eight named boxes). The human types beside each row. Answers come back as `entries` keyed by those ids. A question cannot mix options, items, and fields.
 
 `allowComment` is only valid on a choice, items, or fields question. Do not set it on free text or on a photo-only question (no options, items, or fields). Free text already is the comment; `allowFiles` does not make a comment legal. Photo plus comment works when the question also has options, items, or fields.
+
+For a drawing, set `sketch: true` on the question (no options, items, fields, comment, or files). The human draws with pen, line, rectangle, ellipse, arrow, and text. Status returns `sketch` (shapes on a 0–1 board) plus `previewFileId` when a PNG snapshot was uploaded. Optional create-time `background` (`filename`, `contentType`, `data` as base64) puts a picture under the drawing; the scene is still only what they drew. A background that is not a usable image is refused and no answer link is returned.
 
 For money, set `input: "money"` and an ISO 4217 `currency` on the row or the question (`GBP`, `USD`, `EUR`). Put a known figure in `amount` as a canonical decimal (`2476.80`), not in the label. The human sees a formatted amount, and a currency-prefixed box when they type money. Answers stay canonical decimals in that currency. Do not convert. Mixed currencies are per-row. If a choice option is an amount, put the symbol in the label (`£6,500`).
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { callbackUrlIsUsable } from "./callback-url";
 import { isIsoCurrency, parseMoney } from "./money";
+import { parseSketchBackground } from "./sketch-background";
 
 export const SESSION_DEFAULT_TTL_SECONDS = 86_400;
 export const SESSION_MAX_TTL_SECONDS = 7 * 86_400;
@@ -11,6 +12,22 @@ export const QUESTION_DETAIL_MAX_CHARS = 8_000;
 export const QUESTION_ITEMS_MAX = 16;
 export const QUESTION_FIELDS_MAX = 8;
 export const WAIT_MAX_SECONDS = 60;
+/**
+ * What one `wait` call actually sits for, however long the agent asked for.
+ *
+ * The bound above is the contract; this is the room the handler needs to answer
+ * inside it. A serverless function is killed at `WAIT_FUNCTION_MAX_SECONDS`, so
+ * a loop allowed to burn the whole bound dies before it can return and the
+ * caller sees a 504 instead of a status. Waiting less than asked is inside the
+ * contract; the response says `nextAction: "wait"` and the agent goes again.
+ */
+export const WAIT_BUDGET_SECONDS = 50;
+/**
+ * Mirrors `export const maxDuration` in the wait and MCP routes. Next.js needs
+ * that literal to be statically analysable, so those files cannot import this
+ * one; `wait-budget.test.ts` fails if the two ever drift apart.
+ */
+export const WAIT_FUNCTION_MAX_SECONDS = 60;
 export const FILE_MAX_BYTES = 4 * 1024 * 1024;
 export const FILE_MAX_COUNT = 5;
 export const QUESTION_OPTIONS_MAX = 8;
@@ -23,6 +40,9 @@ export const METADATA_VALUE_MAX_CHARS = 200;
 export const QUESTION_OPTIONS_MIN = 2;
 export const QUESTION_ITEMS_MIN = 2;
 export const QUESTION_FIELDS_MIN = 2;
+export const SKETCH_SHAPES_MAX = 200;
+export const SKETCH_PEN_POINTS_MAX = 500;
+export const SKETCH_LABEL_MAX_CHARS = 100;
 
 export type QuestionIssue = {
   questionId?: string;
@@ -73,6 +93,12 @@ const QUESTION_ISSUE_MESSAGES: Record<string, string> = {
   invalid_currency: "Currency must be a three-letter ISO 4217 code",
   comment_needs_shape: "allowComment is only valid on a choice, items, or fields question",
   mixed_shapes: "A question cannot mix options, items, and fields",
+  sketch_mixed: "A sketch question cannot have options, items, or fields",
+  sketch_no_comment: "allowComment is not valid on a sketch question",
+  sketch_no_files: "allowFiles is not valid on a sketch question",
+  sketch_no_choice_fields: "Sketch questions cannot have choice fields",
+  sketch_background_not_sketch: "A background picture is only valid on a sketch question",
+  sketch_background_unusable: "Sketch background must be a usable image",
   money_needs_currency: "Money rows need a currency",
   amount_needs_currency: "An amount needs a currency",
   invalid_amount: "Amount is not a usable money value",
@@ -95,8 +121,17 @@ export const questionSchema = z.object({
   required: z.boolean().optional().default(true),
   allowComment: z.boolean().optional().default(false),
   allowFiles: z.boolean().optional().default(false),
+  sketch: z.boolean().optional(),
   recommendedOptionId: z.string().min(1).optional(),
   currency: isoCurrencySchema.optional(),
+  backgroundFileId: z.string().min(1).optional(),
+  background: z
+    .object({
+      filename: z.string().min(1).max(200),
+      contentType: z.string().min(1).max(100),
+      data: z.string().min(1),
+    })
+    .optional(),
 });
 
 function addQuestionIssue(
@@ -134,9 +169,10 @@ function refineQuestionList(
     const options = question.options ?? [];
     const items = question.items ?? [];
     const fields = question.fields ?? [];
-    const shaped =
+    const sketch = question.sketch === true;
+    const classicShapeCount =
       (options.length > 0 ? 1 : 0) + (items.length > 0 ? 1 : 0) + (fields.length > 0 ? 1 : 0);
-    if (shaped > 1) {
+    if (classicShapeCount > 1) {
       addQuestionIssue(
         ctx,
         index,
@@ -145,9 +181,72 @@ function refineQuestionList(
         QUESTION_ISSUE_MESSAGES.mixed_shapes,
       );
     }
+    if (sketch && classicShapeCount > 0) {
+      addQuestionIssue(
+        ctx,
+        index,
+        question.id,
+        "sketch_mixed",
+        QUESTION_ISSUE_MESSAGES.sketch_mixed,
+      );
+    }
 
     if (options.length === 1) {
       addQuestionIssue(ctx, index, question.id, "options_min", QUESTION_ISSUE_MESSAGES.options_min);
+    }
+
+    const hasBackground = Boolean(question.background || question.backgroundFileId);
+    if (hasBackground && !sketch) {
+      addQuestionIssue(
+        ctx,
+        index,
+        question.id,
+        "sketch_background_not_sketch",
+        QUESTION_ISSUE_MESSAGES.sketch_background_not_sketch,
+      );
+    }
+
+    if (sketch) {
+      if (question.background) {
+        const parsedBackground = parseSketchBackground(question.background);
+        if (!parsedBackground.ok) {
+          addQuestionIssue(
+            ctx,
+            index,
+            question.id,
+            parsedBackground.code,
+            parsedBackground.message,
+          );
+        }
+      }
+      if (question.allowComment) {
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "sketch_no_comment",
+          QUESTION_ISSUE_MESSAGES.sketch_no_comment,
+        );
+      }
+      if (question.allowFiles) {
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "sketch_no_files",
+          QUESTION_ISSUE_MESSAGES.sketch_no_files,
+        );
+      }
+      if (question.allowMultiple || question.recommendedOptionId) {
+        addQuestionIssue(
+          ctx,
+          index,
+          question.id,
+          "sketch_no_choice_fields",
+          QUESTION_ISSUE_MESSAGES.sketch_no_choice_fields,
+        );
+      }
+      continue;
     }
 
     if (options.length === 0 && items.length === 0 && fields.length === 0) {
@@ -445,19 +544,85 @@ export const sessionStatusSchema = z.enum([
 
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 
+const sketchCoord = z.number().min(0).max(1);
+const sketchPointSchema = z.object({
+  x: sketchCoord,
+  y: sketchCoord,
+});
+const sketchLabelSchema = z.string().min(1).max(SKETCH_LABEL_MAX_CHARS).optional();
+
+export const sketchShapeSchema = z.discriminatedUnion("type", [
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("pen"),
+    points: z.array(sketchPointSchema).min(1).max(SKETCH_PEN_POINTS_MAX),
+    label: sketchLabelSchema,
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("line"),
+    from: sketchPointSchema,
+    to: sketchPointSchema,
+    label: sketchLabelSchema,
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("arrow"),
+    from: sketchPointSchema,
+    to: sketchPointSchema,
+    label: sketchLabelSchema,
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("rectangle"),
+    x: sketchCoord,
+    y: sketchCoord,
+    width: sketchCoord,
+    height: sketchCoord,
+    label: sketchLabelSchema,
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("ellipse"),
+    x: sketchCoord,
+    y: sketchCoord,
+    width: sketchCoord,
+    height: sketchCoord,
+    label: sketchLabelSchema,
+  }),
+  z.object({
+    id: z.string().min(1),
+    type: z.literal("text"),
+    x: sketchCoord,
+    y: sketchCoord,
+    label: z.string().min(1).max(SKETCH_LABEL_MAX_CHARS),
+  }),
+]);
+
+export const sketchSceneSchema = z.object({
+  shapes: z.array(sketchShapeSchema).max(SKETCH_SHAPES_MAX),
+});
+
+export type SketchScene = z.infer<typeof sketchSceneSchema>;
+export type SketchShape = z.infer<typeof sketchShapeSchema>;
+
 export const saveAnswerSchema = z
   .object({
     selectedOptionIds: z.array(z.string().min(1)).min(1).optional(),
     text: z.string().max(TEXT_ANSWER_MAX_CHARS).optional(),
     fileIds: z.array(z.string().min(1)).max(FILE_MAX_COUNT).optional(),
     entries: z.record(z.string().min(1), z.string().max(ENTRY_ANSWER_MAX_CHARS)).optional(),
+    sketch: sketchSceneSchema.optional(),
+    previewFileId: z.string().min(1).optional(),
   })
   .superRefine((value, ctx) => {
     if (
       value.selectedOptionIds === undefined &&
       value.text === undefined &&
       value.fileIds === undefined &&
-      value.entries === undefined
+      value.entries === undefined &&
+      value.sketch === undefined &&
+      value.previewFileId === undefined
     ) {
       ctx.addIssue({
         code: "custom",

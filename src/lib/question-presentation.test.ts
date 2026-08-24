@@ -39,6 +39,7 @@ describe("questionKind", () => {
         fields: [{ id: "vat" }, { id: "paye" }],
       }),
     ).toBe("fields");
+    expect(questionKind({ options: [], sketch: true })).toBe("sketch");
   });
 
   it("needs every row filled", () => {

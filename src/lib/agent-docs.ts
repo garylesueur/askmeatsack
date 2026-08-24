@@ -111,7 +111,7 @@ Create returns \`answerUrl\`, \`machineUrl\`, \`pollUrl\`, and \`manageUrl\`. Ke
 - Status: \`GET /api/v1/sessions/{sessionId}?token=\`
 - Edit while pending: \`PATCH /api/v1/sessions/{sessionId}?token=\`
 - Manage summary: \`GET /s/{sessionId}/manage?token=\` (markdown at \`.md\`)
-- Wait: \`POST /api/v1/sessions/{sessionId}/wait\` (at most 60 seconds per call)
+- Wait: \`POST /api/v1/sessions/{sessionId}/wait\` (bound at most 60 seconds; one call sits up to 50, then answers \`timedOut: true\` with \`nextAction: "wait"\` — call it again)
 - Cancel: \`POST /api/v1/sessions/{sessionId}/cancel\`
 
 ## Machine answering

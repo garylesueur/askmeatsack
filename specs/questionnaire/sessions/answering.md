@@ -18,11 +18,11 @@ If a question is not usable, create is refused and no answer link is returned. T
 
 ### B2 — Human answers one question at a time 🟢
 
-The human opens the answer link in a browser and sees the title, any context, and one question. Choice questions show their options as large tap targets; a recommended option is marked as recommended. Text questions show a text field. Choosing a single option without a comment or files moves on to the next question. Multi-choice, text, comments, and files use a continue control. Step numbers above the question jump to any question. A back control returns to the previous question. Progress shows which step they are on, for example “2 of 12”. Closing the tab and opening the same link again resumes at the first question that still needs an answer, or at review if every required question already has an answer.
+The human opens the answer link in a browser and sees the title, any context, and one question. Choice questions show their options as large tap targets; a recommended option is marked as recommended. Text questions show a text field. Sketch questions show a drawing board (B40). Choosing a single option without a comment or files moves on to the next question. Multi-choice, text, comments, files, and sketches use a continue control. Step numbers above the question jump to any question. A back control returns to the previous question. Progress shows which step they are on, for example “2 of 12”. Closing the tab and opening the same link again resumes at the first question that still needs an answer, or at review if every required question already has an answer.
 
 ### B3 — Answers are kept as they go 🟢
 
-When the human picks an option or types in a text field, that answer is saved without a separate save button. They can change a saved answer until they submit. Closing the tab and opening the same link again still shows the saved answers.
+When the human picks an option, types in a text field, or draws on a sketch board, that answer is saved without a separate save button. They can change a saved answer until they submit. Closing the tab and opening the same link again still shows the saved answers.
 
 ### B4 — Agent can see progress before submit 🟢
 
@@ -34,11 +34,11 @@ After the last question the human sees a review of every answer. They can jump b
 
 ### B6 — Cannot submit until required questions are answered 🟢
 
-Continue and submit stay unavailable, and submit is refused if forced, until every required question has an answer. Optional questions may be left blank. A required choice needs a valid option. A required text question needs non-empty text. On a required question, continue stays unavailable until that question has an answer.
+Continue and submit stay unavailable, and submit is refused if forced, until every required question has an answer. Optional questions may be left blank. A required choice needs a valid option. A required text question needs non-empty text. A required sketch question needs at least one shape or stroke on the board (B40). On a required question, continue stays unavailable until that question has an answer.
 
 ### B7 — Agent reads the finished answers 🟢
 
-When the questionnaire is submitted, the agent’s status shows that it is finished and includes every question’s chosen option ids and any text. The agent can then stop waiting and continue its work. The askmeatsack.com tool and HTTP return the same result.
+When the questionnaire is submitted, the agent’s status shows that it is finished and includes every question’s chosen option ids, any text, any row or field values, and any sketch (B40). The agent can then stop waiting and continue its work. The askmeatsack.com tool and HTTP return the same result.
 
 ### B8 — The link expires 🟢
 
@@ -46,7 +46,7 @@ After the expiry time, the human cannot change or submit answers. The page expla
 
 ### B9 — A bad answer is refused 🟢
 
-A choice that is not one of that question’s options is refused. Several options on a single-choice question are refused. A question that allows several options accepts more than one of its own options. Text longer than the limit is refused. Saving a choice on a text question, or text on a choice question that does not allow a comment, is refused. Previous valid answers stay as they were.
+A choice that is not one of that question’s options is refused. Several options on a single-choice question are refused. A question that allows several options accepts more than one of its own options. Text longer than the limit is refused. Saving a choice on a text question, or text on a choice question that does not allow a comment, is refused. A sketch on a question that is not a sketch question is refused. A sketch with no allowed shape kinds, or with coordinates outside the board, is refused. Previous valid answers stay as they were.
 
 ### B10 — The two links have different powers 🟢
 
@@ -74,7 +74,7 @@ A choice question may name one of its options as recommended. The human sees tha
 
 ### B16 — Questions may be choices, text, or both 🟢
 
-A question is a choice (two to eight options, optional several-at-once), free text, or a choice that also allows a short comment. The human answers in the matching control. The agent receives option ids, text, or both, keyed by question id. Structured rows and named fields are a separate kind (B32).
+A question is a choice (two to eight options, optional several-at-once), free text, or a choice that also allows a short comment. The human answers in the matching control. The agent receives option ids, text, or both, keyed by question id. Structured rows and named fields are a separate kind (B32). A sketch is a separate kind (B40).
 
 ### B17 — Human or agent can cancel while it is open 🟢
 
@@ -86,7 +86,7 @@ When creating a questionnaire, the agent may leave a callback URL. When status b
 
 ### B19 — Human can download the answers 🟢
 
-After submit, the confirmation screen lets the human download the answers as Markdown or JSON (question ids, prompts, chosen labels and ids, any text). Download is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret. This service does not email a copy.
+After submit, the confirmation screen lets the human download the answers as Markdown or JSON (question ids, prompts, chosen labels and ids, any text, and any sketch). Download is not offered on an open, expired, or cancelled questionnaire, and never includes the agent’s secret. This service does not email a copy.
 
 ### B20 — Ask in the conversation 🟢
 
@@ -98,7 +98,7 @@ When creating a questionnaire, the agent may optionally name a theme: `ask` (the
 
 ### B23 — A machine can read the questions as markdown 🟢
 
-The same public answer token also serves a markdown document at the answer path with `.md` appended. Fetching the ordinary answer link with `Accept: text/markdown` (or `text/plain`) returns that same document. The HTML page advertises it with an alternate markdown link. That document lists every question, its options, where to save answers, where to submit, and a JSON Schema for the answer body. It never includes the agent’s status secret. A token that does not match does not show the questions.
+The same public answer token also serves a markdown document at the answer path with `.md` appended. Fetching the ordinary answer link with `Accept: text/markdown` (or `text/plain`) returns that same document. The HTML page advertises it with an alternate markdown link. That document lists every question, its options, where to save answers, where to submit, and a JSON Schema for the answer body. A sketch question is described as a sketch, including the shape kinds the answer may contain. It never includes the agent’s status secret. A token that does not match does not show the questions.
 
 ### B24 — A machine can answer with JSON 🟢
 
@@ -178,9 +178,26 @@ A file attached to an answer is checked for malware before it can be downloaded.
 an answer, the file cannot be read and whoever asks is told it is still being checked. A file
 found to be infected is removed and never served.
 
+### B40 — A question may ask for a sketch 🟢
+
+A question may be a sketch instead of a choice, free text, rows, or named boxes. Create marks that with `sketch: true` on the question — not a `kind` field. The human sees a drawing board on that step and answers by drawing. The tools are pen (freehand), straight line, rectangle, ellipse, arrow, and a text label. They can undo the last change. There is no separate save control — the sketch is kept as they draw, like any other answer (B3). Continue works like a text question: they move on when the board is enough.
+
+A required sketch needs at least one shape or stroke. An optional sketch may be left blank. The human can clear the board; a required sketch then has no answer again until they draw.
+
+The agent receives both a **scene** and a **picture**. The scene is the grokkable half: each shape has a stable id, a kind (pen, line, rectangle, ellipse, arrow, or text), optional label text, and position on a board whose coordinates run from 0 to 1 on both axes. A pen is a list of points. A line or arrow has two ends. A rectangle or ellipse has origin plus size. Text is a point plus the words. The picture is a snapshot of the same board, so a model that can see images has that too. Status, callback, JSON download, and the markdown answers all carry the scene; the picture is available at a URL on the questionnaire’s origin, same unguessable-link model as an uploaded file (B25).
+
+A question cannot mix a sketch with options, items, or fields. Comment and files are not valid on a sketch question — the drawing is the answer. `detail` on the rail still works (B26): the agent can show a situation in markdown or mermaid beside the board; that material is not the sketch and is not drawn on.
+
+Review shows a still of the sketch with the prompt. Jumping back to the step restores the board so they can change it until submit.
+
+### B41 — A sketch may start from a picture 🟢
+
+When creating a sketch question, the agent may give a background picture for the board (a photo, a plan, a screenshot). The human draws on top of it. The scene the agent gets is only what they drew, not a tracing of the background. The snapshot still shows the drawing on that picture. A background is optional; without one the board is blank. A background that is not a usable image is refused at create and no answer link is returned.
+
 ## Rules (Invariants)
 
-- A choice question has at least two and at most eight options. A text question has no options, items, or fields. An item question has two to sixteen rows. A field question has two to eight named boxes. A question cannot mix options, items, and fields. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required. `allowComment` is only valid when the question already has options, items, or fields. Free text already is the comment; a photo-only question cannot add a comment without a shape.
+- A choice question has at least two and at most eight options. A text question has no options, items, fields, or sketch. An item question has two to sixteen rows. A field question has two to eight named boxes. A sketch question has a drawing board and no options, items, or fields. A question cannot mix options, items, fields, and sketch. A comment is optional extra text, not a substitute for the choice, rows, or fields when the question is required. `allowComment` is only valid when the question already has options, items, or fields. Free text already is the comment; a photo-only question cannot add a comment without a shape. `allowComment` and files are not valid on a sketch question.
+- A sketch answer’s coordinates sit on a 0-to-1 board on both axes. Allowed shape kinds are pen, line, rectangle, ellipse, arrow, and text. A sketch holds at most 200 shapes. A pen holds at most 500 points. A text label is at most 100 characters. The scene, not the snapshot, is the answer the agent is expected to read; the snapshot is extra. Ink follows the page theme; the human does not pick colours.
 - Money rows need an ISO 4217 currency on the row or the question. Known figures use `amount`. Stored money answers are canonical decimals. The service does not convert currencies.
 - A question is required unless it is marked otherwise. Required defaults to yes. Several options on one question default to no.
 - Saved answers freeze at submit, expiry, or cancel. They do not change afterwards.
@@ -193,7 +210,12 @@ found to be infected is removed and never served.
 - Sessions are ephemeral. This product does not keep a long-term archive of answers.
 - Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out. Refused questions use the same error body on both: the first rule in the message, and a list of issues with question id and rule.
 - The agent tool is named **askmeatsack.com**. Answer links are on `https://askmeatsack.com`.
-- A bounded wait never exceeds the time the agent asked for, and never more than 60 seconds per call.
+- A bounded wait never exceeds the time the agent asked for, and never more than 60 seconds per
+  call. One call sits at most `WAIT_BUDGET_SECONDS`, leaving the handler room to answer inside
+  the function limit rather than being killed on the wire. A wait that ends with nothing
+  submitted says so, and says to call again.
+- A terminal callback is attempted once, retried a few times within that attempt, and the
+  outcome is readable by the agent. A hook that failed is distinguishable from one never set.
 - An opened signal comes only from the running answering page, never from a mere fetch of the link.
 - Text answers are at most 2000 characters. Question `detail` is at most 8000 characters. A
   title is at most 200 characters, `context` at most 4000, and a prompt at most 1000. Metadata
@@ -254,6 +276,11 @@ found to be infected is removed and never served.
 | Non-empty text on a text question, or a comment on a choice that allows it, within 2000 characters | Answer saved; progress updates |
 | Text on a choice that does not allow a comment, or options on a text question | Refused; previous answer unchanged |
 | Text over 2000 characters | Refused; previous answer unchanged |
+| A usable scene on a sketch question (allowed kinds, coordinates on the board) | Answer saved; progress updates |
+| A sketch on a question that is not a sketch question | Refused; previous answer unchanged |
+| A sketch with an unknown kind, or coordinates outside the board | Refused; previous answer unchanged |
+| Clearing the board on an optional sketch | Answer saved as blank |
+| Clearing the board on a required sketch | Sketch has no answer until they draw again |
 | Questionnaire already submitted, expired, or cancelled | Refused; answers unchanged |
 | Token does not match | Refused; no questions shown |
 
@@ -262,7 +289,7 @@ found to be infected is removed and never served.
 | Situation | Outcome |
 | --- | --- |
 | Every required question has a valid answer, from the review | Submitted; answers freeze; agent sees `submitted`; callback fires if set |
-| A required choice has no option, or required text is empty | Submit refused; human is told what is missing |
+| A required choice has no option, required text is empty, or a required sketch has no shape | Submit refused; human is told what is missing |
 | Already submitted | Still success; same answers; callback not sent again |
 | Expired or cancelled | Refused |
 
@@ -296,7 +323,7 @@ found to be infected is removed and never served.
 
 | Situation | Outcome |
 | --- | --- |
-| GET the answer path with `.md` and a matching public token | Markdown of questions, options, save/submit URLs, and JSON Schema |
+| GET the answer path with `.md` and a matching public token | Markdown of questions, options, sketch questions, save/submit URLs, and JSON Schema |
 | GET the ordinary answer path with `Accept: text/markdown` or `text/plain` | The same markdown as `.md` |
 | GET `.md` with a bad token | Refused; no questions |
 | PUT JSON answers with a matching token | Answers saved; optional submit in the same request |
@@ -312,13 +339,15 @@ found to be infected is removed and never served.
 | GET manage with `.md` or `Accept: text/markdown` | The same summary as markdown |
 | GET manage with the public answer token, or a bad token | Refused; no questions |
 | PATCH while `pending`, usable fields, matching agent token | Questionnaire updated; answer link unchanged |
+| Create or PATCH a question that mixes sketch with options, items, fields, comment, or files | Refused with the question id and the rule; questionnaire unchanged |
+| Create a sketch question with an unusable background picture | Refused; no answer link |
 | PATCH with unusable questions | Refused with the question id and the rule; questionnaire unchanged |
 | PATCH after an answer is saved, or after submit, expiry, or cancel | Refused; questions unchanged |
 | PATCH with nothing to change | Refused |
 
 ## User Flows
 
-- **F1 — Human answers:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B2–B6, B8–B12, B14–B17, B19, B26
+- **F1 — Human answers:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B2–B6, B8–B12, B14–B17, B19, B26, B40
 - **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B34
 - **F3 — Owner inspects:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B27, B28
 
@@ -334,6 +363,8 @@ found to be infected is removed and never served.
 - **Settled:** Tool and HTTP are both in. Same questionnaire. Recorded as B1, B7, B13.
 - **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, and JSON download are in. Recorded as B13–B19.
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
+- **Amended:** The bound is what the agent may ask for; `WAIT_BUDGET_SECONDS` is what one call sits for. They were both 60, the same number as the function limit, so a wait for the documented maximum was killed before it could answer and production returned 504 for the one value every instruction named. The bound stays 60; the budget is lower so the handler can reply. Guarded by `wait-budget.test.ts`.
+- **Amended:** A timed-out wait carries `timedOut`, `nextAction`, and a hint. It used to return a status snapshot identical to a `status` read, which gave an agent no reason to loop — so it stopped, and the person's answer was never collected.
 - **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Recorded as B1 and B20.
 - **Withdrawn:** Email from this service (B21). Giving `answerUrl` is the calling agent’s job; this service does not send mail.
 - **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
@@ -350,12 +381,22 @@ found to be infected is removed and never served.
 - **Settled:** “I will label them in the comment” is a weak answer type. Rows (`items`) and named boxes (`fields`) are in. Money uses `input`, ISO `currency`, and optional `amount`. No conversion. Recorded as B32.
 - **Settled:** File questions use a compact attach control: choose, drop, or take a photo. Multiple files are allowed, up to five. The evidence rail is not the drop zone. Recorded as B25.
 - **Blocks B33:** Which capture types are first-class (location, live camera, …), and is location a coordinate the agent can read, or a place the human confirms?
+- **Settled:** A sketch is another question shape on this product, not a sibling. Same link, wait, and structured answers. Recorded as B40.
+- **Settled:** The agent gets a scene (named shapes, 0–1 coordinates) plus a picture of the board. The scene is what to read; the picture is for vision and for review. Recorded as B40.
+- **Settled:** Tools are pen, line, rectangle, ellipse, arrow, and text. Undo. Theme ink, no colour picker. Recorded as B40 and the invariants.
+- **Settled:** A required sketch is “at least one shape or stroke”. Recorded as B6 and B40.
+- **Settled:** Comment and files are not valid on a sketch question. Rail `detail` stays beside the board. Recorded as B40.
+- **Settled:** An optional background picture on create lets them draw on a plan or photo. The scene is still only what they drew. Recorded as B41.
+- **Settled:** Create marks a sketch question with `sketch: true` on the question, the same style as `allowFiles`. Not a `kind` enum. Recorded as B40.
+- **Settled:** The background is an upload at create (`background`: filename, contentType, base64 data), stored on the questionnaire. Arbitrary remote URLs are not fetched. Recorded as B41.
 
 ## Future Considerations
 
 - Agent-attached source files on create, distinct from the human’s answer uploads.
 - Branching or scoring — still out of scope. The calling agent interprets answers.
 - Richer device capture on a question (location, live camera), distinct from attaching a file.
+- Extra sketch tools (colour, layers, a full whiteboard). Deliberately not this question type.
+- A standing board that is not an answer — that would be a different product, not Ask.
 
 ## Out of Scope
 
@@ -366,3 +407,4 @@ found to be infected is removed and never served.
 - Wiring into Cursor’s own product APIs or the native AskQuestion UI.
 - Long-term storage or search of past questionnaires.
 - Posting the answer link to Slack or any other chat. The calling agent does that with the URL this service already returns.
+- A separate sketch product, live collaboration, or a board that outlives the questionnaire.

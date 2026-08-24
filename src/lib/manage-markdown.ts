@@ -108,6 +108,9 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
       if (answer.files && answer.files.length > 0) {
         bits.push(`${answer.files.length} file(s)`);
       }
+      if (answer.sketch && answer.sketch.shapes.length > 0) {
+        bits.push(`sketch (${answer.sketch.shapes.length} shape(s))`);
+      }
       lines.push("", `Answered: ${bits.join("; ")}.`);
     }
   }
