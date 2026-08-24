@@ -4,6 +4,7 @@ import { useLayoutEffect, useSyncExternalStore, type ReactNode } from "react";
 import {
   appearanceClassName,
   appearanceStyle,
+  applyAppearanceMode,
   readStoredColorMode,
   readSystemDark,
   resolveEffectiveMode,
@@ -22,38 +23,6 @@ type AppearanceShellProps = {
   showModeToggle?: boolean;
 };
 
-function applyHtmlMode(mode: "system" | "light" | "dark"): void {
-  const root = document.documentElement;
-  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  if (mode === "system") {
-    delete root.dataset.colorMode;
-  } else {
-    root.dataset.colorMode = mode;
-  }
-  if (mode === "light") {
-    root.classList.add("light");
-    root.classList.remove("dark");
-    return;
-  }
-  if (mode === "dark") {
-    root.classList.add("dark");
-    root.classList.remove("light");
-    return;
-  }
-  root.classList.remove("light");
-  root.classList.toggle("dark", systemDark);
-}
-
-function modeIsDark(mode: "system" | "light" | "dark", systemDark: boolean): boolean {
-  if (mode === "light") {
-    return false;
-  }
-  if (mode === "dark") {
-    return true;
-  }
-  return systemDark;
-}
-
 export function AppearanceShell({
   appearance,
   children,
@@ -63,14 +32,14 @@ export function AppearanceShell({
   const stored = useSyncExternalStore(subscribeColorMode, readStoredColorMode, () => null);
   const systemDark = useSyncExternalStore(subscribeSystemDark, readSystemDark, () => false);
   const mode = resolveEffectiveMode(appearance, stored);
-  const isDark = modeIsDark(mode, systemDark);
+  const preference = stored ?? "auto";
 
   useLayoutEffect(() => {
-    applyHtmlMode(mode);
+    applyAppearanceMode(mode, preference);
     return () => {
-      applyHtmlMode("system");
+      applyAppearanceMode("system", readStoredColorMode() ?? "auto");
     };
-  }, [mode]);
+  }, [mode, preference, systemDark]);
 
   return (
     <div
@@ -83,12 +52,7 @@ export function AppearanceShell({
     >
       {showModeToggle ? (
         <div className="flex w-full justify-end pt-3">
-          <ColorModeToggle
-            isDark={isDark}
-            onToggle={() => {
-              storeColorMode(isDark ? "light" : "dark");
-            }}
-          />
+          <ColorModeToggle value={preference} onChange={storeColorMode} />
         </div>
       ) : null}
       {children}

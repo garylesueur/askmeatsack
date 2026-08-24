@@ -1,5 +1,13 @@
 import type { CSSProperties } from "react";
 import type { Appearance } from "./schema";
+import {
+  COLOR_MODE_LEGACY_STORAGE_KEY,
+  COLOR_MODE_STORAGE_KEY,
+  applyResolvedColorMode,
+  isStoredColorMode,
+  persistColorModeCookie,
+  type StoredColorMode,
+} from "./color-mode";
 
 export const APPEARANCE_THEMES = ["ask", "paper", "grove", "ember"] as const;
 
@@ -7,14 +15,14 @@ export type AppearanceTheme = (typeof APPEARANCE_THEMES)[number];
 
 export type AppearanceMode = "system" | "light" | "dark";
 
+export { COLOR_MODE_STORAGE_KEY };
+
 export function resolveTheme(appearance?: Appearance): AppearanceTheme {
   if (appearance?.theme) {
     return appearance.theme;
   }
   return "ask";
 }
-
-export const COLOR_MODE_STORAGE_KEY = "askmeatsack:color-mode";
 
 export function resolveMode(appearance?: Appearance): AppearanceMode {
   if (appearance?.mode === "light" || appearance?.mode === "dark") {
@@ -25,13 +33,17 @@ export function resolveMode(appearance?: Appearance): AppearanceMode {
 
 const colorModeListeners = new Set<() => void>();
 
-export function readStoredColorMode(): "light" | "dark" | null {
+export function readStoredColorMode(): StoredColorMode | null {
   if (typeof window === "undefined") {
     return null;
   }
   const value = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
-  if (value === "light" || value === "dark") {
+  if (isStoredColorMode(value)) {
     return value;
+  }
+  const legacy = window.localStorage.getItem(COLOR_MODE_LEGACY_STORAGE_KEY);
+  if (legacy === "light" || legacy === "dark") {
+    return legacy;
   }
   return null;
 }
@@ -49,8 +61,9 @@ export function subscribeColorMode(listener: () => void): () => void {
   };
 }
 
-export function storeColorMode(mode: "light" | "dark"): void {
+export function storeColorMode(mode: StoredColorMode): void {
   window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+  document.cookie = persistColorModeCookie(mode, window.location.hostname, window.location.protocol);
   for (const listener of colorModeListeners) {
     listener();
   }
@@ -70,12 +83,21 @@ export function readSystemDark(): boolean {
 
 export function resolveEffectiveMode(
   appearance: Appearance | undefined,
-  stored: "light" | "dark" | null,
+  stored: StoredColorMode | null,
 ): AppearanceMode {
-  if (stored) {
+  if (stored === "light" || stored === "dark") {
     return stored;
   }
+  if (stored === "auto") {
+    return "system";
+  }
   return resolveMode(appearance);
+}
+
+export function applyAppearanceMode(mode: AppearanceMode, preference: StoredColorMode): void {
+  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = mode === "dark" || (mode !== "light" && systemDark);
+  applyResolvedColorMode(document.documentElement, preference, isDark);
 }
 
 export function appearanceClassName(

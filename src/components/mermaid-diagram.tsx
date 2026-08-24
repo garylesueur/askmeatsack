@@ -29,7 +29,7 @@ export function MermaidDiagram({ chart }: { chart: string }) {
     update();
     mq.addEventListener("change", update);
     const observer = new MutationObserver(update);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(root, { attributes: true, attributeFilter: ["class", "data-theme"] });
     return () => {
       mq.removeEventListener("change", update);
       observer.disconnect();
