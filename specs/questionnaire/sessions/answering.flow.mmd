@@ -27,6 +27,8 @@ flowchart TD
     F1_answering -->|"F1.T16: Finish [This is the last question, or every required question already has an answer.]"| F1_review
     F1_review -->|"F1.T17: Change"| F1_answering
     F1_answering -->|"F1.T18: Jump"| F1_answering
+    F1_answering -->|"F1.T21: Draw [The question is a sketch and the scene is usable.]"| F1_answering
+    F1_answering -->|"F1.T22: Draw [The question is not a sketch, or the scene is not usable.]"| F1_answering
     F1_review -->|"F1.T19: Time runs out"| F1_expired_view
     F1_review -->|"F1.T20: Cancel"| F1_cancelled_view
   end

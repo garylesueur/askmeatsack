@@ -12,6 +12,8 @@ export type AnswersDownload = {
     text?: string;
     entries?: Record<string, string>;
     files?: SessionFile[];
+    sketch?: { shapes: unknown[] };
+    previewUrl?: string;
   }>;
 };
 
@@ -75,6 +77,18 @@ export function answersDownloadMarkdown(download: AnswersDownload, questions: Qu
       for (const file of row.files) {
         lines.push(`- [${file.filename}](${file.url})`);
       }
+      wrote = true;
+    }
+
+    if (row.sketch && row.sketch.shapes.length > 0) {
+      if (wrote) {
+        lines.push("");
+      }
+      lines.push(`Sketch (${row.sketch.shapes.length} shape(s)).`);
+      wrote = true;
+    }
+    if (row.previewUrl) {
+      lines.push(`- [Sketch picture](${row.previewUrl})`);
       wrote = true;
     }
 

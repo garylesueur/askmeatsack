@@ -6,6 +6,10 @@ import {
 } from "@/lib/app-sessions";
 import { isSessionServiceError } from "@/lib/sessions";
 
+// Mirrors WAIT_FUNCTION_MAX_SECONDS in src/lib/schema.ts; a route segment
+// config must be a literal, so it cannot import it. wait-budget.test.ts fails
+// if they drift. A wait sits for WAIT_BUDGET_SECONDS, leaving room to answer
+// inside this limit rather than being killed on the wire.
 export const maxDuration = 60;
 
 type RouteContext = {

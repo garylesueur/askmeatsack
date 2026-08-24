@@ -36,7 +36,7 @@ function toolWithStore() {
       now = new Date(now.getTime() + ms);
     },
     postCallback: async () => {
-      return;
+      return true;
     },
   });
   return {

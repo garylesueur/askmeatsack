@@ -3,13 +3,17 @@ import type { Question } from "./schema";
 
 const SHORT_PROMPT_MAX_CHARS = 90;
 
-export type QuestionKind = "choice" | "text" | "items" | "fields";
+export type QuestionKind = "choice" | "text" | "items" | "fields" | "sketch";
 
 export function questionKind(question: {
   options: { id: string }[];
   items?: { id: string }[];
   fields?: { id: string }[];
+  sketch?: boolean;
 }): QuestionKind {
+  if (question.sketch) {
+    return "sketch";
+  }
   if ((question.items ?? []).length > 0) {
     return "items";
   }

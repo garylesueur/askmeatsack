@@ -55,6 +55,21 @@ export function answersJsonSchema(questions: Question[]): Record<string, unknown
         items: { type: "string" },
       };
     }
+    if (kind === "sketch") {
+      answerProperties.sketch = {
+        type: "object",
+        additionalProperties: false,
+        required: ["shapes"],
+        properties: {
+          shapes: {
+            type: "array",
+            maxItems: 200,
+            items: { type: "object" },
+          },
+        },
+      };
+      answerProperties.previewFileId = { type: "string" };
+    }
     properties[question.id] = {
       type: "object",
       additionalProperties: false,

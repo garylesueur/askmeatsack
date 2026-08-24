@@ -7,8 +7,8 @@ import {
 import {
   fileStoreAvailable,
   fileTooLarge,
+  inlineStorageKey,
   storeAnswerFile,
-  type StoredFile,
 } from "@/lib/answer-files";
 import { limitCreateFromRequest } from "@/lib/create-rate-limit";
 import { FILE_MAX_BYTES } from "@/lib/schema";
@@ -19,9 +19,6 @@ type RouteContext = {
 };
 
 export async function POST(request: Request, context: RouteContext): Promise<Response> {
-  if (!fileStoreAvailable()) {
-    return jsonError(503, "files_unavailable", "File storage is not configured");
-  }
   const limited = await limitCreateFromRequest(request);
   if (!limited.ok) {
     return jsonError(429, "rate_limited", "Too many uploads from this address. Try again later.");
@@ -34,10 +31,6 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
     return jsonError(400, "invalid_answer", "questionId is required");
   }
 
-  // Authorise before a single byte reaches storage. The invariant in
-  // specs/questionnaire/sessions/answering.md is "Files use the public answer
-  // token"; storing first and checking afterwards left the bucket writable by
-  // anyone who could guess a URL.
   const service = getDefaultSessionService();
   const publicToken = readPublicToken(request);
   const refused = await service.canAcceptFile({
@@ -58,18 +51,34 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
     return jsonError(400, "invalid_answer", `File must be at most ${FILE_MAX_BYTES} bytes`);
   }
 
-  let stored: StoredFile;
-  try {
-    stored = await storeAnswerFile({
-      sessionId,
-      questionId,
-      filename: file.name || "upload",
-      body: file,
-      contentType: file.type || "application/octet-stream",
-    });
-  } catch (error) {
-    console.error("R2 upload failed", error instanceof Error ? error.message : "unknown error");
-    return jsonError(502, "files_unavailable", "File storage refused the upload");
+  const view = await service.getForPublic({ sessionId, publicToken });
+  if (isSessionServiceError(view)) {
+    return jsonServiceError(view);
+  }
+  const question = view.questions.find((candidate) => candidate.id === questionId);
+  const sketchPreview = question?.sketch === true;
+  if (!fileStoreAvailable() && !sketchPreview) {
+    return jsonError(503, "files_unavailable", "File storage is not configured");
+  }
+
+  let storageKey: string;
+  if (fileStoreAvailable()) {
+    try {
+      const stored = await storeAnswerFile({
+        sessionId,
+        questionId,
+        filename: file.name || "upload",
+        body: file,
+        contentType: file.type || "application/octet-stream",
+      });
+      storageKey = stored.pathname;
+    } catch (error) {
+      console.error("R2 upload failed", error instanceof Error ? error.message : "unknown error");
+      return jsonError(502, "files_unavailable", "File storage refused the upload");
+    }
+  } else {
+    const bytes = Buffer.from(await file.arrayBuffer());
+    storageKey = inlineStorageKey(bytes);
   }
 
   const result = await service.attachFile({
@@ -79,7 +88,7 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
     filename: file.name || "upload",
     contentType: file.type || "application/octet-stream",
     size: file.size,
-    storageKey: stored.pathname,
+    storageKey,
   });
   if (isSessionServiceError(result)) {
     return jsonServiceError(result);

@@ -1,5 +1,5 @@
 import { SESSION_READ_WINDOW_SECONDS } from "./schema";
-import type { Appearance, Question, SessionStatus } from "./schema";
+import type { Appearance, Question, SessionStatus, SketchScene } from "./schema";
 
 export type SessionFile = {
   id: string;
@@ -16,6 +16,8 @@ export type SessionAnswer = {
   text?: string;
   entries?: Record<string, string>;
   files?: SessionFile[];
+  sketch?: SketchScene;
+  previewFileId?: string;
   answeredAt: string;
 };
 
@@ -37,7 +39,11 @@ export type Session = {
   agentToken: string;
   metadata?: Record<string, string>;
   callbackUrl?: string;
+  /** Set once delivery has been attempted, so it is never attempted twice. */
   callbackSent?: boolean;
+  callbackAttemptedAt?: string;
+  /** Whether the callback actually arrived. Undefined until an attempt ends. */
+  callbackDelivered?: boolean;
 };
 
 export type SessionStore = {

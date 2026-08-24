@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   ENTRY_ANSWER_MAX_CHARS,
   FILE_MAX_BYTES,
@@ -8,6 +9,7 @@ import {
   TEXT_ANSWER_MAX_CHARS,
   type Appearance,
   type Question,
+  type SketchScene,
 } from "@/lib/schema";
 import type { PublicSessionView, SessionProgress } from "@/lib/sessions";
 import type { SessionAnswer, SessionFile } from "@/lib/session-store";
@@ -31,6 +33,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ThankYouScreen, ExpiredLinkScreen, CancelledScreen } from "./status-screens";
+
+const SketchBoard = dynamic(
+  () => import("@/components/sketch-board").then((module) => module.SketchBoard),
+  { ssr: false },
+);
 
 type AnsweringFormProps = {
   sessionId: string;
@@ -56,6 +63,9 @@ function hasUsableAnswer(question: Question, answer: SessionAnswer | undefined):
     const text = answer?.text ?? "";
     const files = answer?.files ?? [];
     return text.trim().length > 0 || files.length > 0;
+  }
+  if (kind === "sketch") {
+    return (answer?.sketch?.shapes.length ?? 0) > 0;
   }
   return (answer?.selectedOptionIds ?? []).length > 0;
 }
@@ -117,6 +127,23 @@ function shouldAdvanceOnChoice(question: Question): boolean {
   );
 }
 
+function fileHref(sessionId: string, publicToken: string, fileId: string): string {
+  return `/api/v1/sessions/${sessionId}/files/${encodeURIComponent(fileId)}?t=${encodeURIComponent(publicToken)}`;
+}
+
+function pngFileFromDataUrl(dataUrl: string): File | null {
+  const comma = dataUrl.indexOf(",");
+  if (comma < 0 || !dataUrl.startsWith("data:image/png")) {
+    return null;
+  }
+  const binary = atob(dataUrl.slice(comma + 1));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return new File([bytes], "sketch.png", { type: "image/png" });
+}
+
 function answerSummary(question: Question, answer: SessionAnswer | undefined): string {
   const labels: string[] = [];
   for (const optionId of answer?.selectedOptionIds ?? []) {
@@ -153,6 +180,10 @@ function answerSummary(question: Question, answer: SessionAnswer | undefined): s
       names.push(file.filename);
     }
     parts.push(names.join(", "));
+  }
+  if (answer?.sketch && answer.sketch.shapes.length > 0) {
+    const count = answer.sketch.shapes.length;
+    parts.push(`Sketch (${count} shape${count === 1 ? "" : "s"})`);
   }
   if (parts.length === 0) {
     return "No answer";
@@ -201,6 +232,7 @@ export function AnsweringForm({
   const [cancelled, setCancelled] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const textTimers = useRef<Record<string, number>>({});
+  const sketchPngs = useRef<Record<string, string>>({});
 
   useEffect(() => {
     void fetch(`/api/v1/sessions/${sessionId}/opened?t=${encodeURIComponent(publicToken)}`, {
@@ -242,6 +274,14 @@ export function AnsweringForm({
   const markdownHref = `${downloadHref}&format=md`;
 
   function goToStep(index: number) {
+    const current = questions[stepIndex];
+    if (current && questionKind(current) === "sketch") {
+      void flushSketch(current).then(() => {
+        setReviewing(false);
+        setStepIndex(index);
+      });
+      return;
+    }
     setReviewing(false);
     setStepIndex(index);
   }
@@ -482,6 +522,105 @@ export function AnsweringForm({
     }, 400);
   }
 
+  function onSketchChange(currentQuestion: Question, sketch: SketchScene, snapshotPng?: string) {
+    const previous = answers[currentQuestion.id];
+    const nextAnswer: SessionAnswer = {
+      selectedOptionIds: [],
+      answeredAt: new Date().toISOString(),
+      sketch,
+    };
+    if (previous?.previewFileId) {
+      nextAnswer.previewFileId = previous.previewFileId;
+    }
+    if (snapshotPng) {
+      sketchPngs.current[currentQuestion.id] = snapshotPng;
+    }
+    setAnswers((current) => ({ ...current, [currentQuestion.id]: nextAnswer }));
+    setSaveState("saving");
+    setSubmitError(null);
+    const existingTimer = textTimers.current[`sketch:${currentQuestion.id}`];
+    if (existingTimer !== undefined) {
+      window.clearTimeout(existingTimer);
+    }
+    textTimers.current[`sketch:${currentQuestion.id}`] = window.setTimeout(() => {
+      void saveSketch(currentQuestion, sketch, previous, snapshotPng);
+    }, 400);
+  }
+
+  async function saveSketch(
+    currentQuestion: Question,
+    sketch: SketchScene,
+    previous: SessionAnswer | undefined,
+    snapshotPng?: string,
+  ) {
+    const response = await fetch(
+      `/api/v1/sessions/${sessionId}/answers/${currentQuestion.id}?t=${encodeURIComponent(publicToken)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sketch }),
+      },
+    );
+    if (!response.ok) {
+      const body = (await response.json()) as { error?: { code?: string } };
+      if (body.error?.code === "expired") {
+        setExpired(true);
+        return;
+      }
+      setAnswers((current) => {
+        const restored = { ...current };
+        if (previous) {
+          restored[currentQuestion.id] = previous;
+        } else {
+          delete restored[currentQuestion.id];
+        }
+        return restored;
+      });
+      setSaveState("error");
+      return;
+    }
+    const body = (await response.json()) as { progress: SessionProgress };
+    setProgress(body.progress);
+    if (sketch.shapes.length === 0 || !snapshotPng) {
+      setSaveState("saved");
+      return;
+    }
+    const png = pngFileFromDataUrl(snapshotPng);
+    if (!png) {
+      setSaveState("saved");
+      return;
+    }
+    const form = new FormData();
+    form.append("file", png);
+    const upload = await fetch(
+      `/api/v1/sessions/${sessionId}/files?t=${encodeURIComponent(publicToken)}&questionId=${encodeURIComponent(currentQuestion.id)}`,
+      { method: "POST", body: form },
+    );
+    if (!upload.ok) {
+      setSaveState("saved");
+      return;
+    }
+    const uploaded = (await upload.json()) as {
+      file: SessionFile;
+      progress: SessionProgress;
+    };
+    setAnswers((current) => {
+      const currentAnswer = current[currentQuestion.id];
+      if (!currentAnswer?.sketch) {
+        return current;
+      }
+      return {
+        ...current,
+        [currentQuestion.id]: {
+          ...currentAnswer,
+          previewFileId: uploaded.file.id,
+        },
+      };
+    });
+    setProgress(uploaded.progress);
+    setSaveState("saved");
+  }
+
   function onEntryChange(currentQuestion: Question, entryId: string, value: string) {
     const previous = answers[currentQuestion.id];
     const entries = { ...previous?.entries, [entryId]: value };
@@ -506,6 +645,25 @@ export function AnsweringForm({
     textTimers.current[`entry:${currentQuestion.id}`] = window.setTimeout(() => {
       void saveEntries(currentQuestion, entries, previous);
     }, 400);
+  }
+
+  async function flushSketch(currentQuestion: Question) {
+    const timerKey = `sketch:${currentQuestion.id}`;
+    const existingTimer = textTimers.current[timerKey];
+    if (existingTimer !== undefined) {
+      window.clearTimeout(existingTimer);
+      delete textTimers.current[timerKey];
+    }
+    const sketch = answers[currentQuestion.id]?.sketch;
+    if (!sketch || sketch.shapes.length === 0) {
+      return;
+    }
+    await saveSketch(
+      currentQuestion,
+      sketch,
+      answers[currentQuestion.id],
+      sketchPngs.current[currentQuestion.id],
+    );
   }
 
   function flushText(currentQuestion: Question) {
@@ -724,11 +882,14 @@ export function AnsweringForm({
             void submitAnswers();
             return;
           }
-          if (question) {
-            flushText(question);
-            flushEntries(question);
+          if (!question) {
+            return;
           }
-          goForward();
+          flushText(question);
+          flushEntries(question);
+          void flushSketch(question).then(() => {
+            goForward();
+          });
         }}
       >
         {reviewing ? (
@@ -754,6 +915,20 @@ export function AnsweringForm({
                     {index + 1}. {item.prompt}
                   </button>
                   <p className="text-sm text-foreground">{answerSummary(item, answers[item.id])}</p>
+                  {(() => {
+                    const previewId = answers[item.id]?.previewFileId;
+                    if (!previewId) {
+                      return null;
+                    }
+                    return (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={fileHref(sessionId, publicToken, previewId)}
+                        alt=""
+                        className="mt-1 max-h-48 rounded-md border border-border"
+                      />
+                    );
+                  })()}
                 </li>
               ))}
             </ul>
@@ -785,7 +960,20 @@ export function AnsweringForm({
                 </aside>
               ) : null}
               <div className="flex flex-col gap-4 @4xl:col-start-1">
-                {questionKind(question) === "text" ? (
+                {questionKind(question) === "sketch" ? (
+                  <SketchBoard
+                    disabled={submitting}
+                    scene={answers[question.id]?.sketch}
+                    backgroundUrl={
+                      question.backgroundFileId
+                        ? fileHref(sessionId, publicToken, question.backgroundFileId)
+                        : undefined
+                    }
+                    onChange={(sketch, snapshotPng) => {
+                      onSketchChange(question, sketch, snapshotPng);
+                    }}
+                  />
+                ) : questionKind(question) === "text" ? (
                   <Textarea
                     value={answers[question.id]?.text ?? ""}
                     maxLength={TEXT_ANSWER_MAX_CHARS}

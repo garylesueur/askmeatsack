@@ -47,6 +47,9 @@ function manageAnswerSummary(question: Question, answer: SessionAnswer): string 
   if (answer.text) {
     bits.push(answer.text);
   }
+  if (answer.sketch && answer.sketch.shapes.length > 0) {
+    bits.push(`Sketch (${answer.sketch.shapes.length})`);
+  }
   if (bits.length === 0) {
     return "Answered";
   }
@@ -58,8 +61,12 @@ function manageKindLabel(question: {
   items?: { id: string }[];
   fields?: { id: string }[];
   allowMultiple: boolean;
+  sketch?: boolean;
 }): string {
   const kind = questionKind(question);
+  if (kind === "sketch") {
+    return "Sketch";
+  }
   if (kind === "choice" && question.allowMultiple) {
     return "Several options";
   }

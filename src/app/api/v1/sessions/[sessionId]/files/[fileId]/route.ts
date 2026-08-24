@@ -7,6 +7,8 @@ import {
 import {
   contentDispositionFilename,
   fetchAnswerFile,
+  bytesFromInlineKey,
+  isInlineFileKey,
   storageKeyFromFile,
 } from "@/lib/answer-files";
 import { isSessionServiceError } from "@/lib/sessions";
@@ -29,6 +31,18 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
   const key = storageKeyFromFile(result);
   if (!key) {
     return jsonError(404, "not_found", "File was not found");
+  }
+  if (isInlineFileKey(key)) {
+    const bytes = bytesFromInlineKey(key);
+    if (!bytes) {
+      return jsonError(404, "not_found", "File was not found");
+    }
+    const headers = new Headers();
+    headers.set("Content-Type", result.contentType || "application/octet-stream");
+    headers.set("Content-Disposition", contentDispositionFilename(result.filename));
+    headers.set("Cache-Control", "private, max-age=3600");
+    headers.set("Content-Length", String(bytes.length));
+    return new Response(Uint8Array.from(bytes), { status: 200, headers });
   }
 
   let stored: Response;

@@ -116,6 +116,28 @@ export async function bytesFromUploadBody(body: UploadBody): Promise<Uint8Array>
   return new Uint8Array(await body.arrayBuffer());
 }
 
+export const INLINE_FILE_PREFIX = "inline:";
+
+export function isInlineFileKey(key: string): boolean {
+  return key.startsWith(INLINE_FILE_PREFIX);
+}
+
+export function bytesFromInlineKey(key: string): Buffer | null {
+  if (!isInlineFileKey(key)) {
+    return null;
+  }
+  try {
+    const bytes = Buffer.from(key.slice(INLINE_FILE_PREFIX.length), "base64");
+    return bytes.length > 0 ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
+export function inlineStorageKey(bytes: Buffer): string {
+  return `${INLINE_FILE_PREFIX}${bytes.toString("base64")}`;
+}
+
 export function storageKeyFromFile(file: { key?: string; url: string }): string | null {
   if (file.key) {
     return file.key;

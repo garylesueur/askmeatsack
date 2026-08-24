@@ -62,6 +62,39 @@ describe("answersDownloadMarkdown", () => {
     expect(markdown).toContain("- Note: Paid");
     expect(markdown).not.toContain("agent-secret");
   });
+
+  it("includes sketch shapes and a preview URL", () => {
+    const markdown = answersDownloadMarkdown(
+      {
+        title: "Plan",
+        answers: [
+          {
+            questionId: "layout",
+            prompt: "Sketch the kitchen",
+            selectedLabels: [],
+            sketch: {
+              shapes: [{ id: "s1", type: "rectangle", x: 0.1, y: 0.1, width: 0.2, height: 0.2 }],
+            },
+            previewUrl: "https://askmeatsack.com/api/v1/sessions/session-1/files/prev?t=pub",
+          },
+        ],
+      },
+      [
+        {
+          id: "layout",
+          prompt: "Sketch the kitchen",
+          options: [],
+          allowMultiple: false,
+          required: true,
+          allowComment: false,
+          allowFiles: false,
+          sketch: true,
+        },
+      ],
+    );
+    expect(markdown).toContain("Sketch (1 shape");
+    expect(markdown).toContain("Sketch picture");
+  });
 });
 
 describe("wantsMarkdownDownload", () => {

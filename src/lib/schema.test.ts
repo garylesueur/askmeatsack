@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSessionSchema, questionIssuesFromZod, questionSchema } from "./schema";
+import {
+  createSessionSchema,
+  questionIssuesFromZod,
+  questionSchema,
+  saveAnswerSchema,
+} from "./schema";
 
 describe("question create validation", () => {
   it("requires at least two items and two fields in the schema", () => {
@@ -137,6 +142,39 @@ describe("question create validation", () => {
         },
         code: "recommended_unknown",
       },
+      {
+        name: "sketch mixed with options",
+        question: {
+          id: "mix",
+          prompt: "Draw this",
+          sketch: true,
+          options: [
+            { id: "yes", label: "Yes" },
+            { id: "no", label: "No" },
+          ],
+        },
+        code: "sketch_mixed",
+      },
+      {
+        name: "comment on a sketch",
+        question: {
+          id: "draw",
+          prompt: "Sketch the layout",
+          sketch: true,
+          allowComment: true,
+        },
+        code: "sketch_no_comment",
+      },
+      {
+        name: "files on a sketch",
+        question: {
+          id: "draw",
+          prompt: "Sketch the layout",
+          sketch: true,
+          allowFiles: true,
+        },
+        code: "sketch_no_files",
+      },
     ];
 
     for (const testCase of cases) {
@@ -167,5 +205,56 @@ describe("question create validation", () => {
         message: "Need at least one question",
       },
     ]);
+  });
+
+  it("accepts a sketch question", () => {
+    const parsed = createSessionSchema.safeParse({
+      questions: [{ id: "layout", prompt: "Sketch the kitchen", sketch: true }],
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) {
+      return;
+    }
+    expect(parsed.data.questions[0]?.sketch).toBe(true);
+  });
+
+  it("refuses a non-image sketch background", () => {
+    const parsed = createSessionSchema.safeParse({
+      questions: [
+        {
+          id: "layout",
+          prompt: "Sketch the kitchen",
+          sketch: true,
+          background: {
+            filename: "plan.pdf",
+            contentType: "application/pdf",
+            data: Buffer.from("%PDF-1.4").toString("base64"),
+          },
+        },
+      ],
+    });
+    expect(parsed.success).toBe(false);
+    if (parsed.success) {
+      return;
+    }
+    expect(
+      questionIssuesFromZod(parsed.error, {
+        questions: [{ id: "layout", prompt: "Sketch the kitchen", sketch: true }],
+      })[0],
+    ).toMatchObject({
+      questionId: "layout",
+      code: "sketch_background_unusable",
+    });
+  });
+});
+
+describe("sketch scene", () => {
+  it("refuses a point outside the board", () => {
+    const parsed = saveAnswerSchema.safeParse({
+      sketch: {
+        shapes: [{ id: "s1", type: "pen", points: [{ x: 0, y: 1.2 }] }],
+      },
+    });
+    expect(parsed.success).toBe(false);
   });
 });

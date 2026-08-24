@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createMemorySessionStore } from "./session-store";
-import { createSessionService, humanScreenFor } from "./sessions";
+import { WAIT_BUDGET_SECONDS, WAIT_MAX_SECONDS } from "./schema";
+import { createSessionService, humanScreenFor, isSessionServiceError } from "./sessions";
 
 const usableQuestions = [
   {
@@ -15,7 +16,7 @@ const usableQuestions = [
 
 function serviceWithStore(options?: {
   onSleep?: () => void | Promise<void>;
-  postCallback?: (url: string, body: unknown) => Promise<void>;
+  postCallback?: (url: string, body: unknown) => Promise<boolean>;
 }) {
   let now = new Date("2026-08-16T20:00:00.000Z");
   const store = createMemorySessionStore();
@@ -39,11 +40,11 @@ function serviceWithStore(options?: {
       now = new Date(now.getTime() + ms);
     },
     postCallback: async (url, body) => {
-      if (options?.postCallback) {
-        await options.postCallback(url, body);
-        return;
-      }
       callbackCalls.push({ url, body });
+      if (options?.postCallback) {
+        return await options.postCallback(url, body);
+      }
+      return true;
     },
   });
   return {
@@ -158,6 +159,322 @@ describe("B1 — Agent starts a questionnaire", () => {
         message: "Item questions need two to sixteen rows",
       },
     ]);
+  });
+
+  it("creates a sketch question and returns an answer link", async () => {
+    const { sessions } = serviceWithStore();
+    const result = await sessions.create({
+      title: "Kitchen",
+      questions: [{ id: "layout", prompt: "Sketch the kitchen", sketch: true }],
+    });
+    expect(result).toMatchObject({
+      sessionId: "session-1",
+      status: "pending",
+      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    });
+  });
+
+  it("refuses a sketch mixed with options, comment, or files", async () => {
+    const { sessions } = serviceWithStore();
+    const mixed = await sessions.create({
+      questions: [
+        {
+          id: "layout",
+          prompt: "Sketch the kitchen",
+          sketch: true,
+          options: [
+            { id: "yes", label: "Yes" },
+            { id: "no", label: "No" },
+          ],
+        },
+      ],
+    });
+    expect(mixed).toMatchObject({
+      code: "invalid_questions",
+      status: 400,
+      issues: [{ questionId: "layout", code: "sketch_mixed" }],
+    });
+    expect(mixed).not.toHaveProperty("answerUrl");
+
+    const withComment = await sessions.create({
+      questions: [
+        {
+          id: "layout",
+          prompt: "Sketch the kitchen",
+          sketch: true,
+          allowComment: true,
+        },
+      ],
+    });
+    expect(withComment).toMatchObject({
+      issues: [{ questionId: "layout", code: "sketch_no_comment" }],
+    });
+
+    const withFiles = await sessions.create({
+      questions: [
+        {
+          id: "layout",
+          prompt: "Sketch the kitchen",
+          sketch: true,
+          allowFiles: true,
+        },
+      ],
+    });
+    expect(withFiles).toMatchObject({
+      issues: [{ questionId: "layout", code: "sketch_no_files" }],
+    });
+  });
+});
+
+describe("B40 — Sketch answers", () => {
+  const sketchQuestions = [{ id: "layout", prompt: "Sketch the kitchen", sketch: true }];
+  const scene = {
+    shapes: [
+      {
+        id: "s1",
+        type: "rectangle" as const,
+        x: 0.1,
+        y: 0.1,
+        width: 0.4,
+        height: 0.3,
+        label: "island",
+      },
+      {
+        id: "s2",
+        type: "arrow" as const,
+        from: { x: 0.5, y: 0.25 },
+        to: { x: 0.8, y: 0.25 },
+      },
+    ],
+  };
+
+  it("saves a scene, moves to in_progress, and includes it on status", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: sketchQuestions });
+    const saved = await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "layout",
+      publicToken,
+      body: { sketch: scene },
+    });
+    expect(saved).toMatchObject({
+      questionId: "layout",
+      progress: { answeredCount: 1, questionIdsAnswered: ["layout"] },
+    });
+    const poll = await sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(poll).toMatchObject({
+      status: "in_progress",
+      answers: { layout: { sketch: scene } },
+    });
+  });
+
+  it("refuses coordinates outside the board and keeps the previous scene", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: sketchQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "layout",
+      publicToken,
+      body: { sketch: scene },
+    });
+    const refused = await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "layout",
+      publicToken,
+      body: {
+        sketch: {
+          shapes: [{ id: "bad", type: "line", from: { x: 0, y: 0 }, to: { x: 1.5, y: 0 } }],
+        },
+      },
+    });
+    expect(refused).toMatchObject({ code: "invalid_answer", status: 400 });
+    const poll = await sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(poll).toMatchObject({
+      answers: { layout: { sketch: scene } },
+    });
+  });
+
+  it("blocks submit on an empty required sketch and allows PUT of a scene then submit", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: sketchQuestions });
+    const refused = await sessions.submit({ sessionId: "session-1", publicToken });
+    expect(refused).toMatchObject({ code: "required_unanswered", status: 400 });
+    const put = await sessions.saveAnswers({
+      sessionId: "session-1",
+      publicToken,
+      body: {
+        answers: { layout: { sketch: scene } },
+        submit: true,
+      },
+    });
+    expect(put).toMatchObject({
+      submitted: { status: "submitted" },
+    });
+  });
+
+  it("lets an optional sketch stay blank", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({
+      questions: [{ id: "doodle", prompt: "Doodle if you like", sketch: true, required: false }],
+    });
+    const submitted = await sessions.submit({ sessionId: "session-1", publicToken });
+    expect(submitted).toMatchObject({ status: "submitted" });
+  });
+
+  const png1x1 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+  it("stores a PNG background on create and keeps the scene as drawings only", async () => {
+    const { sessions } = serviceWithStore();
+    const created = await sessions.create({
+      questions: [
+        {
+          id: "layout",
+          prompt: "Sketch on the plan",
+          sketch: true,
+          background: {
+            filename: "plan.png",
+            contentType: "image/png",
+            data: png1x1,
+          },
+        },
+      ],
+    });
+    expect(created).toMatchObject({ answerUrl: expect.stringContaining("/s/") });
+    const view = await sessions.getForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(view).toMatchObject({
+      questions: [{ id: "layout", sketch: true, backgroundFileId: expect.any(String) }],
+    });
+    if ("questions" in view) {
+      expect(JSON.stringify(view.questions)).not.toContain(png1x1);
+      expect(view.questions[0]).not.toHaveProperty("background");
+    }
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "layout",
+      publicToken,
+      body: { sketch: scene },
+    });
+    const poll = await sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(poll).toMatchObject({
+      answers: { layout: { sketch: scene } },
+    });
+  });
+
+  it("refuses a PDF background at create", async () => {
+    const { sessions } = serviceWithStore();
+    const refused = await sessions.create({
+      questions: [
+        {
+          id: "layout",
+          prompt: "Sketch on the plan",
+          sketch: true,
+          background: {
+            filename: "plan.pdf",
+            contentType: "application/pdf",
+            data: Buffer.from("%PDF-1.4 hello").toString("base64"),
+          },
+        },
+      ],
+    });
+    expect(refused).toMatchObject({
+      code: "invalid_questions",
+      issues: [{ questionId: "layout", code: "sketch_background_unusable" }],
+    });
+  });
+
+  it("restores a saved scene on the public view", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: sketchQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "layout",
+      publicToken,
+      body: { sketch: scene },
+    });
+    const view = await sessions.getForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(view).toMatchObject({
+      answers: { layout: { sketch: scene } },
+    });
+  });
+
+  it("attaches a PNG preview, then download JSON and markdown carry the scene and picture URL", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: sketchQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "layout",
+      publicToken,
+      body: { sketch: scene },
+    });
+    const attached = await sessions.attachFile({
+      sessionId: "session-1",
+      publicToken,
+      questionId: "layout",
+      filename: "sketch.png",
+      contentType: "image/png",
+      size: 24,
+      storageKey: "inline:preview",
+    });
+    expect(attached).toMatchObject({
+      file: { filename: "sketch.png", contentType: "image/png" },
+    });
+    await sessions.submit({ sessionId: "session-1", publicToken });
+    const file = await sessions.downloadForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(file).toMatchObject({
+      status: "submitted",
+      answers: [
+        {
+          questionId: "layout",
+          prompt: "Sketch the kitchen",
+          selectedOptionIds: [],
+          selectedLabels: [],
+          sketch: scene,
+          previewUrl: expect.stringContaining("/files/"),
+        },
+      ],
+    });
+    const markdown = await sessions.downloadMarkdownForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(markdown).toContain("Sketch (2 shape");
+    expect(markdown).toContain("Sketch picture");
+    const machine = await sessions.markdownForPublic({
+      sessionId: "session-1",
+      publicToken,
+    });
+    expect(machine).toContain("Sketch");
+    expect(machine).toContain("pen");
+    expect(machine).toContain("arrow");
+    const manage = await sessions.markdownForManage({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(manage).toContain("sketch");
+    expect(manage).toContain("2 shape");
   });
 });
 
@@ -1467,6 +1784,7 @@ describe("B18 — Agent can be called back on a terminal status", () => {
           setTimeout(resolve, 25);
         });
         released = true;
+        return true;
       },
     });
     await sessions.create({
@@ -1580,6 +1898,29 @@ describe("B28 — Owner can edit before anyone answers", () => {
       questions: [{ id: "Q2", prompt: "Ship it?" }],
     });
     expect(JSON.stringify(publicView)).not.toContain(agentToken);
+  });
+
+  it("replaces questions with a sketch question while pending", async () => {
+    const { sessions } = serviceWithStore();
+    const created = await sessions.create({
+      title: "Naming",
+      questions: usableQuestions,
+    });
+    const updated = await sessions.update({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: {
+        questions: [{ id: "layout", prompt: "Sketch the kitchen", sketch: true }],
+      },
+    });
+    expect(updated).toMatchObject({
+      status: "pending",
+      questions: [{ id: "layout", sketch: true }],
+    });
+    expect(created).toMatchObject({
+      answerUrl: (updated as { answerUrl: string }).answerUrl,
+    });
   });
 
   it("F3.T4 — Edit after an answer is refused", async () => {
@@ -1769,5 +2110,130 @@ describe("B32 — labelled rows and named fields", () => {
       message: "Question hmrc: Money rows need a currency",
       issues: [{ questionId: "hmrc", code: "money_needs_currency" }],
     });
+  });
+});
+
+describe("B13 — A bounded wait tells the agent what to do next", () => {
+  it("Stops short of the function limit however long the agent asked for", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: usableQuestions });
+    const waited = await sessions.wait({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: { seconds: WAIT_MAX_SECONDS },
+    });
+    // Asking for the documented maximum used to run the request to the wire and
+    // come back a 504. Sitting for less is inside the contract; dying is not.
+    expect(waited).toMatchObject({ timedOut: true, waitedSeconds: WAIT_BUDGET_SECONDS });
+  });
+
+  it("Says to call again, rather than returning a bare pending status", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: usableQuestions });
+    const waited = await sessions.wait({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: { seconds: 5 },
+    });
+    expect(waited).toMatchObject({ status: "pending", timedOut: true, nextAction: "wait" });
+    expect(waited).toHaveProperty("hint");
+    if (isSessionServiceError(waited)) {
+      throw new Error("expected a wait result");
+    }
+    // A person taking their time is the normal case, and the reply is the only
+    // place left to say so by the time an agent reads it.
+    expect(waited.hint).toContain("keep waiting");
+    expect(waited.hint).toContain(waited.expiresAt);
+  });
+
+  it("An answered wait is not marked timed out", async () => {
+    const { sessions } = serviceWithStore({});
+    await sessions.create({ questions: usableQuestions });
+    await sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q1",
+      publicToken,
+      body: { selectedOptionIds: ["1"] },
+    });
+    await sessions.submit({ sessionId: "session-1", publicToken });
+    const waited = await sessions.wait({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+      body: { seconds: 30 },
+    });
+    expect(waited).toMatchObject({ status: "submitted", timedOut: false, waitedSeconds: 0 });
+    expect(waited).not.toHaveProperty("nextAction");
+  });
+});
+
+describe("B18 — A callback that failed is not mistaken for one never set", () => {
+  async function submitWith(options?: {
+    postCallback?: (url: string, body: unknown) => Promise<boolean>;
+    scheduleAfterResponse?: boolean;
+  }) {
+    const harness = serviceWithStore({ postCallback: options?.postCallback });
+    await harness.sessions.create({
+      questions: usableQuestions,
+      callbackUrl: "https://example.com/hook",
+    });
+    await harness.sessions.saveAnswer({
+      sessionId: "session-1",
+      questionId: "Q1",
+      publicToken,
+      body: { selectedOptionIds: ["1"] },
+    });
+    await harness.sessions.submit({ sessionId: "session-1", publicToken });
+    const poll = await harness.sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    return { ...harness, poll };
+  }
+
+  it("Reports a delivered callback as delivered", async () => {
+    const { poll } = await submitWith();
+    expect(poll).toMatchObject({
+      callback: { url: "https://example.com/hook", delivered: true },
+    });
+  });
+
+  it("Retries a receiver that was merely cold", async () => {
+    let attempts = 0;
+    const { poll, callbackCalls } = await submitWith({
+      postCallback: async () => {
+        attempts += 1;
+        return attempts >= 3;
+      },
+    });
+    // One blip used to lose the hook for good, with nothing recording that it had.
+    expect(callbackCalls).toHaveLength(3);
+    expect(poll).toMatchObject({ callback: { delivered: true } });
+  });
+
+  it("Records a callback that never arrived, and stops trying", async () => {
+    const { poll, callbackCalls } = await submitWith({
+      postCallback: async () => false,
+    });
+    expect(callbackCalls).toHaveLength(3);
+    expect(poll).toMatchObject({ callback: { delivered: false } });
+    if (isSessionServiceError(poll)) {
+      throw new Error("expected a session view");
+    }
+    expect(poll.callback?.attemptedAt).not.toBeNull();
+  });
+
+  it("Says nothing about delivery when no callback was set", async () => {
+    const { sessions } = serviceWithStore();
+    await sessions.create({ questions: usableQuestions });
+    const poll = await sessions.getForAgent({
+      sessionId: "session-1",
+      agentToken,
+      hasCreateCredential: false,
+    });
+    expect(poll).not.toHaveProperty("callback");
   });
 });
