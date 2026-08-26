@@ -32,33 +32,33 @@ export type HeroSceneProps = {
 };
 
 /**
- * Homepage hero: product copy over the character scene. On a narrow screen the
- * words sit above the picture. On a wide screen they occupy the quiet left of
- * the illustration. The picture never contains live text.
+ * Homepage hero: product copy beside the character scene. On a narrow screen
+ * the words sit above the picture. On a wide screen they sit to the left of
+ * it. Copy and art never share the same pixels.
  */
 export function HeroScene({ src, alt, eyebrow, title, description, children }: HeroSceneProps) {
   return (
-    <div className="grid items-start md:grid-cols-12">
-      <div className="relative z-10 md:col-span-6 md:col-start-1 md:row-start-1 md:p-10">
-        <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground md:text-[#5d594f]">
+    <div className="grid items-center gap-10 md:grid-cols-12 md:gap-8">
+      <div className="min-w-0 md:col-span-5">
+        <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
           {eyebrow}
         </p>
-        <h1 className="max-w-[15ch] font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance text-foreground sm:text-6xl md:text-[#28251f]">
+        <h1 className="max-w-[15ch] font-heading text-4xl font-extrabold leading-[1.02] tracking-[-0.035em] text-balance text-foreground sm:text-5xl lg:text-6xl">
           {title}
         </h1>
-        <p className="mt-5 max-w-[46ch] text-lg leading-relaxed text-muted-foreground md:text-[#5d594f]">
+        <p className="mt-5 max-w-[42ch] text-lg leading-relaxed text-muted-foreground">
           {description}
         </p>
         {children}
       </div>
-      <figure className="relative mt-10 aspect-[3/2] overflow-hidden rounded-2xl border border-border bg-[#f4efe2] shadow-sm md:col-span-full md:col-start-1 md:row-start-1 md:mt-0">
+      <figure className="relative aspect-[3/2] overflow-hidden rounded-2xl border border-border bg-[#f4efe2] shadow-sm md:col-span-7">
         <Image
           src={src}
           alt={alt}
           fill
           priority
-          sizes="(min-width: 1024px) 960px, calc(100vw - 48px)"
-          className="object-cover"
+          sizes="(min-width: 1024px) 560px, calc(100vw - 48px)"
+          className="object-cover object-right"
         />
       </figure>
     </div>

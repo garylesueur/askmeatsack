@@ -70,7 +70,7 @@ export function HomeLanding({ mcpUrl, cursorHref, pluginHref }: HomeLandingProps
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        <code className="rounded-md bg-muted px-2 py-1 font-mono text-sm text-foreground">
+        <code className="max-w-full break-all rounded-md bg-muted px-2 py-1 font-mono text-sm text-foreground">
           {mcpUrl}
         </code>
         <Button
