@@ -179,3 +179,11 @@ only the tool description — prefer the plugin where you can.
 MIT — see [LICENSE](LICENSE).
 
 Built by [Gary Le Sueur](https://gaz.dev).
+
+### Site icons
+
+The browser favicon and Apple touch icon use the same character artwork as the
+plugin listing. Edit `public/plugin-icon.png`, then run `pnpm sync:icons` to
+regenerate `src/app/favicon.ico`, `src/app/icon.png`, and
+`src/app/apple-icon.png`. Do not edit those exports by hand. Builds regenerate
+them, and tests check that they match the source.
