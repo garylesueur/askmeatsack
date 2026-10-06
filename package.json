@@ -8,15 +8,16 @@
     "env": "op inject -i .env.development.tpl -o .env.local",
     "env:op-items": "bash scripts/ensure-op-items.sh",
     "env:vercel": "bash scripts/sync-vercel-env.sh",
-    "build": "node scripts/sync-skill.mjs && node brand/scripts/sync-brand.mjs && next build",
+    "build": "node scripts/sync-icons.mjs && node scripts/sync-skill.mjs && node brand/scripts/sync-brand.mjs && next build",
     "start": "next start",
     "lint": "oxlint && node scripts/check-import-layers.mjs",
     "format": "oxfmt . '!.agents/**'",
     "format:check": "oxfmt --check . '!.agents/**'",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "node scripts/sync-icons.mjs --check && vitest run",
     "sync:skill": "node scripts/sync-skill.mjs",
-    "sync:brand": "node brand/scripts/sync-brand.mjs"
+    "sync:brand": "node brand/scripts/sync-brand.mjs",
+    "sync:icons": "node scripts/sync-icons.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -48,6 +49,7 @@
     "@types/react-dom": "^19",
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
+    "sharp": "0.35.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
