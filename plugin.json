@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "askmeatsack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An agent asks a human questions. Create a questionnaire, inspect or edit it on the private manage link, paste the answer link, and wait. No API key. Free to create; teams and custom domains are paid.",
   "author": {
     "name": "Gary Le Sueur",
@@ -35,8 +35,8 @@
           "Create a questionnaire for the project team."
         ],
         "brandColor": "#a04f32",
-        "logo": "./public/logo.svg",
-        "composerIcon": "./public/logo.svg"
+        "logo": "./public/plugin-icon.png",
+        "composerIcon": "./public/plugin-icon.png"
       }
     }
   }
