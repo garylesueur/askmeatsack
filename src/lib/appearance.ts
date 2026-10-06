@@ -63,7 +63,11 @@ export function subscribeColorMode(listener: () => void): () => void {
 
 export function storeColorMode(mode: StoredColorMode): void {
   window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
-  document.cookie = persistColorModeCookie(mode, window.location.hostname, window.location.protocol);
+  document.cookie = persistColorModeCookie(
+    mode,
+    window.location.hostname,
+    window.location.protocol,
+  );
   for (const listener of colorModeListeners) {
     listener();
   }

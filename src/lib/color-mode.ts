@@ -26,12 +26,20 @@ export function colorModeCookieDomain(hostname: string): string {
   return "";
 }
 
-export function persistColorModeCookie(mode: StoredColorMode, hostname: string, protocol: string): string {
+export function persistColorModeCookie(
+  mode: StoredColorMode,
+  hostname: string,
+  protocol: string,
+): string {
   const secure = protocol === "https:" ? "; Secure" : "";
   return `${COLOR_MODE_COOKIE}=${mode}; Path=/; Max-Age=31536000; SameSite=Lax${secure}${colorModeCookieDomain(hostname)}`;
 }
 
-export function applyResolvedColorMode(root: HTMLElement, mode: StoredColorMode, isDark: boolean): void {
+export function applyResolvedColorMode(
+  root: HTMLElement,
+  mode: StoredColorMode,
+  isDark: boolean,
+): void {
   root.setAttribute("data-theme", isDark ? "dark" : "light");
   root.setAttribute("data-color-mode", mode);
   root.classList.toggle("dark", isDark);

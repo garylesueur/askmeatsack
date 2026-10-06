@@ -49,6 +49,24 @@ The card is drawn from the questionnaire's own fields. It is never a screenshot 
 A crawler arrives with no public token, so the card's URL carries a preview token derived from the session's public token. Someone holding only a session id cannot fetch the card, someone holding the card URL cannot turn it back into the public token, and the public token is not accepted in the preview token's place. A card fetched without a usable preview token names nobody's questionnaire.
 
 
+### B9 — Plugins share a Meatsack marketplace 🟢 implemented
+
+The Meatsack marketplace lists askmeatsack.com, showmeatsack.com, and
+sharemeatsack.com as independently installable plugins. This product's plugin
+ID is `askmeatsack`; its listing name and tool name remain **askmeatsack.com**.
+The product repository owns its manifest, skill, hosted MCP configuration, and
+logo. The marketplace sync copies a minimal package from those sources.
+
+The portable manifest carries OpenAI listing metadata and logo paths. Claude
+Code and Cursor compatibility manifests use the same plugin ID and version.
+The homepage offers install instructions for Codex, Claude Code, and Cursor;
+`/llms.txt`, `/mcp.md`, and the HTML MCP guide link to the marketplace. Each
+plugin includes both the MCP connection and the same skill served at `/skill.md`.
+
+Publication of `garylesueur/meatsack-marketplace` must precede deployment of the
+website links. Public ChatGPT/Codex and Cursor directory submissions are a
+separate release step.
+
 ## Rules (Invariants)
 
 - Public copy always calls the product **askmeatsack.com**. The tool is named `askmeatsack.com`.

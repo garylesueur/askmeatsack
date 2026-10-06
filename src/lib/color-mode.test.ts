@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  colorModeCookieDomain,
-  isStoredColorMode,
-  persistColorModeCookie,
-} from "./color-mode";
+import { colorModeCookieDomain, isStoredColorMode, persistColorModeCookie } from "./color-mode";
 
 describe("colour mode persistence", () => {
   it("accepts light, dark, and auto", () => {

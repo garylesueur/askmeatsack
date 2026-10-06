@@ -107,6 +107,40 @@ in config we own, so updating the plugin never clobbers our choices.
 > convention decisions, and `paths.conventions` points at a file that does not
 > exist.
 
+## Plugin marketplace
+
+The plugin ID is `askmeatsack`; its display name and MCP tool name are
+**askmeatsack.com**. The portable manifest includes OpenAI listing metadata and
+icons; `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json` provide
+client compatibility.
+
+The [Meatsack marketplace](https://github.com/garylesueur/meatsack-marketplace)
+packages all three products. It contains generated, minimal plugin copies;
+this repository remains the source for this product's manifest, skill, MCP
+connection, and logo. Run the marketplace sync after changing those files.
+
+Codex:
+
+```sh
+codex plugin marketplace add garylesueur/meatsack-marketplace
+```
+
+Then install **askmeatsack.com** from the Meatsack source in Plugins.
+
+Claude Code:
+
+```text
+/plugin marketplace add garylesueur/meatsack-marketplace
+/plugin install askmeatsack@meatsack
+```
+
+Cursor Teams/Enterprise: Dashboard → Plugins & MCPs → Add Marketplace →
+Import from Repo, using the marketplace repository URL. Install the product
+from Customize. A local clone can also be linked into `~/.cursor/plugins/local/`.
+
+Marketplace publication must precede deploying these website install links.
+Public ChatGPT/Codex and Cursor directory listings require separate submissions.
+
 ## Install
 
 This repository is itself an [Agent Plugin](https://agent-plugins.org/) — the
@@ -120,7 +154,7 @@ Plugin and choose this repository root (the folder that contains `plugin.json`).
 For local development you can also symlink it:
 
 ```bash
-ln -s /path/to/askmeatsack ~/.cursor/plugins/local/askmeatsack.com
+ln -s /path/to/askmeatsack ~/.cursor/plugins/local/askmeatsack
 ```
 
 Then reload the window. The plugin carries the hosted MCP server and
