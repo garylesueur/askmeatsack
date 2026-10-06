@@ -43,6 +43,7 @@ askmeatsack.com is how an agent asks a human a set of questions. Create returns 
 
 ## Docs
 
+- [Install plugin](${origin}/install): Marketplace setup for Codex, Claude Code, and Cursor
 - [Skill](${origin}/skill.md): How to use the askmeatsack.com tool
 - [MCP and HTTP](${origin}/mcp.md): Connect, actions, curl, machine answering
 - [Plugin marketplace](${MARKETPLACE_HREF}): Install in Codex, Claude Code, or Cursor
@@ -77,7 +78,7 @@ This URL is the MCP server. Browsers get a short page. Agents should fetch \`${o
 
 There is no API key. Create is open today. Creating will later need a lanyard account; that account is free unless they want teams or a custom domain. The person answering never signs in.
 
-${pluginInstallMarkdown()}
+${pluginInstallMarkdown(origin)}
 ## Tool
 
 One tool, named \`askmeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`edit\`.
@@ -202,6 +203,7 @@ export function mcpGuideHtml(origin = publicOrigin()): string {
       <li><a href="${originEscaped}/mcp.md">API guide (markdown)</a></li>
       <li><a href="${originEscaped}/skill.md">Skill</a></li>
       <li><a href="${CURSOR_PLUGIN_HREF}">Cursor plugin</a></li>
+      <li><a href="${originEscaped}/install">Install plugin</a></li>
       <li><a href="${MARKETPLACE_HREF}">Meatsack plugin marketplace</a></li>
       <li><a href="${originEscaped}/llms.txt">llms.txt</a></li>
       <li><a href="${originEscaped}/">${title}</a></li>

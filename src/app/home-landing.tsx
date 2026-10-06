@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
-import { PluginInstall } from "@/components/plugin-install";
+import Link from "next/link";
 import { HomeDemo } from "@/app/home-demo";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,9 +40,15 @@ export function HomeLanding({ mcpUrl, cursorHref, pluginHref }: HomeLandingProps
   return (
     <>
       <div className="mt-8 flex flex-wrap items-center gap-3">
+        <Link
+          href="/install"
+          className="inline-flex rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          Install plugin
+        </Link>
         <Dialog open={tryOpen} onOpenChange={setTryOpen}>
           <DialogTrigger asChild>
-            <Button type="button" size="lg">
+            <Button type="button" size="lg" variant="outline">
               Try it
             </Button>
           </DialogTrigger>
@@ -57,52 +62,54 @@ export function HomeLanding({ mcpUrl, cursorHref, pluginHref }: HomeLandingProps
             <div className="min-h-0 overflow-y-auto">{tryOpen ? <HomeDemo /> : null}</div>
           </DialogContent>
         </Dialog>
-
-        <a href={cursorHref} className="inline-flex">
-          <Image
-            src="/mcp-install-light.svg"
-            alt="Add askmeatsack.com to Cursor"
-            width={126}
-            height={28}
-            unoptimized
-            className="dark:invert"
-          />
-        </a>
-      </div>
-
-      <PluginInstall />
-
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <code className="max-w-full break-all rounded-md bg-muted px-2 py-1 font-mono text-sm text-foreground">
-          {mcpUrl}
-        </code>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void copy("mcp", mcpUrl);
-          }}
-        >
-          {copied === "mcp" ? "Copied" : "Copy MCP URL"}
-        </Button>
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">
-        Paste that into any MCP client.{" "}
-        <a href={pluginHref} className="underline underline-offset-4 hover:text-foreground">
-          Plugin source
-        </a>
-        {" · "}
-        <a
-          href="https://grok.com/connectors"
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-4 hover:text-foreground"
-        >
-          Grok connectors
-        </a>
+        Connection and skill together. Codex, Claude Code, or Cursor.
       </p>
+
+      <details className="mt-5 text-sm">
+        <summary className="cursor-pointer text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          Connect an MCP client directly
+        </summary>
+        <div className="pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="max-w-full break-all rounded-md bg-muted px-2 py-1 font-mono text-sm text-foreground">
+              {mcpUrl}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void copy("mcp", mcpUrl);
+              }}
+            >
+              {copied === "mcp" ? "Copied" : "Copy MCP URL"}
+            </Button>
+          </div>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            Paste that into any MCP client.{" "}
+            <a href={cursorHref} className="underline underline-offset-4 hover:text-foreground">
+              Add MCP to Cursor
+            </a>
+            {" · "}
+            <a href={pluginHref} className="underline underline-offset-4 hover:text-foreground">
+              Plugin source
+            </a>
+            {" · "}
+            <a
+              href="https://grok.com/connectors"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Grok connectors
+            </a>
+          </p>
+        </div>
+      </details>
     </>
   );
 }

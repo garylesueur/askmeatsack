@@ -59,7 +59,11 @@ logo. The marketplace sync copies a minimal package from those sources.
 
 The portable manifest carries OpenAI listing metadata and logo paths. Claude
 Code and Cursor compatibility manifests use the same plugin ID and version.
-The homepage offers install instructions for Codex, Claude Code, and Cursor;
+The homepage leads with an **Install plugin** action to `/install`. The guide
+shows this product’s character icon, app-specific steps and copyable commands for
+Codex, Claude Code, and Cursor. Add the marketplace once per app, then choose
+one or more plugins. Direct MCP setup remains available as a secondary option.
+The install guide is linked from the footer and sitemap;
 `/llms.txt`, `/mcp.md`, and the HTML MCP guide link to the marketplace. Each
 plugin includes both the MCP connection and the same skill served at `/skill.md`.
 

@@ -7,6 +7,7 @@ describe("public crawler files", () => {
     const urls = sitemap().map((entry) => entry.url);
     expect(urls).toEqual([
       "https://askmeatsack.com",
+      "https://askmeatsack.com/install",
       "https://askmeatsack.com/mcp",
       "https://askmeatsack.com/mcp.md",
       "https://askmeatsack.com/skill.md",
