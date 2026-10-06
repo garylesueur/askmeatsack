@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "askmeatsack.com",
+  "name": "askmeatsack",
   "version": "0.1.0",
   "description": "An agent asks a human questions. Create a questionnaire, inspect or edit it on the private manage link, paste the answer link, and wait. No API key. Free to create; teams and custom domains are paid.",
   "author": {
@@ -16,5 +16,28 @@
     "mcp",
     "human-in-the-loop",
     "forms"
-  ]
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "askmeatsack.com",
+        "shortDescription": "Ask a person questions and wait for answers",
+        "longDescription": "An agent asks a human questions. Create a questionnaire, inspect or edit it on the private manage link, paste the answer link, and wait. No API key. Free to create; teams and custom domains are paid. The plugin includes the hosted MCP connection and the skill that guides the agent through the workflow. The agent delivers the resulting link using the conversation or a service it already has access to.",
+        "developerName": "Gary Le Sueur",
+        "category": "Productivity",
+        "capabilities": [
+          "Questions",
+          "Answers"
+        ],
+        "websiteURL": "https://askmeatsack.com",
+        "defaultPrompt": [
+          "Ask me the questions you need answered before you start.",
+          "Create a questionnaire for the project team."
+        ],
+        "brandColor": "#a04f32",
+        "logo": "./public/logo.svg",
+        "composerIcon": "./public/logo.svg"
+      }
+    }
+  }
 }
