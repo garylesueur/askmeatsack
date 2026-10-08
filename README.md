@@ -74,12 +74,9 @@ Production are pushed to Vercel and are not for a laptop.
 ## calm-craft
 
 This repository is built with [calm-craft](https://github.com/calmtechltd/calm-craft),
-our own MIT-licensed [Agent Plugin](https://agent-plugins.org/). It is vendored
-as a submodule at `.agents/plugins/calm-craft`:
-
-```bash
-git submodule update --init --recursive
-```
+our own MIT-licensed [Agent Plugin](https://agent-plugins.org/), installed in the
+agent tooling. Use its `calm-craft:…` skills across repositories; this repository
+keeps its project settings in `.engineering/config.yaml`.
 
 **What it is.** Three things that make coding agents produce work you can trust:
 specs as an addressable source of truth, a delivery loop that plans and then
