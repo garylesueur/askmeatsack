@@ -22,17 +22,24 @@ const origin = publicOrigin();
 export const metadata: Metadata = {
   metadataBase: new URL(origin),
   title: {
-    default: SITE_TITLE,
-    template: `%s · ${SITE_TITLE}`,
+    default: `${SITE_TITLE} · I, Meatsack`,
+    template: `%s · ${SITE_TITLE} · I, Meatsack`,
   },
   description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   applicationName: SITE_TITLE,
-  keywords: ["ask.imeatsack.com", "MCP", "questionnaire", "agent", "human in the loop"],
-  authors: [{ name: SITE_TITLE, url: origin }],
+  keywords: [
+    "I, Meatsack",
+    "ask.imeatsack.com",
+    "MCP",
+    "questionnaire",
+    "agent",
+    "human in the loop",
+  ],
+  authors: [{ name: "Gary Le Sueur", url: "https://gaz.dev" }],
   alternates: {
     canonical: "/",
     types: {
-      "text/markdown": "/mcp.md",
+      "text/markdown": "/index.md",
       "text/plain": "/llms.txt",
     },
   },
@@ -40,18 +47,19 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_GB",
     url: origin,
-    siteName: SITE_TITLE,
-    title: SITE_TITLE,
+    siteName: "I, Meatsack",
+    title: `${SITE_TITLE} · I, Meatsack`,
     description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
+    title: `${SITE_TITLE} · I, Meatsack`,
     description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
 };
 

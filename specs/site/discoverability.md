@@ -79,6 +79,17 @@ Publication of `garylesueur/meatsack-marketplace` must precede deployment of the
 website links. Public ChatGPT/Codex and Cursor directory submissions are a
 separate release step.
 
+### B20 — The I, Meatsack family is discoverable in text and metadata 🟢 implemented
+
+The homepage advertises `/index.md` as its Markdown equivalent and `/llms.txt`
+as its documentation index. `/llms-full.txt` combines the product overview and
+current installation, skill and API documentation. These two text equivalents
+have `noindex, follow` headers and a canonical link to the HTML homepage; they
+are excluded from the sitemap. Public JSON-LD connects the product to the
+I, Meatsack website and application suite. The social card names I, Meatsack,
+the product and its canonical subdomain. Private session and share URLs stay
+outside public discovery indexes.
+
 ## Rules (Invariants)
 
 - Public copy always calls the product **ask.imeatsack.com**. The tool is named `ask.imeatsack.com`.
