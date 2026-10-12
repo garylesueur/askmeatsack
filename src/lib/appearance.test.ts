@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   appearanceClassName,
   appearanceStyle,
@@ -6,6 +6,10 @@ import {
   resolveEffectiveMode,
   resolveMode,
   resolveTheme,
+  readStoredColorMode,
+  storeColorMode,
+  subscribeColorMode,
+  COLOR_MODE_STORAGE_KEY,
 } from "./appearance";
 
 describe("questionnaire appearance", () => {
@@ -53,5 +57,63 @@ describe("questionnaire appearance", () => {
 
   it("picks light text on a dark accent", () => {
     expect(contrastingForeground("#0f766e")).toBe("#fafafa");
+  });
+});
+
+describe("reader colour preferences", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it.each([
+    ["dark", "dark"],
+    ["auto", "auto"],
+    ["invalid", null],
+  ])("restores the shared cookie %s when no local choice exists", (cookie, expected) => {
+    vi.stubGlobal("window", { localStorage: { getItem: () => null } });
+    vi.stubGlobal("document", {
+      cookie: `meatsack_color_mode=${cookie}`,
+      documentElement: { getAttribute: () => "auto" },
+    });
+    expect(readStoredColorMode()).toBe(expected);
+  });
+
+  it("keeps the selected mode usable when saving is refused", () => {
+    const attributes = new Map<string, string>([["data-color-mode", "light"]]);
+    const root = {
+      getAttribute: (name: string) => attributes.get(name) ?? null,
+      setAttribute: (name: string, value: string) => attributes.set(name, value),
+      classList: { toggle: () => undefined },
+      style: { colorScheme: "light" },
+    };
+    let storageListener: ((event: { key: string | null }) => void) | undefined;
+    vi.stubGlobal("window", {
+      addEventListener: (_name: string, listener: (event: { key: string | null }) => void) => {
+        storageListener = listener;
+      },
+      removeEventListener: () => undefined,
+      localStorage: {
+        getItem: () => "light",
+        setItem: () => {
+          throw new Error("Storage full");
+        },
+      },
+      matchMedia: () => ({ matches: false }),
+      location: { hostname: "ask.imeatsack.com", protocol: "https:" },
+    });
+    vi.stubGlobal("document", {
+      documentElement: root,
+      get cookie() {
+        return "";
+      },
+      set cookie(_value: string) {
+        throw new Error("Cookies blocked");
+      },
+    });
+    const unsubscribe = subscribeColorMode(() => undefined);
+    storeColorMode("dark");
+    expect(readStoredColorMode()).toBe("dark");
+    expect(root.style.colorScheme).toBe("dark");
+    storageListener?.({ key: COLOR_MODE_STORAGE_KEY });
+    expect(readStoredColorMode()).toBe("light");
+    unsubscribe();
   });
 });
