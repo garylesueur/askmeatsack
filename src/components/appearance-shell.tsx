@@ -37,7 +37,8 @@ export function AppearanceShell({
   useLayoutEffect(() => {
     applyAppearanceMode(mode, preference);
     return () => {
-      applyAppearanceMode("system", readStoredColorMode() ?? "auto");
+      const storedMode = readStoredColorMode();
+      applyAppearanceMode(resolveEffectiveMode(undefined, storedMode), storedMode ?? "auto");
     };
   }, [mode, preference, systemDark]);
 
@@ -52,7 +53,14 @@ export function AppearanceShell({
     >
       {showModeToggle ? (
         <div className="flex w-full justify-end pt-3">
-          <ColorModeToggle value={preference} onChange={storeColorMode} />
+          <ColorModeToggle
+            isDark={mode === "dark" || (mode === "system" && systemDark)}
+            onToggle={() =>
+              storeColorMode(
+                mode === "dark" || (mode === "system" && systemDark) ? "light" : "dark",
+              )
+            }
+          />
         </div>
       ) : null}
       {children}

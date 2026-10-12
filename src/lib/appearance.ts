@@ -37,14 +37,25 @@ export function readStoredColorMode(): StoredColorMode | null {
   if (typeof window === "undefined") {
     return null;
   }
-  const value = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+  const current = document.documentElement.getAttribute("data-color-mode");
+  if (current === "light" || current === "dark") return current;
+  let value: string | null;
+  let legacy: string | null;
+  try {
+    value = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+    legacy = window.localStorage.getItem(COLOR_MODE_LEGACY_STORAGE_KEY);
+  } catch {
+    const mode = document.documentElement.getAttribute("data-color-mode");
+    return isStoredColorMode(mode) ? mode : null;
+  }
   if (isStoredColorMode(value)) {
     return value;
   }
-  const legacy = window.localStorage.getItem(COLOR_MODE_LEGACY_STORAGE_KEY);
   if (legacy === "light" || legacy === "dark") {
     return legacy;
   }
+  const cookie = document.cookie.match(/(?:^|; )meatsack_color_mode=([^;]*)/);
+  if (cookie && isStoredColorMode(cookie[1])) return cookie[1];
   return null;
 }
 
@@ -62,12 +73,21 @@ export function subscribeColorMode(listener: () => void): () => void {
 }
 
 export function storeColorMode(mode: StoredColorMode): void {
-  window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
-  document.cookie = persistColorModeCookie(
-    mode,
-    window.location.hostname,
-    window.location.protocol,
-  );
+  applyAppearanceMode(mode === "auto" ? "system" : mode, mode);
+  try {
+    window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+  } catch {
+    // The current page still switches when storage is unavailable.
+  }
+  try {
+    document.cookie = persistColorModeCookie(
+      mode,
+      window.location.hostname,
+      window.location.protocol,
+    );
+  } catch {
+    // The current page still switches when cookies are unavailable.
+  }
   for (const listener of colorModeListeners) {
     listener();
   }
