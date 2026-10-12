@@ -1,7 +1,8 @@
 import { answersJsonSchema } from "./answers-json-schema";
 import { entryRowCaption } from "./money";
 import { questionEntries, questionKind } from "./question-presentation";
-import type { Question } from "./schema";
+import type { Question, SessionStatus } from "./schema";
+import type { SessionAnswer } from "./session-store";
 
 type MarkdownInput = {
   title?: string;
@@ -12,6 +13,9 @@ type MarkdownInput = {
   answersUrl: string;
   submitUrl: string;
   filesUrl: string;
+  status?: SessionStatus;
+  expiresAt?: string;
+  answers?: Record<string, SessionAnswer>;
 };
 
 export function questionnaireMarkdown(input: MarkdownInput): string {
@@ -23,13 +27,26 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
   lines.push(
     "",
     "This is the machine-readable form of an askmeatsack.com questionnaire.",
-    "Humans use the browser page. Agents should read this file, POST JSON, then submit.",
+    "You can answer on the respondent's behalf without clicking through the browser form.",
+    "For an open questionnaire, read every question, then PUT all answers as JSON with `submit: true` in one request.",
     "",
     `- Browser: ${input.answerUrl}`,
     `- This document: ${input.machineUrl}`,
     `- Save answers: \`PUT ${input.answersUrl}\``,
     `- Submit: \`POST ${input.submitUrl}\``,
   );
+
+  if (input.status) {
+    lines.push("", `Status: \`${input.status}\``);
+    if (input.expiresAt) {
+      lines.push(`Expires at: ${input.expiresAt}`);
+    }
+    if (["submitted", "expired", "cancelled"].includes(input.status)) {
+      lines.push(
+        "This questionnaire is closed. Answers cannot be changed; do not send new answers.",
+      );
+    }
+  }
 
   const needsFiles = input.questions.some((question) => question.allowFiles || question.sketch);
   if (needsFiles) {
@@ -98,16 +115,69 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
     "",
     "## How to answer",
     "",
-    "PUT a JSON body to the save URL. Set `submit` to true to freeze answers in the same request, or POST the submit URL after.",
+    "1. Use the questions and JSON Schema to prepare answers keyed by the exact question ids. Use option ids, not labels. Ask the respondent for anything you cannot answer from their available information; do not invent answers or select recommendations automatically.",
+    "2. Send `PUT` to the save URL with `Content-Type: application/json` and a body containing `answers` and `submit: true`. Keep the `t` token from the link. No account, API key, MCP connection, or browser interaction is needed to answer.",
+    '3. Confirm that the response contains `submitted.status: "submitted"`. Submission freezes the answers. If the response contains `error`, correct the named problem and retry while the questionnaire is open. Valid answers may already have been saved before an error; fetch this document again to check.',
+    "",
+    "To save a draft instead, omit `submit` or set it to false. You can later POST the submit URL to finish without resending answers. Every required question must have a usable answer before submission; optional questions may be omitted.",
+    "",
+    "Payload shape for this questionnaire (replace the example values with the respondent's answers; these are not suggested answers):",
     "",
     "```json",
     JSON.stringify(
       {
-        answers: {
-          Q1: { selectedOptionIds: ["yes"], text: "optional comment" },
-        },
+        answers: Object.fromEntries(
+          input.questions.map((question) => {
+            const kind = questionKind(question);
+            const answer: Record<string, unknown> = {};
+            if (kind === "choice") {
+              answer.selectedOptionIds = [question.options[0].id];
+            } else if (kind === "sketch") {
+              answer.sketch = {
+                shapes: [
+                  { id: "example", type: "rectangle", x: 0.1, y: 0.1, width: 0.6, height: 0.4 },
+                ],
+              };
+            } else if (kind === "items" || kind === "fields") {
+              answer.entries = Object.fromEntries(
+                questionEntries(question).map((row) => [
+                  row.id,
+                  row.input === "money" ? "0.00" : "Your answer",
+                ]),
+              );
+            } else {
+              answer.text = "Your answer";
+            }
+            if (question.allowComment) answer.text = "Your comment";
+            return [question.id, answer];
+          }),
+        ),
         submit: true,
       },
+      null,
+      2,
+    ),
+    "```",
+    "",
+    "## Saved answers",
+    "",
+    "These are the current answers, not a request body. Preserve answers the respondent still wants, and use uploaded file ids in `fileIds` when answering questions with files.",
+    "",
+    "```json",
+    JSON.stringify(
+      Object.fromEntries(
+        Object.entries(input.answers ?? {}).map(([id, answer]) => [
+          id,
+          {
+            selectedOptionIds: answer.selectedOptionIds,
+            ...(answer.text !== undefined ? { text: answer.text } : {}),
+            ...(answer.entries ? { entries: answer.entries } : {}),
+            ...(answer.sketch ? { sketch: answer.sketch } : {}),
+            ...(answer.previewFileId ? { previewFileId: answer.previewFileId } : {}),
+            ...(answer.files?.length ? { fileIds: answer.files.map((file) => file.id) } : {}),
+          },
+        ]),
+      ),
       null,
       2,
     ),

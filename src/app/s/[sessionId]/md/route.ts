@@ -18,6 +18,8 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex, nofollow",
+      Link: '</llms.txt>; rel="describedby"; type="text/plain"',
     },
   });
 }

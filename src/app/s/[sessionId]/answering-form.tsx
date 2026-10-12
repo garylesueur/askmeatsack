@@ -1130,11 +1130,12 @@ export function AnsweringForm({
         ) : null}
       </form>
       {layout === "page" && machineHref ? (
-        <p className="mt-8 text-xs text-muted-foreground">
-          Machine-readable questionnaire:{" "}
-          <a href={machineHref} className="underline underline-offset-2">
-            {machineHref}
+        <p className="mt-8 text-sm text-muted-foreground">
+          Your agent can help answer. Give it this page's link, or the{" "}
+          <a href={machineHref} className="underline underline-offset-4">
+            Markdown questionnaire
           </a>
+          . It can read all the questions and submit your answers together.
         </p>
       ) : null}
     </main>
