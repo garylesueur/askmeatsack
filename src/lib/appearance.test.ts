@@ -8,6 +8,8 @@ import {
   resolveTheme,
   readStoredColorMode,
   storeColorMode,
+  subscribeColorMode,
+  COLOR_MODE_STORAGE_KEY,
 } from "./appearance";
 
 describe("questionnaire appearance", () => {
@@ -82,7 +84,12 @@ describe("reader colour preferences", () => {
       classList: { toggle: () => undefined },
       style: { colorScheme: "light" },
     };
+    let storageListener: ((event: { key: string | null }) => void) | undefined;
     vi.stubGlobal("window", {
+      addEventListener: (_name: string, listener: (event: { key: string | null }) => void) => {
+        storageListener = listener;
+      },
+      removeEventListener: () => undefined,
       localStorage: {
         getItem: () => "light",
         setItem: () => {
@@ -101,8 +108,12 @@ describe("reader colour preferences", () => {
         throw new Error("Cookies blocked");
       },
     });
+    const unsubscribe = subscribeColorMode(() => undefined);
     storeColorMode("dark");
     expect(readStoredColorMode()).toBe("dark");
     expect(root.style.colorScheme).toBe("dark");
+    storageListener?.({ key: COLOR_MODE_STORAGE_KEY });
+    expect(readStoredColorMode()).toBe("light");
+    unsubscribe();
   });
 });

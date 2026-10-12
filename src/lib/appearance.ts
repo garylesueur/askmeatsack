@@ -32,13 +32,19 @@ export function resolveMode(appearance?: Appearance): AppearanceMode {
 }
 
 const colorModeListeners = new Set<() => void>();
+let unsavedColorMode: StoredColorMode | null = null;
 
 export function readStoredColorMode(): StoredColorMode | null {
   if (typeof window === "undefined") {
     return null;
   }
-  const current = document.documentElement.getAttribute("data-color-mode");
-  if (current === "light" || current === "dark") return current;
+  if (unsavedColorMode !== null) return unsavedColorMode;
+  try {
+    const cookie = document.cookie.match(/(?:^|; )meatsack_color_mode=([^;]*)/);
+    if (cookie && isStoredColorMode(cookie[1])) return cookie[1];
+  } catch {
+    // Local storage can still restore the choice when cookies are unavailable.
+  }
   let value: string | null;
   let legacy: string | null;
   try {
@@ -54,20 +60,28 @@ export function readStoredColorMode(): StoredColorMode | null {
   if (legacy === "light" || legacy === "dark") {
     return legacy;
   }
-  const cookie = document.cookie.match(/(?:^|; )meatsack_color_mode=([^;]*)/);
-  if (cookie && isStoredColorMode(cookie[1])) return cookie[1];
   return null;
 }
 
 export function subscribeColorMode(listener: () => void): () => void {
   colorModeListeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (
+      event.key !== null &&
+      event.key !== COLOR_MODE_STORAGE_KEY &&
+      event.key !== COLOR_MODE_LEGACY_STORAGE_KEY
+    )
+      return;
+    unsavedColorMode = null;
+    listener();
+  };
   if (typeof window !== "undefined") {
-    window.addEventListener("storage", listener);
+    window.addEventListener("storage", onStorage);
   }
   return () => {
     colorModeListeners.delete(listener);
     if (typeof window !== "undefined") {
-      window.removeEventListener("storage", listener);
+      window.removeEventListener("storage", onStorage);
     }
   };
 }
@@ -76,7 +90,9 @@ export function storeColorMode(mode: StoredColorMode): void {
   applyAppearanceMode(mode === "auto" ? "system" : mode, mode);
   try {
     window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+    unsavedColorMode = null;
   } catch {
+    unsavedColorMode = mode;
     // The current page still switches when storage is unavailable.
   }
   try {
