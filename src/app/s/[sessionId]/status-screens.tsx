@@ -21,7 +21,7 @@ function StatusScreen({
     <AppearanceShell appearance={appearance} className="items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <p className="text-sm text-muted-foreground">askmeatsack.com</p>
+          <p className="text-sm text-muted-foreground">ask.imeatsack.com</p>
           <CardTitle className="text-2xl">{title}</CardTitle>
           <CardDescription className="text-base">{body}</CardDescription>
         </CardHeader>

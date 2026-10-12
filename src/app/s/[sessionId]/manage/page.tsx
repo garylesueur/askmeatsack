@@ -100,14 +100,14 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
   return (
     <AppearanceShell className="px-4 py-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-        <p className="text-sm text-muted-foreground">askmeatsack.com · private</p>
+        <p className="text-sm text-muted-foreground">ask.imeatsack.com · private</p>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-heading text-2xl font-medium">{view.title ?? "Questionnaire"}</h1>
           <Badge variant="secondary">{view.status}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
           {canEdit
-            ? "Nobody has answered yet. You can still change the questions with the askmeatsack.com tool (action edit) or PATCH."
+            ? "Nobody has answered yet. You can still change the questions with the ask.imeatsack.com tool (action edit) or PATCH."
             : "Questions are frozen. Share the answer link, or wait for a result."}
         </p>
 

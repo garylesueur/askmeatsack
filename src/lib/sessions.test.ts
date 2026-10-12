@@ -8,7 +8,7 @@ const usableQuestions = [
     id: "Q1",
     prompt: "What should we call this?",
     options: [
-      { id: "1", label: "askmeatsack.com" },
+      { id: "1", label: "ask.imeatsack.com" },
       { id: "2", label: "Something else" },
     ],
   },
@@ -34,7 +34,7 @@ function serviceWithStore(options?: {
           : "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
       };
     })(),
-    publicBaseUrl: "https://askmeatsack.com",
+    publicBaseUrl: "https://ask.imeatsack.com",
     sleep: async (ms: number) => {
       await options?.onSleep?.();
       now = new Date(now.getTime() + ms);
@@ -69,11 +69,12 @@ describe("B1 — Agent starts a questionnaire", () => {
       sessionId: "session-1",
       status: "pending",
       expiresAt: "2026-08-17T20:00:00.000Z",
-      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl:
+        "https://ask.imeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       pollUrl:
-        "https://askmeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "https://ask.imeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       manageUrl:
-        "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "https://ask.imeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
   });
 
@@ -170,7 +171,8 @@ describe("B1 — Agent starts a questionnaire", () => {
     expect(result).toMatchObject({
       sessionId: "session-1",
       status: "pending",
-      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl:
+        "https://ask.imeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     });
   });
 
@@ -548,7 +550,7 @@ describe("B23 — A machine can read the questions as markdown", () => {
       return;
     }
     expect(markdown).toContain("### Q1");
-    expect(markdown).toContain("`1`: askmeatsack.com");
+    expect(markdown).toContain("`1`: ask.imeatsack.com");
     expect(markdown).toContain(".md?t=");
     expect(markdown).not.toContain("agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
   });
@@ -608,7 +610,7 @@ describe("B25 — Questions may accept files", () => {
       file: {
         filename: "notes.txt",
         key: "askmeatsack/session-1/Q1/ab12-notes.txt",
-        url: "https://askmeatsack.com/api/v1/sessions/session-1/files/agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        url: "https://ask.imeatsack.com/api/v1/sessions/session-1/files/agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       },
     });
     const fetched = await sessions.readPublicFile({
@@ -1280,7 +1282,7 @@ const mixedQuestions = [
     id: "Q1",
     prompt: "What should we call this?",
     options: [
-      { id: "1", label: "askmeatsack.com" },
+      { id: "1", label: "ask.imeatsack.com" },
       { id: "2", label: "Something else" },
     ],
     recommendedOptionId: "1",
@@ -1376,7 +1378,7 @@ describe("B16 — Questions may be choices, text, or both", () => {
       sessionId: "session-1",
       questionId: "Q2",
       publicToken,
-      body: { text: "Ship it as askmeatsack.com" },
+      body: { text: "Ship it as ask.imeatsack.com" },
     });
     expect(saved).toMatchObject({
       questionId: "Q2",
@@ -1514,7 +1516,7 @@ describe("B19 — Human can download the answers", () => {
             questionId: "Q1",
             prompt: "What should we call this?",
             selectedOptionIds: ["1"],
-            selectedLabels: ["askmeatsack.com"],
+            selectedLabels: ["ask.imeatsack.com"],
           },
           {
             questionId: "Q2",
@@ -1561,7 +1563,7 @@ describe("B19 — Human can download the answers", () => {
       publicToken,
     });
     expect(markdown).toContain("# Naming");
-    expect(markdown).toContain("askmeatsack.com");
+    expect(markdown).toContain("ask.imeatsack.com");
     expect(markdown).toContain("Ship it");
     expect(markdown).not.toContain(agentToken);
   });
@@ -1828,7 +1830,7 @@ describe("B27 — Owner can inspect on a private manage link", () => {
     expect(markdown).toContain("Pick a name");
     expect(markdown).toContain("What should we call this?");
     expect(markdown).toContain(
-      "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "https://ask.imeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     );
     expect(markdown).toContain("Nobody has answered yet");
     const agent = await sessions.getForAgent({
@@ -1838,9 +1840,10 @@ describe("B27 — Owner can inspect on a private manage link", () => {
     });
     expect(agent).toMatchObject({
       context: "Pick a name",
-      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl:
+        "https://ask.imeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       manageUrl:
-        "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "https://ask.imeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
   });
 

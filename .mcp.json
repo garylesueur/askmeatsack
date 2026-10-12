@@ -1,7 +1,7 @@
 {
   "mcpServers": {
-    "askmeatsack.com": {
-      "url": "https://askmeatsack.com/mcp",
+    "ask.imeatsack.com": {
+      "url": "https://ask.imeatsack.com/mcp",
       "type": "http"
     }
   }

@@ -23,11 +23,11 @@ describe("questionnaire markdown", () => {
           fields: [],
         },
       ],
-      answerUrl: "https://askmeatsack.com/s/1?t=pub",
-      machineUrl: "https://askmeatsack.com/s/1.md?t=pub",
-      answersUrl: "https://askmeatsack.com/api/v1/sessions/1/answers?t=pub",
-      submitUrl: "https://askmeatsack.com/api/v1/sessions/1/submit?t=pub",
-      filesUrl: "https://askmeatsack.com/api/v1/sessions/1/files?t=pub",
+      answerUrl: "https://ask.imeatsack.com/s/1?t=pub",
+      machineUrl: "https://ask.imeatsack.com/s/1.md?t=pub",
+      answersUrl: "https://ask.imeatsack.com/api/v1/sessions/1/answers?t=pub",
+      submitUrl: "https://ask.imeatsack.com/api/v1/sessions/1/submit?t=pub",
+      filesUrl: "https://ask.imeatsack.com/api/v1/sessions/1/files?t=pub",
     });
     expect(markdown).toContain("PUT");
     expect(markdown).toContain("JSON Schema");
@@ -55,11 +55,11 @@ describe("questionnaire markdown", () => {
           fields: [],
         },
       ],
-      answerUrl: "https://askmeatsack.com/s/1?t=pub",
-      machineUrl: "https://askmeatsack.com/s/1.md?t=pub",
-      answersUrl: "https://askmeatsack.com/api/v1/sessions/1/answers?t=pub",
-      submitUrl: "https://askmeatsack.com/api/v1/sessions/1/submit?t=pub",
-      filesUrl: "https://askmeatsack.com/api/v1/sessions/1/files?t=pub",
+      answerUrl: "https://ask.imeatsack.com/s/1?t=pub",
+      machineUrl: "https://ask.imeatsack.com/s/1.md?t=pub",
+      answersUrl: "https://ask.imeatsack.com/api/v1/sessions/1/answers?t=pub",
+      submitUrl: "https://ask.imeatsack.com/api/v1/sessions/1/submit?t=pub",
+      filesUrl: "https://ask.imeatsack.com/api/v1/sessions/1/files?t=pub",
       answers: {
         layout: {
           selectedOptionIds: [],
@@ -123,11 +123,11 @@ describe("questionnaire markdown", () => {
           ],
         },
       },
-      answerUrl: "https://askmeatsack.com/s/1?t=pub",
-      machineUrl: "https://askmeatsack.com/s/1.md?t=pub",
-      answersUrl: "https://askmeatsack.com/api/v1/sessions/1/answers?t=pub",
-      submitUrl: "https://askmeatsack.com/api/v1/sessions/1/submit?t=pub",
-      filesUrl: "https://askmeatsack.com/api/v1/sessions/1/files?t=pub",
+      answerUrl: "https://ask.imeatsack.com/s/1?t=pub",
+      machineUrl: "https://ask.imeatsack.com/s/1.md?t=pub",
+      answersUrl: "https://ask.imeatsack.com/api/v1/sessions/1/answers?t=pub",
+      submitUrl: "https://ask.imeatsack.com/api/v1/sessions/1/submit?t=pub",
+      filesUrl: "https://ask.imeatsack.com/api/v1/sessions/1/files?t=pub",
     });
     const payload = JSON.parse(markdown.match(/Payload shape[\s\S]*?```json\n([\s\S]*?)\n```/)![1]);
     expect(payload).toEqual({

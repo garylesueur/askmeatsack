@@ -819,7 +819,7 @@ export function AnsweringForm({
     >
       <div className="flex items-baseline justify-between gap-3">
         <h1 className="text-sm text-muted-foreground">
-          {title ?? (layout === "page" ? "askmeatsack.com" : "Questions")}
+          {title ?? (layout === "page" ? "ask.imeatsack.com" : "Questions")}
         </h1>
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {reviewing ? "Review" : `${stepIndex + 1} of ${questions.length}`}

@@ -26,7 +26,7 @@ export function questionnaireMarkdown(input: MarkdownInput): string {
   }
   lines.push(
     "",
-    "This is the machine-readable form of an askmeatsack.com questionnaire.",
+    "This is the machine-readable form of an ask.imeatsack.com questionnaire.",
     "You can answer on the respondent's behalf without clicking through the browser form.",
     "For an open questionnaire, read every question, then PUT all answers as JSON with `submit: true` in one request.",
     "",

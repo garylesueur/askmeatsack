@@ -3,7 +3,7 @@ import { ASKMEATSACK_SKILL_MARKDOWN } from "./askmeatsack-skill";
 import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "./cursor-install";
 import { publicOrigin } from "./public-origin";
 
-export const SITE_TITLE = "askmeatsack.com";
+export const SITE_TITLE = "ask.imeatsack.com";
 export const SITE_TAGLINE = "An agent asks. A human answers.";
 export const SITE_DESCRIPTION =
   "Create a questionnaire, paste the link, wait. No install, no setup, no dashboard to learn.";
@@ -35,16 +35,16 @@ export function skillMarkdown(): string {
 }
 
 export function llmsTxt(origin = publicOrigin()): string {
-  return `# askmeatsack.com
+  return `# ask.imeatsack.com
 
 > ${SITE_TAGLINE} ${SITE_DESCRIPTION}
 
-askmeatsack.com is how an agent asks a human a set of questions. Create returns an answer link and a private manage link. The human answers in the browser. The agent can inspect or edit while nobody has answered, then wait, poll, or be called back. MCP and HTTP are the same questionnaire.
+ask.imeatsack.com is how an agent asks a human a set of questions. Create returns an answer link and a private manage link. The human answers in the browser. The agent can inspect or edit while nobody has answered, then wait, poll, or be called back. MCP and HTTP are the same questionnaire.
 
 ## Docs
 
 - [Install plugin](${origin}/install): Marketplace setup for Codex, Claude Code, and Cursor
-- [Skill](${origin}/skill.md): How to use the askmeatsack.com tool
+- [Skill](${origin}/skill.md): How to use the ask.imeatsack.com tool
 - [MCP and HTTP](${origin}/mcp.md): Connect, actions, curl, machine answering
 - [Plugin marketplace](${MARKETPLACE_HREF}): Install in Codex, Claude Code, or Cursor
 - [Plugin source](${CURSOR_PLUGIN_HREF}): MCP plus the skill
@@ -66,7 +66,7 @@ export function mcpGuideMarkdown(origin = publicOrigin()): string {
   const mcpUrl = `${origin}/mcp`;
   const createUrl = `${origin}/api/v1/sessions`;
   const cursorHref = cursorInstallPageHref(mcpUrl);
-  return `# askmeatsack.com
+  return `# ask.imeatsack.com
 
 ${SITE_TAGLINE} ${SITE_DESCRIPTION}
 
@@ -87,7 +87,7 @@ There is no API key. Create is open today. Creating will later need a lanyard ac
 ${pluginInstallMarkdown(origin)}
 ## Tool
 
-One tool, named \`askmeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`edit\`.
+One tool, named \`ask.imeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`edit\`.
 
 POST JSON-RPC to \`${mcpUrl}\`. Do not invent extra tools, a Slack bot, or a mailer of your own.
 
@@ -220,7 +220,7 @@ export function mcpGuideHtml(origin = publicOrigin()): string {
       <li><a href="${originEscaped}/llms.txt">llms.txt</a></li>
       <li><a href="${originEscaped}/">${title}</a></li>
     </ul>
-    <p class="muted">One tool, named askmeatsack.com. Create, inspect or edit on the private manage link, paste the answer link, wait.</p>
+    <p class="muted">One tool, named ask.imeatsack.com. Create, inspect or edit on the private manage link, paste the answer link, wait.</p>
   </main>
 </body>
 </html>

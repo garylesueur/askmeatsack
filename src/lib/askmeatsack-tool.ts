@@ -11,7 +11,7 @@ import {
   type createSessionService,
 } from "./sessions";
 
-export const ASKMEATSACK_TOOL_NAME = "askmeatsack.com";
+export const ASKMEATSACK_TOOL_NAME = "ask.imeatsack.com";
 
 export const askmeatsackToolActions = ["create", "status", "wait", "cancel", "edit"] as const;
 

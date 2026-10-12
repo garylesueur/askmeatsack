@@ -31,7 +31,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
   lines.push(`# ${input.title ?? "Questionnaire"}`);
   lines.push(
     "",
-    "Private owner summary for askmeatsack.com. Do not give this link to the person answering.",
+    "Private owner summary for ask.imeatsack.com. Do not give this link to the person answering.",
     "",
     `- Status: \`${input.status}\``,
     `- Expires: ${input.expiresAt}`,

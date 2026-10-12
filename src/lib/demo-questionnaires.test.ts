@@ -17,16 +17,16 @@ describe("homepage demo packs", () => {
   });
 
   it("builds an Open in Cursor install link", () => {
-    const href = cursorInstallHref("https://askmeatsack.com/mcp");
+    const href = cursorInstallHref("https://ask.imeatsack.com/mcp");
     expect(href.startsWith("cursor://anysphere.cursor-deeplink/mcp/install?")).toBe(true);
-    expect(href).toContain("name=askmeatsack.com");
+    expect(href).toContain("name=ask.imeatsack.com");
     expect(href).toContain("config=");
   });
 
   it("builds Cursor's web install page for the landing button", () => {
-    const href = cursorInstallPageHref("https://askmeatsack.com/mcp");
+    const href = cursorInstallPageHref("https://ask.imeatsack.com/mcp");
     expect(href.startsWith("https://cursor.com/en/install-mcp?")).toBe(true);
-    expect(href).toContain("name=askmeatsack.com");
+    expect(href).toContain("name=ask.imeatsack.com");
     expect(href).toContain("config=");
   });
 });

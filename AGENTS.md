@@ -1,6 +1,6 @@
-# askmeatsack.com — repository instructions
+# ask.imeatsack.com — repository instructions
 
-**Domain:** askmeatsack.com
+**Domain:** ask.imeatsack.com
 
 Greenfield project. Next.js App Router, TypeScript, Tailwind, pnpm. Merge gates live in `.engineering/config.yaml`.
 
@@ -19,15 +19,15 @@ pnpm test        # Vitest
 pnpm build       # Production build
 ```
 
-1Password holds three items in the **Agents** vault (`mep374l3cpdtzwibf5fswsimbi`, override with `OP_VAULT`): `askmeatsack.com Development`, `askmeatsack.com Preview`, and `askmeatsack.com Production`. Same field names, different values. Local commands use the Development item only. Preview and Production are pushed to Vercel; they are not for a laptop. Marketplace KV on Vercel can still inject `KV_REST_API_*` for that environment; leave those fields empty in 1Password so sync does not overwrite them. Leave Development Redis empty to stay local. File uploads need R2 on the environment you are using (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`). The app serves those files itself; `R2_PUBLIC_BASE_URL` is optional. `.env.development.tpl`, `.env.preview.tpl`, and `.env.production.tpl` hold `op://` references only. `.env.example` is the empty placeholder. Never print `.env` contents, never commit secrets.
+1Password holds three items in the **Agents** vault (`mep374l3cpdtzwibf5fswsimbi`, override with `OP_VAULT`): `ask.imeatsack.com Development`, `ucxrz4yvhmmrajqqjdxokdmzju`, and `fgps4a7gwmzfbl7vrn2lk6oela`. Same field names, different values. Local commands use the Development item only. Preview and Production are pushed to Vercel; they are not for a laptop. Marketplace KV on Vercel can still inject `KV_REST_API_*` for that environment; leave those fields empty in 1Password so sync does not overwrite them. Leave Development Redis empty to stay local. File uploads need R2 on the environment you are using (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`). The app serves those files itself; `R2_PUBLIC_BASE_URL` is optional. `.env.development.tpl`, `.env.preview.tpl`, and `.env.production.tpl` hold `op://` references only. `.env.example` is the empty placeholder. Never print `.env` contents, never commit secrets.
 
 On Vercel, Preview and Production already have Upstash. `AGENT_API_KEY` and R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`) belong in the matching 1Password items and are pushed with `pnpm env:vercel`. Preview and Production should each have their own R2 bucket.
 
 ## What this is
 
-An agent asks a human questions. Create returns an askmeatsack.com link for the conversation (skill does that inline). Humans answer in the browser. Posting that same link to Slack, email, or anywhere else is the calling agent’s job.
+An agent asks a human questions. Create returns an ask.imeatsack.com link for the conversation (skill does that inline). Humans answer in the browser. Posting that same link to Slack, email, or anywhere else is the calling agent’s job.
 
-Always call the product **askmeatsack.com** in user-facing copy. The agent tool is named `askmeatsack.com`. Answer links are `https://askmeatsack.com/…`.
+Always call the product **ask.imeatsack.com** in user-facing copy. The agent tool is named `ask.imeatsack.com`. Answer links are `https://ask.imeatsack.com/…`.
 
 ## Where things live
 

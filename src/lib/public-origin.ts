@@ -3,5 +3,5 @@ export function publicOrigin(): string {
   if (fromEnv) {
     return fromEnv;
   }
-  return "https://askmeatsack.com";
+  return "https://ask.imeatsack.com";
 }

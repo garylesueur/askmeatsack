@@ -1,4 +1,4 @@
-# askmeatsack.com
+# ask.imeatsack.com
 
 **An agent asks. A human answers.**
 
@@ -10,7 +10,7 @@ person answering never signs in.
 
 Posting the link to Slack, email, or anywhere else is the calling agent's job.
 
-Sibling project: [showmeatsack.com](https://github.com/garylesueur/showmeatsack) —
+Sibling project: [show.imeatsack.com](https://github.com/garylesueur/showmeatsack) —
 an agent posts a page, a person opens it.
 
 ## Quick start
@@ -46,8 +46,7 @@ are the merge gates — see `.engineering/config.yaml`, and
 
 ## Secrets
 
-Three 1Password items live in the **Agents** vault: `askmeatsack.com
-Development`, `askmeatsack.com Preview`, and `askmeatsack.com Production`. Same
+Three 1Password items live in the **Agents** vault: `MEATSACK lanyard Development`, `ucxrz4yvhmmrajqqjdxokdmzju`, and `fgps4a7gwmzfbl7vrn2lk6oela`. Same
 field names, different values. Local work uses Development only; Preview and
 Production are pushed to Vercel and are not for a laptop.
 
@@ -110,7 +109,7 @@ in config we own, so updating the plugin never clobbers our choices.
 ## Plugin marketplace
 
 The plugin ID is `askmeatsack`; its display name and MCP tool name are
-**askmeatsack.com**. The portable manifest includes OpenAI listing metadata and
+**ask.imeatsack.com**. The portable manifest includes OpenAI listing metadata and
 icons; `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json` provide
 client compatibility.
 
@@ -125,7 +124,7 @@ Codex:
 codex plugin marketplace add garylesueur/meatsack-marketplace
 ```
 
-Then install **askmeatsack.com** from the Meatsack source in Plugins.
+Then install **ask.imeatsack.com** from the Meatsack source in Plugins.
 
 Claude Code:
 
@@ -137,7 +136,7 @@ Claude Code:
 Cursor Teams/Enterprise: Dashboard → Plugins & MCPs → Add Marketplace →
 Import from Repo, using the marketplace repository URL. Install the product
 from Customize. For a personal account, copy the plugin package into `~/.cursor/plugins/local/`.
-See the [installation guide](https://askmeatsack.com/install) for commands.
+See the [installation guide](https://ask.imeatsack.com/install) for commands.
 
 Marketplace publication must precede deploying these website install links.
 Public ChatGPT/Codex and Cursor directory listings require separate submissions.
@@ -169,7 +168,7 @@ Then reload the window. The plugin carries the hosted MCP server and
 https://github.com/garylesueur/askmeatsack
 ```
 
-**Or install the MCP server on its own** at `https://askmeatsack.com/mcp`. The
+**Or install the MCP server on its own** at `https://ask.imeatsack.com/mcp`. The
 tool works, and the server sends the same skill as its MCP `instructions`, so
 most clients still get the full brief. Clients that ignore `instructions` see
 only the tool description — prefer the plugin where you can.

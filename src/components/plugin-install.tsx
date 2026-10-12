@@ -154,20 +154,20 @@ export function PluginInstall({ mcpUrl, cursorHref }: { mcpUrl: string; cursorHr
         </p>
         <ul className="mt-4 space-y-3">
           <li>
-            <a href="https://askmeatsack.com/install" className={LINK}>
-              askmeatsack.com
+            <a href="https://ask.imeatsack.com/install" className={LINK}>
+              ask.imeatsack.com
             </a>{" "}
             — Ask a person questions and wait for answers.
           </li>
           <li>
-            <a href="https://showmeatsack.com/install" className={LINK}>
-              showmeatsack.com
+            <a href="https://show.imeatsack.com/install" className={LINK}>
+              show.imeatsack.com
             </a>{" "}
             — Publish a page for someone to open.
           </li>
           <li>
-            <a href="https://sharemeatsack.com/install" className={LINK}>
-              sharemeatsack.com
+            <a href="https://share.imeatsack.com/install" className={LINK}>
+              share.imeatsack.com
             </a>{" "}
             — Send files or request them from someone.
           </li>

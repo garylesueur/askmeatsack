@@ -5,7 +5,7 @@ import { proxy } from "./proxy";
 describe("B23 — answer link discovery", () => {
   it("advertises the token-preserving alternate and llms.txt on HTML", () => {
     const response = proxy(
-      new NextRequest("https://askmeatsack.com/s/session?t=public-token", {
+      new NextRequest("https://ask.imeatsack.com/s/session?t=public-token", {
         headers: { Accept: "text/html" },
       }),
     );
@@ -22,12 +22,12 @@ describe("B23 — answer link discovery", () => {
   it("negotiates Markdown without dropping the public token or confusing a manage link", () => {
     for (const path of ["/s/session", "/s/session/manage"]) {
       const response = proxy(
-        new NextRequest(`https://askmeatsack.com${path}?t=public-token`, {
+        new NextRequest(`https://ask.imeatsack.com${path}?t=public-token`, {
           headers: { Accept: "text/markdown, text/html;q=0.5" },
         }),
       );
       expect(response.headers.get("x-middleware-rewrite")).toBe(
-        `https://askmeatsack.com${path}/md?t=public-token`,
+        `https://ask.imeatsack.com${path}/md?t=public-token`,
       );
       expect(response.headers.get("Vary")).toBe("Accept");
     }

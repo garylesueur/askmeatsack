@@ -6,12 +6,12 @@ describe("public crawler files", () => {
   it("lists the public documents and keeps questionnaires off the sitemap", () => {
     const urls = sitemap().map((entry) => entry.url);
     expect(urls).toEqual([
-      "https://askmeatsack.com",
-      "https://askmeatsack.com/install",
-      "https://askmeatsack.com/mcp",
-      "https://askmeatsack.com/mcp.md",
-      "https://askmeatsack.com/skill.md",
-      "https://askmeatsack.com/llms.txt",
+      "https://ask.imeatsack.com",
+      "https://ask.imeatsack.com/install",
+      "https://ask.imeatsack.com/mcp",
+      "https://ask.imeatsack.com/mcp.md",
+      "https://ask.imeatsack.com/skill.md",
+      "https://ask.imeatsack.com/llms.txt",
     ]);
     expect(urls.join(" ")).not.toContain("/s/");
     expect(urls.join(" ")).not.toContain("/api/");
@@ -19,8 +19,8 @@ describe("public crawler files", () => {
 
   it("allows the public site and disallows API, questionnaires, and agent rewrites", () => {
     const file = robots();
-    expect(file.host).toBe("https://askmeatsack.com");
-    expect(file.sitemap).toBe("https://askmeatsack.com/sitemap.xml");
+    expect(file.host).toBe("https://ask.imeatsack.com");
+    expect(file.sitemap).toBe("https://ask.imeatsack.com/sitemap.xml");
     expect(file.rules).toEqual({
       userAgent: "*",
       allow: "/",

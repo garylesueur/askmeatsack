@@ -106,32 +106,39 @@ export function SiteFooter({
   docs,
 }: Omit<SiteChromeProps, "wordmark" | "accountHref">) {
   return (
-    <footer className="mt-24 flex flex-wrap items-baseline gap-x-7 gap-y-3 border-t border-border pt-9 pb-14 text-[13px] text-muted-foreground">
+    <footer className="mt-24 flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-border pt-7 pb-12 text-[13px] text-muted-foreground">
       <span>
         Built by{" "}
         <a
           href={AUTHOR.href}
           target="_blank"
           rel="noreferrer"
-          className="text-foreground/80 transition-colors hover:text-primary"
+          className="inline-flex min-h-11 items-center text-foreground/80 transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
           {AUTHOR.name}
         </a>
       </span>
-      <span className="ml-auto flex flex-wrap gap-x-4 gap-y-2">
+      <span className="flex w-full flex-wrap gap-x-5 gap-y-2 sm:ml-auto sm:w-auto">
         <a
           href={repoHref}
           target="_blank"
           rel="noreferrer"
-          className="transition-colors hover:text-primary"
+          className="inline-flex min-h-11 items-center transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
           GitHub
         </a>
-        <a href={sibling.href} className="transition-colors hover:text-primary">
+        <a
+          href={sibling.href}
+          className="inline-flex min-h-11 items-center transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+        >
           {sibling.name}
         </a>
         {docs.map((doc) => (
-          <a key={doc.href} href={doc.href} className="transition-colors hover:text-primary">
+          <a
+            key={doc.href}
+            href={doc.href}
+            className="inline-flex min-h-11 items-center transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          >
             {doc.label}
           </a>
         ))}

@@ -1,7 +1,7 @@
 ---
 name: askmeatsack
 description: >
-  Creates an askmeatsack.com questionnaire for a human, pastes the answer link,
+  Creates an ask.imeatsack.com questionnaire for a human, pastes the answer link,
   and waits. Use whenever you need more than one thing from a person, need a
   file, photo, or ID, or want structured answers — instead of listing questions
   in the chat. Use in a live chat or from an unattended job that needs unique
@@ -13,11 +13,13 @@ description: >
   link while nobody has answered.
 ---
 
-# askmeatsack.com
+# ask.imeatsack.com
 
 Create a questionnaire, put the answer link where the human will see it, then wait. Do not invent another form or a Slack bot.
 
-The product is **askmeatsack.com**. The tool is named `askmeatsack.com`. HTTP and the tool are the same questionnaire. Answer links look like `https://askmeatsack.com/s/…`.
+The product is **ask.imeatsack.com**. The tool is named `ask.imeatsack.com`. HTTP and the tool are the same questionnaire. Answer links look like `https://ask.imeatsack.com/s/…`.
+
+Product homepage and HTTP API: `https://ask.imeatsack.com`. Connect MCP at `https://ask.imeatsack.com/mcp`.
 
 There is no API key. Create is open today. Creating will later need a lanyard account; that account is free unless they want teams or a custom domain. The person answering never signs in. After create, keep `pollUrl` (or its `token`) and `manageUrl` for status, wait, cancel, inspect, and edit.
 
@@ -25,7 +27,7 @@ Use this in a live chat, or from an unattended job that still needs facts, files
 
 ## In this conversation
 
-1. Call `askmeatsack.com` with action `create` (or `POST /api/v1/sessions`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or `appearance` (`theme`: `ask`, `paper`, `grove`, or `ember`). Omit `appearance` to follow the person’s system light or dark. Each theme has both modes. Set `mode` to `light` or `dark` only if you must force one. Set `allowFiles` on a question if they should attach files (they can choose, drop, or take a photo; at most five, 4 MB each). The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
+1. Call `ask.imeatsack.com` with action `create` (or `POST /api/v1/sessions`). Send title, optional context, the questions, and optional expiry, metadata, callback URL, or `appearance` (`theme`: `ask`, `paper`, `grove`, or `ember`). Omit `appearance` to follow the person’s system light or dark. Each theme has both modes. Set `mode` to `light` or `dark` only if you must force one. Set `allowFiles` on a question if they should attach files (they can choose, drop, or take a photo; at most five, 4 MB each). The human sees one question at a time, can jump back via the step numbers, and reviews before submit. This service does not score answers — you interpret them.
 2. You always get `answerUrl`, `machineUrl`, `pollUrl`, and `manageUrl` immediately. Paste **`answerUrl` into this conversation** so the person answering can open it. Keep `manageUrl` for yourself: open it, or fetch it as markdown, to see the questions and status. The manage page is a stacked owner summary — it is not what the human sees. While nobody has answered, action `edit` (or `PATCH` the session) can change title, context, questions, appearance, or expiry. The answer link stays the same. If the respondent is an agent, they can fetch `answerUrl` with `Accept: text/markdown`, or `machineUrl`, then PUT answers as JSON. Do not wait for them to ask for the link.
 3. Wait with action `wait` (pass `sessionId` and `agentToken` from `pollUrl`). One call sits for up to 50 seconds. That is how long a request may hang, not how long the person has — the questionnaire stays answerable until it expires, 24 hours by default. If nothing has been submitted yet the reply says `timedOut: true` and `nextAction: "wait"`: **call `wait` again, and keep calling.** Someone taking ten minutes or two hours is the normal case, not a fault. Poll `status` the same way if you would rather not hold the line.
 4. If you cannot sit in that loop, set `callbackUrl` at create instead. On a terminal status the service POSTs `{ sessionId, status, answers }` to it once, retrying a few times if the receiver is down. `status` and `wait` then report `callback.delivered`, so a hook that failed does not read like one you never set. A failed POST does not undo the status.
@@ -57,7 +59,7 @@ For a drawing, set `sketch: true` on the question (no options, items, fields, co
 
 For money, set `input: "money"` and an ISO 4217 `currency` on the row or the question (`GBP`, `USD`, `EUR`). Put a known figure in `amount` as a canonical decimal (`2476.80`), not in the label. The human sees a formatted amount, and a currency-prefixed box when they type money. Answers stay canonical decimals in that currency. Do not convert. Mixed currencies are per-row. If a choice option is an amount, put the symbol in the label (`£6,500`).
 
-If you were sent an askmeatsack.com `/s/…` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
+If you were sent an ask.imeatsack.com `/s/…` link and you already have the answers, fetch it as markdown and PUT. If you do not, give the HTML link to the human. Do not invent answers.
 
 ## Someone who is not in this conversation
 
@@ -65,7 +67,7 @@ Giving `answerUrl` to them (in chat, mail, Slack, or anywhere you can already po
 
 ## Do not
 
-- Name extra tools. There is one tool, `askmeatsack.com`, with actions `create`, `status`, `wait`, `cancel`, and `edit`.
+- Name extra tools. There is one tool, `ask.imeatsack.com`, with actions `create`, `status`, `wait`, `cancel`, and `edit`.
 - Put the agent status secret or `manageUrl` on the answering page or anywhere the respondent should not see it.
 - Treat Slack (or any other chat) posting as a feature of this product.
 - Share one answer link across a list of people, or invent a second form because the ask is automated.

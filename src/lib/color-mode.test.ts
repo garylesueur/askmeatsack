@@ -8,15 +8,16 @@ describe("colour mode persistence", () => {
     expect(isStoredColorMode("system")).toBe(false);
   });
 
-  it("keeps askmeatsack.com cookies on that product origin", () => {
-    expect(colorModeCookieDomain("askmeatsack.com")).toBe("; Domain=.askmeatsack.com");
-    expect(colorModeCookieDomain("s.showmeatsack.com")).toBe("; Domain=.showmeatsack.com");
+  it("shares the preference across the product and content hosts", () => {
+    expect(colorModeCookieDomain("ask.imeatsack.com")).toBe("; Domain=.imeatsack.com");
+    expect(colorModeCookieDomain("s.imeatsack.com")).toBe("; Domain=.imeatsack.com");
+    expect(colorModeCookieDomain("imeatsack.com.example.com")).toBe("");
   });
 
   it("writes a year-long SameSite cookie", () => {
-    const cookie = persistColorModeCookie("auto", "askmeatsack.com", "https:");
+    const cookie = persistColorModeCookie("auto", "ask.imeatsack.com", "https:");
     expect(cookie).toContain("meatsack_color_mode=auto");
-    expect(cookie).toContain("Domain=.askmeatsack.com");
+    expect(cookie).toContain("Domain=.imeatsack.com");
     expect(cookie).toContain("Secure");
   });
 });

@@ -25,7 +25,7 @@ const mcpHandler = createMcpHandler(
   (server) => {
     server.tool(
       ASKMEATSACK_TOOL_NAME,
-      'Use this instead of listing questions in the chat whenever you need more than one thing from a person, need a file, photo, or ID, or want structured answers. Also the right tool when they say "ask me some questions", "interview me", "quiz me", "what do you need from me", or any dictated form of meatsack ("meat sack", "mute sack", "meats act", "meat sac"). Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the askmeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember — each follows the person’s system light or dark unless mode is set. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (two to sixteen rows), fields (two to eight named boxes), or a sketch (`sketch: true`), and may allow files except on sketch. allowComment is only valid on a choice, items, or fields question — not on free text, photo-only, or sketch. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.',
+      'Use this instead of listing questions in the chat whenever you need more than one thing from a person, need a file, photo, or ID, or want structured answers. Also the right tool when they say "ask me some questions", "interview me", "quiz me", "what do you need from me", or any dictated form of meatsack ("meat sack", "mute sack", "meats act", "meat sac"). Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the ask.imeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember — each follows the person’s system light or dark unless mode is set. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (two to sixteen rows), fields (two to eight named boxes), or a sketch (`sketch: true`), and may allow files except on sketch. allowComment is only valid on a choice, items, or fields question — not on free text, photo-only, or sketch. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.',
       askmeatsackToolInputShape,
       async (args) => {
         const tool = createAskmeatsackTool(getDefaultSessionService());
@@ -45,7 +45,7 @@ const mcpHandler = createMcpHandler(
   },
   {
     serverInfo: {
-      name: "askmeatsack.com",
+      name: "ask.imeatsack.com",
       version: "0.1.0",
     },
     // Clients that install the bare MCP URL never see skills/askmeatsack/SKILL.md.

@@ -11,7 +11,7 @@ let previousStore: SessionStore | undefined;
 beforeEach(() => {
   previousStore = state.askmeatsackStore;
   state.askmeatsackStore = createMemorySessionStore();
-  vi.stubEnv("PUBLIC_BASE_URL", "https://askmeatsack.com");
+  vi.stubEnv("PUBLIC_BASE_URL", "https://ask.imeatsack.com");
 });
 afterEach(() => {
   state.askmeatsackStore = previousStore;
@@ -49,7 +49,7 @@ describe("B23/B24 — a respondent's agent reads and answers over HTTP", () => {
   it("reads all questions, resumes a saved answer, and submits mixed answers in one PUT", async () => {
     const { session, context } = await create();
     const token = new URL(session.answerUrl).searchParams.get("t")!;
-    const answersUrl = `https://askmeatsack.com/api/v1/sessions/${session.sessionId}/answers?t=${token}`;
+    const answersUrl = `https://ask.imeatsack.com/api/v1/sessions/${session.sessionId}/answers?t=${token}`;
     const put = (body: unknown) =>
       PUT(
         new Request(answersUrl, {
@@ -104,17 +104,20 @@ describe("B23/B24 — a respondent's agent reads and answers over HTTP", () => {
   it("refuses question reads and bulk writes with another token", async () => {
     const { session, context } = await create();
     const document = await GET(
-      new Request(`https://askmeatsack.com/s/${session.sessionId}.md?t=wrong`),
+      new Request(`https://ask.imeatsack.com/s/${session.sessionId}.md?t=wrong`),
       context,
     );
     expect(document.status).toBe(404);
     expect(await document.text()).not.toContain("Project details");
     const response = await PUT(
-      new Request(`https://askmeatsack.com/api/v1/sessions/${session.sessionId}/answers?t=wrong`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: { notes: { text: "Not authorised" } }, submit: true }),
-      }),
+      new Request(
+        `https://ask.imeatsack.com/api/v1/sessions/${session.sessionId}/answers?t=wrong`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers: { notes: { text: "Not authorised" } }, submit: true }),
+        },
+      ),
       context,
     );
     expect(response.status).toBe(404);

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create the three Agents-vault items if they are missing.
+# Check existing Agents-vault items by stable identifier.
 # Does not set values — fill those in 1Password, then pnpm env:vercel.
 set -euo pipefail
 
@@ -27,20 +27,16 @@ fields=(
 )
 
 for title in \
-  "askmeatsack.com Development" \
-  "askmeatsack.com Preview" \
-  "askmeatsack.com Production"; do
+  "MEATSACK lanyard Development" \
+  "ucxrz4yvhmmrajqqjdxokdmzju" \
+  "fgps4a7gwmzfbl7vrn2lk6oela"; do
   if op item get "$title" --vault "$vault" >/dev/null 2>&1; then
     echo "exists ${title}" >&2
     continue
   fi
 
-  op item create \
-    --category "Secure Note" \
-    --title "$title" \
-    --vault "$vault" >/dev/null
-  echo "created ${title} — add these field labels in 1Password, then pnpm env:vercel:" >&2
-  for field in "${fields[@]}"; do
-    echo "  ${field}" >&2
-  done
+  echo "Required existing item ${title} was not found in vault ${vault}." >&2
+  echo "Restore the saved item; do not create duplicate credentials." >&2
+  exit 1
+
 done
