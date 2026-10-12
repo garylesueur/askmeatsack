@@ -1,6 +1,6 @@
 # Questionnaire
 
-**askmeatsack.com** — an agent asks a human questions. The tool is named askmeatsack.com. Create returns a link for the conversation or for an unattended job; the calling agent delivers it.
+**ask.imeatsack.com** — an agent asks a human questions. The tool is named ask.imeatsack.com. Create returns a link for the conversation or for an unattended job; the calling agent delivers it.
 
 | Spec | Covers | Status |
 | --- | --- | --- |

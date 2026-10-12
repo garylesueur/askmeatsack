@@ -6,13 +6,13 @@ status: partial
 
 # Answering a questionnaire
 
-**askmeatsack.com** is how an agent asks a human a set of questions. Create returns an askmeatsack.com link to put in the conversation there and then, or to send from an unattended job. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
+**ask.imeatsack.com** is how an agent asks a human a set of questions. Create returns an ask.imeatsack.com link to put in the conversation there and then, or to send from an unattended job. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
 
 ## Behaviours
 
 ### B1 — Agent starts a questionnaire 🟢
 
-An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
+An agent calls the **ask.imeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the ask.imeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The ask.imeatsack.com tool and HTTP produce the same questionnaire.
 
 If a question is not usable, create is refused and no answer link is returned. The refusal names the question id and the rule (for example that `allowComment` needs options, items, or fields). Several bad questions are listed; the message is the first of those. HTTP and the tool use the same error body: `error.code`, `error.message`, and `error.issues`.
 
@@ -26,7 +26,7 @@ When the human picks an option, types in a text field, or draws on a sketch boar
 
 ### B4 — Agent can see progress before submit 🟢
 
-Once at least one answer is saved, the agent’s status (askmeatsack.com tool or HTTP) shows work is under way (`in_progress`), how many questions have answers, which question ids those are, and the answers so far. Opening the page with nothing saved yet stays `pending`. Partial answers are enough; the agent does not have to wait for submit to see progress.
+Once at least one answer is saved, the agent’s status (ask.imeatsack.com tool or HTTP) shows work is under way (`in_progress`), how many questions have answers, which question ids those are, and the answers so far. Opening the page with nothing saved yet stays `pending`. Partial answers are enough; the agent does not have to wait for submit to see progress.
 
 ### B5 — Submit once, then answers freeze 🟢
 
@@ -38,7 +38,7 @@ Continue and submit stay unavailable, and submit is refused if forced, until eve
 
 ### B7 — Agent reads the finished answers 🟢
 
-When the questionnaire is submitted, the agent’s status shows that it is finished and includes every question’s chosen option ids, any text, any row or field values, and any sketch (B40). The agent can then stop waiting and continue its work. The askmeatsack.com tool and HTTP return the same result.
+When the questionnaire is submitted, the agent’s status shows that it is finished and includes every question’s chosen option ids, any text, any row or field values, and any sketch (B40). The agent can then stop waiting and continue its work. The ask.imeatsack.com tool and HTTP return the same result.
 
 ### B8 — The link expires 🟢
 
@@ -62,7 +62,7 @@ An unknown questionnaire, or a link whose token does not match, does not show qu
 
 ### B13 — Agent can wait a bounded time 🟢
 
-The agent can wait, via the askmeatsack.com tool or over HTTP, for up to a stated number of seconds. If the questionnaire reaches `submitted`, `expired`, or `cancelled` within that time, the wait returns that result. If it is still open, the wait returns the current status and progress — it does not hang past the bound.
+The agent can wait, via the ask.imeatsack.com tool or over HTTP, for up to a stated number of seconds. If the questionnaire reaches `submitted`, `expired`, or `cancelled` within that time, the wait returns that result. If it is still open, the wait returns the current status and progress — it does not hang past the bound.
 
 ### B14 — The page tells the agent it is actually open 🟢
 
@@ -90,7 +90,7 @@ After submit, the confirmation screen lets the human download the answers as Mar
 
 ### B20 — Ask in the conversation 🟢
 
-Create always returns the askmeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **askmeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. If the agent needs someone else, they post the same link themselves (Slack, email, and so on) — that post is the agent’s job, not this service. The same skill also covers an unattended job that is not sitting in a chat (B34).
+Create always returns the ask.imeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **ask.imeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. If the agent needs someone else, they post the same link themselves (Slack, email, and so on) — that post is the agent’s job, not this service. The same skill also covers an unattended job that is not sitting in a chat (B34).
 
 ### B22 — Agent can hint a theme 🟢
 
@@ -122,7 +122,7 @@ Create also returns a private manage link, keyed by the agent token. Opening it 
 
 ### B28 — Owner can edit before anyone answers 🟢
 
-While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, or callback URL — via the askmeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
+While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, or callback URL — via the ask.imeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
 
 ### B29 — Questions may be grouped into sections 🔵 future
 
@@ -161,7 +161,7 @@ link and the human answering never needs one.
 
 Anyone can try a questionnaire from the home page without signing in. The trial uses
 questionnaires this service already holds — a visitor cannot put their own words on an
-askmeatsack.com link — so the worst a stranger can do is use capacity. Trial questionnaires are
+ask.imeatsack.com link — so the worst a stranger can do is use capacity. Trial questionnaires are
 short-lived and limited by calling address.
 
 ### B37 — A flood from one account is refused 🔵 future
@@ -213,7 +213,7 @@ When creating a sketch question, the agent may give a background picture for the
 - Opaque metadata the agent attaches (repo, branch, run id) is stored and returned to the agent; the human does not need it to answer.
 - Sessions are ephemeral. This product does not keep a long-term archive of answers.
 - Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out. Refused questions use the same error body on both: the first rule in the message, and a list of issues with question id and rule.
-- The agent tool is named **askmeatsack.com**. Answer links are on `https://askmeatsack.com`.
+- The agent tool is named **ask.imeatsack.com**. Answer links are on `https://ask.imeatsack.com`.
 - A bounded wait never exceeds the time the agent asked for, and never more than 60 seconds per
   call. One call sits at most `WAIT_BUDGET_SECONDS`, leaving the handler room to answer inside
   the function limit rather than being killed on the wire. A wait that ends with nothing
@@ -235,7 +235,7 @@ When creating a sketch question, the agent may give a background picture for the
   a redirect away from the address given is not followed.
 - An attached file is not downloadable until it has been checked. Infected files are removed.
 - A callback, when present, is invoked once per terminal status (`submitted`, `expired`, `cancelled`).
-- User-facing copy calls the product **askmeatsack.com**.
+- User-facing copy calls the product **ask.imeatsack.com**.
 - Appearance is optional. Missing appearance is the `ask` theme in the person’s system light or dark. Named themes are `ask`, `paper`, `grove`, and `ember`, each with both modes. `mode` may be `dark` or `light` to force one side. Accent, when present, is a `#` plus six hex digits.
 - The `.md` document is the same questionnaire as the browser page, keyed by the same public token. It never contains the agent status secret.
 - Files use the public answer token. A file is at most 4MB. A question accepts at most five files.
@@ -256,7 +256,7 @@ When creating a sketch question, the agent may give a background picture for the
 
 ### What each doorway may do
 
-| Action | Human answer link | Agent status (askmeatsack.com tool or HTTP) | lanyard token |
+| Action | Human answer link | Agent status (ask.imeatsack.com tool or HTTP) | lanyard token |
 | --- | --- | --- | --- |
 | Start a questionnaire | No | No | Yes (B35) |
 | See questions and save answers | Yes, that questionnaire only | No | No |
@@ -369,10 +369,10 @@ When creating a sketch question, the agent may give a background picture for the
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
 - **Amended:** The bound is what the agent may ask for; `WAIT_BUDGET_SECONDS` is what one call sits for. They were both 60, the same number as the function limit, so a wait for the documented maximum was killed before it could answer and production returned 504 for the one value every instruction named. The bound stays 60; the budget is lower so the handler can reply. Guarded by `wait-budget.test.ts`.
 - **Amended:** A timed-out wait carries `timedOut`, `nextAction`, and a hint. It used to return a status snapshot identical to a `status` read, which gave an agent no reason to loop — so it stopped, and the person's answer was never collected.
-- **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Recorded as B1 and B20.
+- **Settled:** The product is ask.imeatsack.com. The domain is live. The agent tool is named **ask.imeatsack.com**. Create always returns the link. Recorded as B1 and B20.
 - **Withdrawn:** Email from this service (B21). Giving `answerUrl` is the calling agent’s job; this service does not send mail.
 - **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
-- **Reversed:** Create was public, with no shared bearer to hand out. It now needs a lanyard token. Open create had no benefit to us and let anyone put their own words on an askmeatsack.com link. Agent status still needs that questionnaire’s own agent token (the `pollUrl`) — a lanyard token does not replace it. Recorded as B10 and B35.
+- **Reversed:** Create was public, with no shared bearer to hand out. It now needs a lanyard token. Open create had no benefit to us and let anyone put their own words on an ask.imeatsack.com link. Agent status still needs that questionnaire’s own agent token (the `pollUrl`) — a lanyard token does not replace it. Recorded as B10 and B35.
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.

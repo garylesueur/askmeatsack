@@ -1,12 +1,12 @@
 ---
 id: site-home
 area: Site / Home
-status: future
+status: partial
 ---
 
 # The home page
 
-What a person sees when they arrive at askmeatsack.com without knowing what it is. Its job is
+What a person sees when they arrive at ask.imeatsack.com without knowing what it is. Its job is
 to explain the product, prove it, and get an agent connected. `site/discoverability.md` covers
 what machines read; this covers what people read.
 
@@ -42,19 +42,21 @@ The page offers a real questionnaire that a visitor can answer and submit, and t
 the agent would have received. It needs no account — see the trial behaviour in
 `questionnaire/sessions/answering.md`.
 
-### B6 — The page links to its sibling, its source, and its author 🔵 future
+### B6 — The page connects the I, Meatsack family 🟢 implemented
 
-showmeatsack.com, the GitHub repository, and gaz.dev are each reachable from the page. Someone
-who arrives at one product can find the other.
+The header links I, Meatsack to `https://imeatsack.com` and offers Ask, Share and
+Show at their canonical subdomains on desktop and mobile. The current product is
+underlined and identified with `aria-current`. GitHub, the author and the agent
+documents are in the footer.
 
 ### B7 — Signing in is reachable, and obviously not required to look 🔵 future
 
 A person can get to their account from the page. Nothing about the page suggests they need an
 account to read it or to try it.
 
-### B8 — The two products look like siblings 🔵 future
+### B8 — The three products look like siblings 🔵 future
 
-askmeatsack.com and showmeatsack.com share a layout, a type treatment, and a structure. They
+Ask, Share and Show share a layout, a type treatment, and a structure. They
 are told apart by one accent colour and their words, not by looking like different companies.
 
 ### B9 — It works on a phone 🔵 future
@@ -78,7 +80,7 @@ page loses nothing they needed. Nothing important is only visible mid-animation.
 - The account area lives on lanyard. The home page links to it and never reproduces it.
 - Trying it uses the product's own trial path and creates a real questionnaire. It is never a
   mock-up or a video.
-- Copy calls the product **askmeatsack.com**.
+- Copy calls the product **ask.imeatsack.com**.
 - Every animation respects a reduced-motion preference.
 - The page is readable and usable in both light and dark, following the person's own setting.
 
@@ -91,7 +93,7 @@ page loses nothing they needed. Nothing important is only visible mid-animation.
 | Ready to connect an agent | Get the MCP URL, or one-click install |
 | Prefers the raw API | Copy a working `curl` |
 | Wants the code | Reach the repository |
-| Wants the other product | Reach showmeatsack.com |
+| Wants another product | Choose Ask, Share or Show from the header |
 | Already has an account | Reach their account area on lanyard |
 
 | Client | Connecting |

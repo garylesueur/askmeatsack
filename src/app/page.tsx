@@ -6,11 +6,6 @@ import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/agent-docs";
 import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "@/lib/cursor-install";
 import { publicOrigin } from "@/lib/public-origin";
 
-const SIBLING = {
-  name: "show.imeatsack.com",
-  href: "https://show.imeatsack.com",
-};
-
 export default function Home() {
   const origin = publicOrigin();
   const mcpUrl = `${origin}/mcp`;
@@ -31,8 +26,7 @@ export default function Home() {
 
   return (
     <SiteShell
-      wordmark="ask.imeatsack.com"
-      sibling={SIBLING}
+      product="ask"
       repoHref={CURSOR_PLUGIN_HREF}
       docs={[
         { label: "Install plugin", href: "/install" },

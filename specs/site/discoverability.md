@@ -6,13 +6,13 @@ status: implemented
 
 # Site discoverability
 
-Public pages tell search engines, answer engines, and agents what askmeatsack.com is. Questionnaire links stay private.
+Public pages tell search engines, answer engines, and agents what ask.imeatsack.com is. Questionnaire links stay private.
 
 ## Behaviours
 
 ### B1 — Home carries ordinary share metadata 🟢
 
-The home page has a title, description, canonical URL, Open Graph tags, a large share image, and structured data naming askmeatsack.com. Sharing the home URL in chat or on social media shows that card.
+The home page has a title, description, canonical URL, Open Graph tags, a large share image, and structured data naming ask.imeatsack.com. Sharing the home URL in chat or on social media shows that card.
 
 Browser tabs and phone home-screen bookmarks use the product’s Meatsack
 character icon and its ask, show, or share badge. `public/plugin-icon.png` owns
@@ -32,11 +32,11 @@ It also explains how a respondent's agent can read a private answer link as Mark
 
 ### B4 — Pasting the MCP URL yields a guide 🟢
 
-Opening `https://askmeatsack.com/mcp` in a browser shows a short HTML page with the MCP URL and links to the markdown guide, skill, and Cursor plugin. Fetching that same URL as markdown (or with no HTML Accept), or fetching `/mcp.md`, returns a markdown API guide: what the product does, how to connect, the tool actions, curl, machine answering, and the skill.
+Opening `https://ask.imeatsack.com/mcp` in a browser shows a short HTML page with the MCP URL and links to the markdown guide, skill, and Cursor plugin. Fetching that same URL as markdown (or with no HTML Accept), or fetching `/mcp.md`, returns a markdown API guide: what the product does, how to connect, the tool actions, curl, machine answering, and the skill.
 
 ### B5 — The skill is on the site 🟢
 
-`/skill.md` is the askmeatsack.com skill: create, inspect or edit on the private manage link, paste the answer link, wait, or send a unique questionnaire from an unattended job. It matches the skill shipped for Cursor.
+`/skill.md` is the ask.imeatsack.com skill: create, inspect or edit on the private manage link, paste the answer link, wait, or send a unique questionnaire from an unattended job. It matches the skill shipped for Cursor.
 
 ### B6 — Questionnaire pages are not for search 🟢
 
@@ -44,7 +44,7 @@ An answering URL tells crawlers not to index it. The sitemap does not list quest
 
 ### B7 — The repository is an Agent Plugin 🟢
 
-The repository root is an Agent Plugin: a client that understands [Agent Plugins](https://agent-plugins.org/) can install it and get the hosted askmeatsack.com MCP server plus the skill. `.cursor-plugin/plugin.json` is present so Cursor can add this clone as an Open Plugin from the local folder. The plugin skill instructions match `/skill.md`.
+The repository root is an Agent Plugin: a client that understands [Agent Plugins](https://agent-plugins.org/) can install it and get the hosted ask.imeatsack.com MCP server plus the skill. `.cursor-plugin/plugin.json` is present so Cursor can add this clone as an Open Plugin from the local folder. The plugin skill instructions match `/skill.md`.
 
 ### B8 — An answer link previews the ask, never the answers 🟢
 
@@ -59,9 +59,9 @@ A crawler arrives with no public token, so the card's URL carries a preview toke
 
 ### B9 — Plugins share a Meatsack marketplace 🟢 implemented
 
-The Meatsack marketplace lists askmeatsack.com, showmeatsack.com, and
-sharemeatsack.com as independently installable plugins. This product's plugin
-ID is `askmeatsack`; its listing name and tool name remain **askmeatsack.com**.
+The Meatsack marketplace lists ask.imeatsack.com, show.imeatsack.com, and
+share.imeatsack.com as independently installable plugins. This product's plugin
+ID is `askmeatsack`; its listing name and tool name remain **ask.imeatsack.com**.
 The product repository owns its manifest, skill, hosted MCP configuration, and
 logo. The marketplace sync copies a minimal package from those sources.
 
@@ -81,7 +81,7 @@ separate release step.
 
 ## Rules (Invariants)
 
-- Public copy always calls the product **askmeatsack.com**. The tool is named `askmeatsack.com`.
+- Public copy always calls the product **ask.imeatsack.com**. The tool is named `ask.imeatsack.com`.
 - Questionnaire URLs (`/s/…`) are not in the sitemap and are not offered for indexing.
 - A link preview is built only from a questionnaire's title, context, question count, state, and expiry. Answers, prompts, and uploads never reach it.
 - The public token never appears in an `og:image` URL, which crawlers, image proxies, and CDNs retain.
