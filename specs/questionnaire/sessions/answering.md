@@ -98,11 +98,15 @@ When creating a questionnaire, the agent may optionally name a theme: `ask` (the
 
 ### B23 — A machine can read the questions as markdown 🟢
 
-The same public answer token also serves a markdown document at the answer path with `.md` appended. Fetching the ordinary answer link with `Accept: text/markdown` (or `text/plain`) returns that same document. The HTML page advertises it with an alternate markdown link. That document lists every question, its options, where to save answers, where to submit, and a JSON Schema for the answer body. A sketch question is described as a sketch, including the shape kinds the answer may contain. It never includes the agent’s status secret. A token that does not match does not show the questions.
+The same public answer token also serves a markdown document at the answer path with `.md` appended before its query string. Fetching the ordinary answer link with `Accept: text/markdown` (or `text/plain`) returns that same document when preferred over HTML; a zero-quality Markdown request is not accepted. The HTML page and response headers advertise the Markdown alternate. Response headers also point to `/llms.txt` and keep the private page out of caches and search indexes.
+
+The form explains that the respondent can give this link to their own agent to answer on their behalf. The document lists every question, its options, current saved answers, status and expiry, where to save and submit, and a JSON Schema and payload example using that questionnaire's ids. A sketch question includes its allowed shape kinds; saved sketch scenes and preview file ids remain available to the respondent's agent. A closed questionnaire is identified as closed. It never includes the creator’s status secret or file storage keys. A token that does not match does not show questions or saved answers.
 
 ### B24 — A machine can answer with JSON 🟢
 
 Using the public answer token, a caller can PUT all answers as JSON in one request, optionally submitting in that same request. The same validation as the browser applies. Required questions still block submit.
+
+Answering needs no account, API key, MCP installation, or browser interaction. The machine document explains `Content-Type: application/json`, `submit: true`, and the submitted response to check. Agents use the respondent's information, ask for missing answers, and do not treat recommendations as selected answers. If an error occurs, valid answers may already have been saved; the agent can reread the machine document to recover. File uploads happen before submitting their returned ids with the answers.
 
 ### B25 — Questions may accept files 🟢
 

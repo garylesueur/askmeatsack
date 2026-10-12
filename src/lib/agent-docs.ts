@@ -53,6 +53,12 @@ askmeatsack.com is how an agent asks a human a set of questions. Create returns 
 ## Optional
 
 - [llms.txt](${origin}/llms.txt)
+
+## Answer a questionnaire for your user
+
+If your user gives you an answer link, fetch that same URL with \`Accept: text/markdown\` or append \`.md\` to the path before its query string, keeping the \`t\` token. The document includes every question, saved answers, status, expiry, and JSON Schema.
+
+Send all answers in one \`PUT /api/v1/sessions/{sessionId}/answers?t=…\` with \`Content-Type: application/json\` and \`{"answers": {"questionId": {"text": "Your answer"}}, "submit": true}\`. Use the exact URL, question ids, option ids, and answer shapes from the document. Confirm \`submitted.status\` is \`submitted\`. No account, API key, MCP installation, or browser clicks are needed to answer. Ask your user for missing information rather than inventing answers. The answer link is private; do not publish it in an index.
 `;
 }
 
@@ -120,7 +126,13 @@ Create returns \`answerUrl\`, \`machineUrl\`, \`pollUrl\`, and \`manageUrl\`. Ke
 
 ## Machine answering
 
-If the respondent is an agent, fetch the answer link with \`Accept: text/markdown\`, or \`machineUrl\` (the same path with \`.md\`). That markdown has the questions, options, submit URL, and JSON Schema. PUT answers as JSON if you already have them. Humans use the HTML answer link in a browser, one question at a time.
+If your user hands you an answer link, you can answer on their behalf. Fetch it with \`Accept: text/markdown\`, or use \`machineUrl\` (append \`.md\` to the path before the query string, preserving the token). The HTML and Link headers advertise this document, and \`/llms.txt\` explains this path.
+
+The document includes every question, option ids, saved answers, current status, expiry, the exact save and submit URLs, and JSON Schema. Read it before preparing answers. Ask your user for any missing information; do not invent answers or select recommended options automatically.
+
+Send one \`PUT\` to the document's answers URL with \`Content-Type: application/json\`, \`answers\` keyed by question id, and \`submit: true\`. This saves and submits together. Confirm \`submitted.status: "submitted"\` in the response. All required questions still need usable answers. To save a draft, omit \`submit\`; to finish a saved draft, POST the submit URL. If an error occurs, valid answers may already be saved: reread the document and correct the problem while it is open. Closed questionnaires cannot be edited.
+
+The public answer token is enough: no account, API key, MCP connection, or browser clicks are required. File questions use the upload endpoint documented in the questionnaire, then returned file ids in the answer body. Humans can still use the browser form, one question at a time.
 
 ## Do not
 

@@ -28,6 +28,8 @@ Crawlers can fetch a sitemap of the public documents (home, MCP page, markdown g
 
 `/llms.txt` describes the product in short and lists the skill, the MCP/HTTP guide, and the Cursor plugin. Agents that look for that file can find the rest from it.
 
+It also explains how a respondent's agent can read a private answer link as Markdown and submit all answers in one JSON request without installing the creator's plugin. It preserves the answer token, directs agents to the questionnaire's own ids and schema, and never lists live questionnaires.
+
 ### B4 — Pasting the MCP URL yields a guide 🟢
 
 Opening `https://askmeatsack.com/mcp` in a browser shows a short HTML page with the MCP URL and links to the markdown guide, skill, and Cursor plugin. Fetching that same URL as markdown (or with no HTML Accept), or fetching `/mcp.md`, returns a markdown API guide: what the product does, how to connect, the tool actions, curl, machine answering, and the skill.

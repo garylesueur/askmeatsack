@@ -906,6 +906,9 @@ export function createSessionService(deps: SessionServiceDeps) {
         answersUrl: urls.answersUrl,
         submitUrl: urls.submitUrl,
         filesUrl: urls.filesUrl,
+        status: session.status,
+        expiresAt: session.expiresAt,
+        answers: session.answers,
       });
     },
 
