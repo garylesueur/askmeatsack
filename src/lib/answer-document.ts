@@ -10,8 +10,10 @@ export function wantsAnswerMarkdown(accept: string | null): boolean {
   const qualities = new Map<string, number>();
   for (const range of (accept ?? "").split(",")) {
     const [type, ...parameters] = range.trim().toLowerCase().split(";");
-    const qualityParameter = parameters.find((parameter) => parameter.trim().startsWith("q="));
-    const quality = qualityParameter ? Number(qualityParameter.trim().slice(2)) : 1;
+    const qualityParameter = parameters
+      .map((parameter) => parameter.split("="))
+      .find(([name, value]) => name.trim() === "q" && value !== undefined);
+    const quality = qualityParameter ? Number(qualityParameter.slice(1).join("=").trim()) : 1;
     if (Number.isFinite(quality) && quality >= 0 && quality <= 1) {
       qualities.set(type.trim(), quality);
     }

@@ -27,4 +27,13 @@ describe("answer document negotiation", () => {
     expect(wantsAnswerMarkdown("text/plain, text/html;q=0")).toBe(true);
     expect(wantsAnswerMarkdown("text/markdown, text/html")).toBe(false);
   });
+
+  it.each([
+    ["text/markdown; q = 0, text/html;q=0.5", false],
+    ["text/markdown; q= 0, text/html;q=0.5", false],
+    ["text/plain;\tQ\t=\t0, text/html;q=0.5", false],
+    ["text/markdown;q=0.5, text/html; q = 0", true],
+  ])("B23 — trims quality parameter names and values in %s", (accept, expected) => {
+    expect(wantsAnswerMarkdown(accept)).toBe(expected);
+  });
 });
