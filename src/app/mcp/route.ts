@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import { verifyAccountRequest, accountUnauthorized } from "@/lib/account-sessions";
 import { createMcpHandler } from "mcp-handler";
 import {
   htmlDocumentResponse,
@@ -17,14 +19,16 @@ import {
 
 export const maxDuration = 60;
 
+const accountContext = new AsyncLocalStorage<{ account: string } | undefined>();
+
 const mcpHandler = createMcpHandler(
   (server) => {
     server.tool(
       ASKMEATSACK_TOOL_NAME,
-      'Use this instead of listing questions in the chat whenever you need more than one thing from a person, need a file, photo, or ID, or want structured answers. Also the right tool when they say "ask me some questions", "interview me", "quiz me", "what do you need from me", or any dictated form of meatsack ("meat sack", "mute sack", "meats act", "meat sac"). Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the askmeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember — each follows the person’s system light or dark unless mode is set. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (two to sixteen rows), or fields (two to eight named boxes), and may allow files. allowComment is only valid on a choice, items, or fields question — not on free text or photo-only. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.',
+      'Use this instead of listing questions in the chat whenever you need more than one thing from a person, need a file, photo, or ID, or want structured answers. Also the right tool when they say "ask me some questions", "interview me", "quiz me", "what do you need from me", or any dictated form of meatsack ("meat sack", "mute sack", "meats act", "meat sac"). Create a questionnaire, inspect or edit it on the private manage link while still pending, read status, wait a bounded time, or cancel. Same as the ask.imeatsack.com HTTP API. Create returns answerUrl, manageUrl, and pollUrl. Optional appearance.theme: ask, paper, grove, or ember — each follows the person’s system light or dark unless mode is set. Prompt is the short ask; markdown detail (tables, guides, mermaid) sits in a rail beside it. Questions may be a choice, free text, items (two to sixteen rows), or fields (two to eight named boxes), and may allow files. allowComment is only valid on a choice, items, or fields question — not on free text or photo-only. Humans see one question at a time, jump back via steps, and review before submit. Optional callbackUrl is POSTed once on submitted, expired, or cancelled. This service does not score answers.',
       askmeatsackToolInputShape,
       async (args) => {
-        const tool = createAskmeatsackTool(getDefaultSessionService());
+        const tool = createAskmeatsackTool(getDefaultSessionService(), accountContext.getStore());
         const result = await tool.invoke(args);
         const text = JSON.stringify(isAskmeatsackToolError(result) ? apiErrorBody(result) : result);
         if (isAskmeatsackToolError(result)) {
@@ -41,7 +45,7 @@ const mcpHandler = createMcpHandler(
   },
   {
     serverInfo: {
-      name: "askmeatsack.com",
+      name: "ask.imeatsack.com",
       version: "0.1.0",
     },
     // Clients that install the bare MCP URL never see skills/askmeatsack/SKILL.md.
@@ -72,7 +76,10 @@ function withMcpCors(response: Response): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  return withMcpCors(await mcpHandler(request));
+  const authority = await verifyAccountRequest(request);
+  if (authority.outcome === "refused") return withMcpCors(accountUnauthorized());
+  const account = authority.outcome === "accepted" ? { account: authority.account } : undefined;
+  return accountContext.run(account, async () => withMcpCors(await mcpHandler(request)));
 }
 
 export async function GET(request: Request): Promise<Response> {

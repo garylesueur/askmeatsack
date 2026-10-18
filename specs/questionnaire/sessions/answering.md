@@ -6,13 +6,13 @@ status: partial
 
 # Answering a questionnaire
 
-**askmeatsack.com** is how an agent asks a human a set of questions. Create returns an askmeatsack.com link to put in the conversation there and then, or to send from an unattended job. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
+**ask.imeatsack.com** is how an agent asks a human a set of questions. Create returns an ask.imeatsack.com link to put in the conversation there and then, or to send from an unattended job. The human answers in the browser and submits once. The agent learns the result by checking status, waiting a bounded time, or being called back.
 
 ## Behaviours
 
 ### B1 — Agent starts a questionnaire 🟢
 
-An agent calls the **askmeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the askmeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The askmeatsack.com tool and HTTP produce the same questionnaire.
+An agent calls the **ask.imeatsack.com** tool, or sends the same JSON over HTTP. It sends a title, optional context, the questions, optional expiry, optional opaque metadata, optionally a callback URL, and optionally a theme (dark or light, and/or one accent colour). When the questions are usable, it always receives the ask.imeatsack.com answer link (to put in the conversation, or anywhere else the agent already can post), a status link, and a private manage link. It also learns when the questionnaire will expire. The ask.imeatsack.com tool and HTTP produce the same questionnaire.
 
 If a question is not usable, create is refused and no answer link is returned. The refusal names the question id and the rule (for example that `allowComment` needs options, items, or fields). Several bad questions are listed; the message is the first of those. HTTP and the tool use the same error body: `error.code`, `error.message`, and `error.issues`.
 
@@ -26,7 +26,7 @@ When the human picks an option or types in a text field, that answer is saved wi
 
 ### B4 — Agent can see progress before submit 🟢
 
-Once at least one answer is saved, the agent’s status (askmeatsack.com tool or HTTP) shows work is under way (`in_progress`), how many questions have answers, which question ids those are, and the answers so far. Opening the page with nothing saved yet stays `pending`. Partial answers are enough; the agent does not have to wait for submit to see progress.
+Once at least one answer is saved, the agent’s status (ask.imeatsack.com tool or HTTP) shows work is under way (`in_progress`), how many questions have answers, which question ids those are, and the answers so far. Opening the page with nothing saved yet stays `pending`. Partial answers are enough; the agent does not have to wait for submit to see progress.
 
 ### B5 — Submit once, then answers freeze 🟢
 
@@ -38,7 +38,7 @@ Continue and submit stay unavailable, and submit is refused if forced, until eve
 
 ### B7 — Agent reads the finished answers 🟢
 
-When the questionnaire is submitted, the agent’s status shows that it is finished and includes every question’s chosen option ids and any text. The agent can then stop waiting and continue its work. The askmeatsack.com tool and HTTP return the same result.
+When the questionnaire is submitted, the agent’s status shows that it is finished and includes every question’s chosen option ids and any text. The agent can then stop waiting and continue its work. The ask.imeatsack.com tool and HTTP return the same result.
 
 ### B8 — The link expires 🟢
 
@@ -50,7 +50,7 @@ A choice that is not one of that question’s options is refused. Several option
 
 ### B10 — The two links have different powers 🟢
 
-The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. Creating a questionnaire needs a lanyard token — see B35.
+The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. New account attribution uses verified Lanyard authority; anonymous creation still remains available until B35 is delivered.
 
 ### B11 — After submit, the human can close the tab 🟢
 
@@ -62,7 +62,7 @@ An unknown questionnaire, or a link whose token does not match, does not show qu
 
 ### B13 — Agent can wait a bounded time 🟢
 
-The agent can wait, via the askmeatsack.com tool or over HTTP, for up to a stated number of seconds. If the questionnaire reaches `submitted`, `expired`, or `cancelled` within that time, the wait returns that result. If it is still open, the wait returns the current status and progress — it does not hang past the bound.
+The agent can wait, via the ask.imeatsack.com tool or over HTTP, for up to a stated number of seconds. If the questionnaire reaches `submitted`, `expired`, or `cancelled` within that time, the wait returns that result. If it is still open, the wait returns the current status and progress — it does not hang past the bound.
 
 ### B14 — The page tells the agent it is actually open 🟢
 
@@ -90,7 +90,7 @@ After submit, the confirmation screen lets the human download the answers as Mar
 
 ### B20 — Ask in the conversation 🟢
 
-Create always returns the askmeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **askmeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. If the agent needs someone else, they post the same link themselves (Slack, email, and so on) — that post is the agent’s job, not this service. The same skill also covers an unattended job that is not sitting in a chat (B34).
+Create always returns the ask.imeatsack.com answer link immediately. A skill shipped with this product tells the agent to call the **ask.imeatsack.com** tool, put that link in the conversation, and wait (status, bounded wait, or callback). The person in that conversation opens it and answers. If the intended respondent is elsewhere, the agent posts their answer link where it already reaches that person (Slack, email, and so on) — that post is the agent’s job. Asking another person means creating a separate questionnaire with its own answer link and response record. The same skill also covers an unattended job that is not sitting in a chat (B34).
 
 ### B22 — Agent can hint a theme 🟢
 
@@ -98,11 +98,15 @@ When creating a questionnaire, the agent may optionally name a theme: `ask` (the
 
 ### B23 — A machine can read the questions as markdown 🟢
 
-The same public answer token also serves a markdown document at the answer path with `.md` appended. Fetching the ordinary answer link with `Accept: text/markdown` (or `text/plain`) returns that same document. The HTML page advertises it with an alternate markdown link. That document lists every question, its options, where to save answers, where to submit, and a JSON Schema for the answer body. It never includes the agent’s status secret. A token that does not match does not show the questions.
+The same public answer token also serves a markdown document at the answer path with `.md` appended before its query string. Fetching the ordinary answer link with `Accept: text/markdown` (or `text/plain`) returns that same document when preferred over HTML; a zero-quality Markdown request is not accepted. The HTML page and response headers advertise the Markdown alternate. Response headers also point to `/llms.txt` and keep the private page out of caches and search indexes.
+
+The form explains that the respondent can give this link to their own agent to answer on their behalf. The document lists every question, its options, current saved answers, status and expiry, where to save and submit, and a JSON Schema and payload example using that questionnaire's ids. A closed questionnaire is identified as closed. It never includes the creator’s status secret or file storage keys. A token that does not match does not show questions or saved answers.
 
 ### B24 — A machine can answer with JSON 🟢
 
 Using the public answer token, a caller can PUT all answers as JSON in one request, optionally submitting in that same request. The same validation as the browser applies. Required questions still block submit.
+
+Answering needs no account, API key, MCP installation, or browser interaction. The machine document explains `Content-Type: application/json`, `submit: true`, and the submitted response to check. Agents use the respondent's information, ask for missing answers, and do not treat recommendations as selected answers. If an error occurs, valid answers may already have been saved; the agent can reread the machine document to recover. File uploads happen before submitting their returned ids with the answers.
 
 ### B25 — Questions may accept files 🟢
 
@@ -118,7 +122,7 @@ Create also returns a private manage link, keyed by the agent token. Opening it 
 
 ### B28 — Owner can edit before anyone answers 🟢
 
-While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, or callback URL — via the askmeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
+While status is still `pending`, the owner can change title, context, questions, appearance, expiry, metadata, or callback URL — via the ask.imeatsack.com tool (`edit`) or HTTP PATCH with the agent token. The public answer link stays the same. Once an answer is saved, or the questionnaire is submitted, expired, or cancelled, an edit is refused and the questions stay as they were.
 
 ### B29 — Questions may be grouped into sections 🔵 future
 
@@ -157,7 +161,7 @@ link and the human answering never needs one.
 
 Anyone can try a questionnaire from the home page without signing in. The trial uses
 questionnaires this service already holds — a visitor cannot put their own words on an
-askmeatsack.com link — so the worst a stranger can do is use capacity. Trial questionnaires are
+ask.imeatsack.com link — so the worst a stranger can do is use capacity. Trial questionnaires are
 short-lived and limited by calling address.
 
 ### B37 — A flood from one account is refused 🔵 future
@@ -172,11 +176,20 @@ A `callbackUrl` must be an ordinary public HTTPS address. An address that resolv
 private network, or one that redirects to somewhere it was not, is refused at create — not
 quietly dropped later, so the agent learns while it can still fix it.
 
-### B39 — An attached file is checked before anyone can read it 🔵 future
+### B39 — An attached file is checked before anyone can read it 🟡 partial
 
 A file attached to an answer is checked for malware before it can be downloaded. Until there is
 an answer, the file cannot be read and whoever asks is told it is still being checked. A file
-found to be infected is removed and never served.
+found to be infected is removed and never served. The new owned-file delivery is
+specified in [retained lifecycle B3–B5](../accounts/lifecycle.md); the legacy anonymous
+upload behaviour remains outside that slice until explicitly upgraded.
+
+> New owned attachments seal and verify bytes before actual Cleanroom submission.
+> Public and authenticated owner byte reads require clean current authority; failed
+> scans remain blocked with a safe retry/poll operation, and infected files queue
+> removal. Focused tests and actual Development upload/scanner/portal acceptance pass.
+> Earlier anonymous uploads remain outside this scanned owned-file slice, so B39 stays
+> partial; production release is separate.
 
 ## Rules (Invariants)
 
@@ -185,14 +198,20 @@ found to be infected is removed and never served.
 - A question is required unless it is marked otherwise. Required defaults to yes. Several options on one question default to no.
 - Saved answers freeze at submit, expiry, or cancel. They do not change afterwards.
 - Default life is 24 hours from creation. The creator may ask for shorter or longer, never more than 7 days.
-- After submit, expiry, or cancel, the agent can still read status and answers for one hour. After that the questionnaire is gone. The human cannot save or submit once it has expired or been cancelled.
+- After submit, expiry, or cancel, the private agent token can still read status and
+  answers for one hour. Anonymous and legacy requests are then gone. New requests
+  retained with verified ownership instead keep owner-only access under the
+  [retained lifecycle](../accounts/lifecycle.md); public and agent powers still end
+  under their existing rules. The human cannot save or submit once expired or cancelled.
 - Prompts and optional question `detail` may be formatted as markdown, including mermaid diagrams and tables. The prompt is the ask; `detail` is the situation shown in the evidence rail. Option labels are plain text. Raw HTML from the creator is not rendered. The service does not score answers.
 - The agent’s status secret never appears in the answering page, the JSON download, or anything the browser is given to run. It may appear in the manage URL, which is only for the owner.
 - Questions can be replaced only while status is `pending`. The public answer token does not change when the owner edits.
 - Opaque metadata the agent attaches (repo, branch, run id) is stored and returned to the agent; the human does not need it to answer.
-- Sessions are ephemeral. This product does not keep a long-term archive of answers.
+- Anonymous and legacy sessions remain ephemeral. New verified-owned requests have
+  a separate retained owner lifecycle; retention never enlarges public or agent-token
+  powers or reconstructs purged legacy content.
 - Tool and HTTP are equivalent: same questions in, same questionnaire, same status and answers out. Refused questions use the same error body on both: the first rule in the message, and a list of issues with question id and rule.
-- The agent tool is named **askmeatsack.com**. Answer links are on `https://askmeatsack.com`.
+- The agent tool is named **ask.imeatsack.com**. Answer links are on `https://ask.imeatsack.com`.
 - A bounded wait never exceeds the time the agent asked for, and never more than 60 seconds per call.
 - An opened signal comes only from the running answering page, never from a mere fetch of the link.
 - Text answers are at most 2000 characters. Question `detail` is at most 8000 characters. A
@@ -200,8 +219,9 @@ found to be infected is removed and never served.
   holds at most 20 keys, each key and value at most 200 characters.
 - Creating needs a lanyard token. Answering never does — the human is not asked to sign in, and
   the answer link works for someone with no account.
-- A questionnaire belongs to the account that created it. Deleting that account does not reach
-  back into questionnaires already answered.
+- A new retained questionnaire belongs to its verified creator account. Account
+  deletion retires its owned questions/responses/files through retryable cleanup under
+  the retained lifecycle. Anonymous/legacy records are not retrospectively claimed.
 - Rate limits count against the account. The home-page trial has no account, so it counts
   against the calling address instead, and only ever creates questionnaires this service
   already holds.
@@ -209,7 +229,7 @@ found to be infected is removed and never served.
   a redirect away from the address given is not followed.
 - An attached file is not downloadable until it has been checked. Infected files are removed.
 - A callback, when present, is invoked once per terminal status (`submitted`, `expired`, `cancelled`).
-- User-facing copy calls the product **askmeatsack.com**.
+- User-facing copy calls the product **ask.imeatsack.com**.
 - Appearance is optional. Missing appearance is the `ask` theme in the person’s system light or dark. Named themes are `ask`, `paper`, `grove`, and `ember`, each with both modes. `mode` may be `dark` or `light` to force one side. Accent, when present, is a `#` plus six hex digits.
 - The `.md` document is the same questionnaire as the browser page, keyed by the same public token. It never contains the agent status secret.
 - Files use the public answer token. A file is at most 4MB. A question accepts at most five files.
@@ -230,7 +250,7 @@ found to be infected is removed and never served.
 
 ### What each doorway may do
 
-| Action | Human answer link | Agent status (askmeatsack.com tool or HTTP) | lanyard token |
+| Action | Human answer link | Agent status (ask.imeatsack.com tool or HTTP) | lanyard token |
 | --- | --- | --- | --- |
 | Start a questionnaire | No | No | Yes (B35) |
 | See questions and save answers | Yes, that questionnaire only | No | No |
@@ -318,6 +338,10 @@ found to be infected is removed and never served.
 
 ## User Flows
 
+- Optional respondent product discovery and "Ask someone else" guidance follow
+  [workspace F1](../accounts/workspace.md#user-flows). The guidance never changes
+  the current answers or passes the answer link, private context or attachments to
+  another questionnaire. Ordinary answering, review and downloads remain available.
 - **F1 — Human answers:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B2–B6, B8–B12, B14–B17, B19, B26
 - **F2 — Agent waits:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B1, B4, B7, B8, B10, B13, B17, B18, B20, B34
 - **F3 — Owner inspects:** [contract](./answering.flow.yaml) · [diagram](./answering.flow.mmd) — covers B27, B28
@@ -334,10 +358,10 @@ found to be infected is removed and never served.
 - **Settled:** Tool and HTTP are both in. Same questionnaire. Recorded as B1, B7, B13.
 - **Settled:** Bounded wait, callback, cancel, free text, recommended option, opened signal, and JSON download are in. Recorded as B13–B19.
 - **Settled:** Maximum wait bound is 60 seconds per call. The agent loops if it wants longer. Stops a hung tool without cutting the wait feature.
-- **Settled:** The product is askmeatsack.com. The domain is live. The agent tool is named **askmeatsack.com**. Create always returns the link. Recorded as B1 and B20.
+- **Settled:** The product is ask.imeatsack.com. The domain is live. The agent tool is named **ask.imeatsack.com**. Create always returns the link. Recorded as B1 and B20.
 - **Withdrawn:** Email from this service (B21). Giving `answerUrl` is the calling agent’s job; this service does not send mail.
 - **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
-- **Reversed:** Create was public, with no shared bearer to hand out. It now needs a lanyard token. Open create had no benefit to us and let anyone put their own words on an askmeatsack.com link. Agent status still needs that questionnaire’s own agent token (the `pollUrl`) — a lanyard token does not replace it. Recorded as B10 and B35.
+- **Reversed:** Create was public, with no shared bearer to hand out. The intended account-only create policy needs a lanyard token; B35 remains future and anonymous create is currently preserved. Open create had no benefit to us and let anyone put their own words on an ask.imeatsack.com link. Agent status still needs that questionnaire’s own agent token (the `pollUrl`) — a lanyard token does not replace it. Recorded as B10 and B35.
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.
@@ -364,5 +388,5 @@ found to be infected is removed and never served.
   they are.
 - Running our own sign-in. Accounts live in lanyard; this service only verifies its tokens.
 - Wiring into Cursor’s own product APIs or the native AskQuestion UI.
-- Long-term storage or search of past questionnaires.
+- Historical migration or inferred ownership of anonymous/legacy questionnaires.
 - Posting the answer link to Slack or any other chat. The calling agent does that with the URL this service already returns.

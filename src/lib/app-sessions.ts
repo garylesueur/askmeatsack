@@ -3,6 +3,8 @@ import {
   createRedisSessionStore,
   type SessionStore,
 } from "./session-store";
+import { createOwnedSessionStore } from "./owned-session-store";
+import { defaultAskMetadata } from "./owned-session-metadata";
 import { createUpstashKvFromEnv } from "./upstash-kv";
 import {
   createSessionService,
@@ -20,9 +22,10 @@ export function getDefaultStore(): SessionStore {
     return globalForSessions.askmeatsackStore;
   }
   const kv = createUpstashKvFromEnv();
-  globalForSessions.askmeatsackStore = kv
-    ? createRedisSessionStore(kv)
-    : createMemorySessionStore();
+  globalForSessions.askmeatsackStore = createOwnedSessionStore(
+    kv ? createRedisSessionStore(kv) : createMemorySessionStore(),
+    defaultAskMetadata(),
+  );
   return globalForSessions.askmeatsackStore;
 }
 

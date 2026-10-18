@@ -10,6 +10,8 @@ import {
   storeAnswerFile,
   type StoredFile,
 } from "@/lib/answer-files";
+import { defaultOwnedAnswerFiles } from "@/lib/owned-answer-files";
+import { OwnedSessionError } from "@/lib/owned-session-metadata";
 import { limitCreateFromRequest } from "@/lib/create-rate-limit";
 import { FILE_MAX_BYTES } from "@/lib/schema";
 import { isSessionServiceError } from "@/lib/sessions";
@@ -56,6 +58,40 @@ export async function POST(request: Request, context: RouteContext): Promise<Res
   }
   if (fileTooLarge(file.size)) {
     return jsonError(400, "invalid_answer", `File must be at most ${FILE_MAX_BYTES} bytes`);
+  }
+
+  const mode = await service.ownedUploadContext({ sessionId, publicToken, questionId });
+  if (isSessionServiceError(mode)) return jsonServiceError(mode);
+  if (mode.owned) {
+    const owned = defaultOwnedAnswerFiles();
+    if (!owned || !publicToken)
+      return jsonError(
+        503,
+        "files_unavailable",
+        "Owned file storage and scanning are not configured",
+      );
+    try {
+      const uploaded = await owned.upload({
+        id: sessionId,
+        questionId,
+        filename: file.name || "upload",
+        contentType: file.type || "application/octet-stream",
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        publicToken,
+      });
+      const result = await service.ownedUploadResult({
+        sessionId,
+        publicToken,
+        fileId: uploaded.fileId,
+      });
+      return isSessionServiceError(result)
+        ? jsonServiceError(result)
+        : Response.json(result, { status: 201 });
+    } catch (error) {
+      return error instanceof OwnedSessionError
+        ? jsonServiceError(error)
+        : jsonError(502, "files_unavailable", "File storage refused the upload");
+    }
   }
 
   let stored: StoredFile;

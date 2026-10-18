@@ -1,8 +1,9 @@
+import { MARKETPLACE_HREF, pluginInstallMarkdown } from "./plugin-install";
 import { ASKMEATSACK_SKILL_MARKDOWN } from "./askmeatsack-skill";
 import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "./cursor-install";
 import { publicOrigin } from "./public-origin";
 
-export const SITE_TITLE = "askmeatsack.com";
+export const SITE_TITLE = "ask.imeatsack.com";
 export const SITE_TAGLINE = "An agent asks. A human answers.";
 export const SITE_DESCRIPTION =
   "Create a questionnaire, paste the link, wait. No install, no setup, no dashboard to learn.";
@@ -34,22 +35,39 @@ export function skillMarkdown(): string {
 }
 
 export function llmsTxt(origin = publicOrigin()): string {
-  return `# askmeatsack.com
+  return `# ask.imeatsack.com
 
 > ${SITE_TAGLINE} ${SITE_DESCRIPTION}
 
-askmeatsack.com is how an agent asks a human a set of questions. Create returns an answer link and a private manage link. The human answers in the browser. The agent can inspect or edit while nobody has answered, then wait, poll, or be called back. MCP and HTTP are the same questionnaire.
+ask.imeatsack.com is how an agent asks a human a set of questions. Create returns an answer link and a private manage link. The human answers in the browser. The agent can inspect or edit while nobody has answered, then wait, poll, or be called back. MCP and HTTP are the same questionnaire.
+
+## I, Meatsack family
+
+- [I, Meatsack](https://imeatsack.com): Ask, Share and Show.
+- [Ask](https://ask.imeatsack.com/llms.txt): Questionnaires for human input.
+- [Share](https://share.imeatsack.com/llms.txt): Send and request files.
+- [Show](https://show.imeatsack.com/llms.txt): Publish pages and workbooks.
 
 ## Docs
 
-- [Skill](${origin}/skill.md): How to use the askmeatsack.com tool
+- [Homepage in Markdown](${origin}/index.md): Product overview and family navigation.
+- [Complete documentation](${origin}/llms-full.txt): Overview, installation, skill and API guide.
+- [Install plugin](${origin}/install): Marketplace setup for Codex, Claude Code, and Cursor
+- [Skill](${origin}/skill.md): How to use the ask.imeatsack.com tool
 - [MCP and HTTP](${origin}/mcp.md): Connect, actions, curl, machine answering
-- [Cursor plugin](${CURSOR_PLUGIN_HREF}): MCP plus the skill
+- [Plugin marketplace](${MARKETPLACE_HREF}): Install in Codex, Claude Code, or Cursor
+- [Plugin source](${CURSOR_PLUGIN_HREF}): MCP plus the skill
 - [Home](${origin}/): Human landing page
 
 ## Optional
 
 - [llms.txt](${origin}/llms.txt)
+
+## Answer a questionnaire for your user
+
+If your user gives you an answer link, fetch that same URL with \`Accept: text/markdown\` or append \`.md\` to the path before its query string, keeping the \`t\` token. The document includes every question, saved answers, status, expiry, and JSON Schema.
+
+Send all answers in one \`PUT /api/v1/sessions/{sessionId}/answers?t=…\` with \`Content-Type: application/json\` and \`{"answers": {"questionId": {"text": "Your answer"}}, "submit": true}\`. Use the exact URL, question ids, option ids, and answer shapes from the document. Confirm \`submitted.status\` is \`submitted\`. No account, API key, MCP installation, or browser clicks are needed to answer. Ask your user for missing information rather than inventing answers. The answer link is private; do not publish it in an index.
 `;
 }
 
@@ -57,7 +75,7 @@ export function mcpGuideMarkdown(origin = publicOrigin()): string {
   const mcpUrl = `${origin}/mcp`;
   const createUrl = `${origin}/api/v1/sessions`;
   const cursorHref = cursorInstallPageHref(mcpUrl);
-  return `# askmeatsack.com
+  return `# ask.imeatsack.com
 
 ${SITE_TAGLINE} ${SITE_DESCRIPTION}
 
@@ -75,9 +93,10 @@ This URL is the MCP server. Browsers get a short page. Agents should fetch \`${o
 
 There is no API key. Create is open today. Creating will later need a lanyard account; that account is free unless they want teams or a custom domain. The person answering never signs in.
 
+${pluginInstallMarkdown(origin)}
 ## Tool
 
-One tool, named \`askmeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`edit\`.
+One tool, named \`ask.imeatsack.com\`. Actions: \`create\`, \`status\`, \`wait\`, \`cancel\`, \`edit\`.
 
 POST JSON-RPC to \`${mcpUrl}\`. Do not invent extra tools, a Slack bot, or a mailer of your own.
 
@@ -116,7 +135,13 @@ Create returns \`answerUrl\`, \`machineUrl\`, \`pollUrl\`, and \`manageUrl\`. Ke
 
 ## Machine answering
 
-If the respondent is an agent, fetch the answer link with \`Accept: text/markdown\`, or \`machineUrl\` (the same path with \`.md\`). That markdown has the questions, options, submit URL, and JSON Schema. PUT answers as JSON if you already have them. Humans use the HTML answer link in a browser, one question at a time.
+If your user hands you an answer link, you can answer on their behalf. Fetch it with \`Accept: text/markdown\`, or use \`machineUrl\` (append \`.md\` to the path before the query string, preserving the token). The HTML and Link headers advertise this document, and \`/llms.txt\` explains this path.
+
+The document includes every question, option ids, saved answers, current status, expiry, the exact save and submit URLs, and JSON Schema. Read it before preparing answers. Ask your user for any missing information; do not invent answers or select recommended options automatically.
+
+Send one \`PUT\` to the document's answers URL with \`Content-Type: application/json\`, \`answers\` keyed by question id, and \`submit: true\`. This saves and submits together. Confirm \`submitted.status: "submitted"\` in the response. All required questions still need usable answers. To save a draft, omit \`submit\`; to finish a saved draft, POST the submit URL. If an error occurs, valid answers may already be saved: reread the document and correct the problem while it is open. Closed questionnaires cannot be edited.
+
+The public answer token is enough: no account, API key, MCP connection, or browser clicks are required. File questions use the upload endpoint documented in the questionnaire, then returned file ids in the answer body. Humans can still use the browser form, one question at a time.
 
 ## Do not
 
@@ -199,10 +224,12 @@ export function mcpGuideHtml(origin = publicOrigin()): string {
       <li><a href="${originEscaped}/mcp.md">API guide (markdown)</a></li>
       <li><a href="${originEscaped}/skill.md">Skill</a></li>
       <li><a href="${CURSOR_PLUGIN_HREF}">Cursor plugin</a></li>
+      <li><a href="${originEscaped}/install">Install plugin</a></li>
+      <li><a href="${MARKETPLACE_HREF}">Meatsack plugin marketplace</a></li>
       <li><a href="${originEscaped}/llms.txt">llms.txt</a></li>
       <li><a href="${originEscaped}/">${title}</a></li>
     </ul>
-    <p class="muted">One tool, named askmeatsack.com. Create, inspect or edit on the private manage link, paste the answer link, wait.</p>
+    <p class="muted">One tool, named ask.imeatsack.com. Create, inspect or edit on the private manage link, paste the answer link, wait.</p>
   </main>
 </body>
 </html>
@@ -237,30 +264,81 @@ export function plainTextResponse(body: string, contentType: string): Response {
   });
 }
 
+export function homepageMarkdown(origin = publicOrigin()): string {
+  return `# ${SITE_TITLE}
+
+> ${SITE_TAGLINE} ${SITE_DESCRIPTION}
+
+Part of [I, Meatsack](https://imeatsack.com). The shared navigation offers
+[Ask](https://ask.imeatsack.com), [Share](https://share.imeatsack.com) and
+[Show](https://show.imeatsack.com), with this product selected.
+
+## Connect your agent
+
+- [Install plugin](${origin}/install): Codex, Claude Code and Cursor setup.
+- [MCP and HTTP guide](${origin}/mcp.md): Actions, payloads and examples.
+- [Workflow skill](${origin}/skill.md): How an agent uses this product.
+- [MCP endpoint](${origin}/mcp)
+- [Documentation index](${origin}/llms.txt)
+- [Complete documentation](${origin}/llms-full.txt)
+
+The agent delivers the human link. Each product has its own MCP server;
+I, Meatsack is the shared home, with no combined MCP endpoint.
+
+Built by [Gary Le Sueur](https://gaz.dev).
+[Source](${CURSOR_PLUGIN_HREF}) · [Marketplace](${MARKETPLACE_HREF})
+Canonical home: ${origin}/
+`;
+}
+
+export function llmsFullTxt(origin = publicOrigin()): string {
+  return `${homepageMarkdown(origin)}\n---\n\n${mcpGuideMarkdown(origin)}`;
+}
+
+export function discoveryTextResponse(body: string, contentType: string): Response {
+  const origin = publicOrigin();
+  return new Response(body, {
+    headers: {
+      "Content-Type": `${contentType}; charset=utf-8`,
+      "Cache-Control": "public, max-age=0, s-maxage=3600",
+      "X-Robots-Tag": "noindex, follow",
+      Link: `<${origin}/>; rel="canonical", <${origin}/llms.txt>; rel="describedby"; type="text/plain"`,
+    },
+  });
+}
+
 export function siteJsonLd(origin = publicOrigin()) {
+  const author = { "@type": "Person", name: "Gary Le Sueur", url: "https://gaz.dev" };
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebSite",
+        "@id": `${origin}/#website`,
         name: SITE_TITLE,
         url: origin,
         description: SITE_DESCRIPTION,
         inLanguage: "en-GB",
+        publisher: author,
+        isPartOf: {
+          "@type": "WebSite",
+          "@id": "https://imeatsack.com/#website",
+          name: "I, Meatsack",
+          url: "https://imeatsack.com",
+        },
       },
       {
         "@type": "SoftwareApplication",
+        "@id": `${origin}/#application`,
         name: SITE_TITLE,
         url: origin,
+        applicationSuite: "I, Meatsack",
         applicationCategory: "DeveloperApplication",
         operatingSystem: "Web",
         description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
+        author,
         sameAs: [CURSOR_PLUGIN_HREF],
-        offers: {
-          "@type": "Offer",
-          price: "0",
-          priceCurrency: "GBP",
-        },
+        offers: { "@type": "Offer", price: "0", priceCurrency: "GBP" },
       },
     ],
   };

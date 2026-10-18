@@ -7,8 +7,8 @@ import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "@/lib/cursor-install"
 import { publicOrigin } from "@/lib/public-origin";
 
 const SIBLING = {
-  name: "showmeatsack.com",
-  href: "https://showmeatsack.com",
+  name: "show.imeatsack.com",
+  href: "https://show.imeatsack.com",
 };
 
 export default function Home() {
@@ -31,10 +31,12 @@ export default function Home() {
 
   return (
     <SiteShell
-      wordmark="askmeatsack.com"
+      wordmark="ask.imeatsack.com"
       sibling={SIBLING}
       repoHref={CURSOR_PLUGIN_HREF}
+      accountHref="https://meatsack.puregaz.com/sign-in?product=askmeatsack"
       docs={[
+        { label: "Install plugin", href: "/install" },
         { label: "skill.md", href: `${origin}/skill.md` },
         { label: "mcp.md", href: `${origin}/mcp.md` },
         { label: "llms.txt", href: "/llms.txt" },

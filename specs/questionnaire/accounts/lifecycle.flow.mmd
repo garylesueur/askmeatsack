@@ -1,0 +1,44 @@
+%% Generated from lifecycle.flow.yaml. Do not edit directly.
+flowchart TD
+  subgraph F1["F1: Keep an attachment"]
+    F1_inspect["Request attachment"]
+    F1_reserve{{"Check access and reserve copy"}}
+    F1_copy{{"Copy eligible contents"}}
+    F1_commit{{"Confirm copied contents and access"}}
+    F1_recovery["Copy needs recovery"]
+    F1_kept(["Kept in Ask"])
+    F1_unavailable(["Attachment unavailable"])
+    F1_leave(["Back to requests"])
+    F1_inspect -->|"F1.T1: Keep attachment"| F1_reserve
+    F1_inspect -->|"F1.T2: Back"| F1_leave
+    F1_reserve -->|"F1.T3: Check complete [This source already has an available independent copy for this account.]"| F1_kept
+    F1_reserve -->|"F1.T4: Check complete [No available copy exists, the source is eligible and allowance is reserved for this attempt.]"| F1_copy
+    F1_reserve -->|"F1.T5: Check complete [No available copy exists and capacity is insufficient or scanning is incomplete.]"| F1_inspect
+    F1_reserve -->|"F1.T6: Check complete [The source is no longer accessible, the request is deleted or the account is closed.]"| F1_unavailable
+    F1_reserve -->|"F1.T7: Check interrupted"| F1_recovery
+    F1_copy -->|"F1.T8: Storage confirms copy"| F1_commit
+    F1_copy -->|"F1.T9: Storage fails or request is interrupted"| F1_recovery
+    F1_commit -->|"F1.T10: Commit complete [The source is still eligible and storage confirmed the expected independent contents.]"| F1_kept
+    F1_commit -->|"F1.T11: Commit complete [Source access or account authority ended before commit, or contents were not confirmed.]"| F1_unavailable
+    F1_commit -->|"F1.T12: Commit interrupted"| F1_recovery
+    F1_recovery -->|"F1.T13: Retry"| F1_reserve
+    F1_recovery -->|"F1.T14: Back"| F1_inspect
+  end
+  subgraph F2["F2: Delete a retained request"]
+    F2_inspect["Retained request"]
+    F2_confirm["Confirm request deletion"]
+    F2_remove{{"Retire request and queue originals"}}
+    F2_recovery["Deletion needs recovery"]
+    F2_removed(["Request removed"])
+    F2_unavailable(["Request unavailable"])
+    F2_leave(["Back to requests"])
+    F2_inspect -->|"F2.T1: Delete request"| F2_confirm
+    F2_inspect -->|"F2.T2: Back"| F2_leave
+    F2_confirm -->|"F2.T3: Cancel"| F2_inspect
+    F2_confirm -->|"F2.T4: Confirm delete"| F2_remove
+    F2_remove -->|"F2.T5: Removal complete [The same owner's request was retired or an earlier attempt already retired it.]"| F2_removed
+    F2_remove -->|"F2.T6: Removal complete [Ownership does not match or account authority has ended.]"| F2_unavailable
+    F2_remove -->|"F2.T7: Removal interrupted"| F2_recovery
+    F2_recovery -->|"F2.T8: Retry"| F2_remove
+    F2_recovery -->|"F2.T9: Back"| F2_inspect
+  end

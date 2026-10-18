@@ -42,7 +42,10 @@ export async function GET(request: Request, context: RouteContext): Promise<Resp
   const headers = new Headers();
   headers.set("Content-Type", result.contentType || "application/octet-stream");
   headers.set("Content-Disposition", contentDispositionFilename(result.filename));
-  headers.set("Cache-Control", "private, max-age=3600");
+  headers.set(
+    "Cache-Control",
+    result.uploadedAt && result.retainedUntil ? "private, no-store" : "private, max-age=3600",
+  );
   const length = stored.headers.get("Content-Length");
   if (length) {
     headers.set("Content-Length", length);

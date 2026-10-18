@@ -1,5 +1,6 @@
 import type { Appearance } from "@/lib/schema";
 import { AppearanceShell } from "@/components/appearance-shell";
+import { RespondentDiscovery } from "@/components/respondent-discovery";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -21,7 +22,7 @@ function StatusScreen({
     <AppearanceShell appearance={appearance} className="items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <p className="text-sm text-muted-foreground">askmeatsack.com</p>
+          <p className="text-sm text-muted-foreground">ask.imeatsack.com</p>
           <CardTitle className="text-2xl">{title}</CardTitle>
           <CardDescription className="text-base">{body}</CardDescription>
         </CardHeader>
@@ -44,6 +45,9 @@ function StatusScreen({
           </CardContent>
         ) : null}
       </Card>
+      <div className="mt-6 w-full max-w-md">
+        <RespondentDiscovery />
+      </div>
     </AppearanceShell>
   );
 }

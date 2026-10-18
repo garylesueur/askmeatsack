@@ -11,7 +11,7 @@ import {
   type createSessionService,
 } from "./sessions";
 
-export const ASKMEATSACK_TOOL_NAME = "askmeatsack.com";
+export const ASKMEATSACK_TOOL_NAME = "ask.imeatsack.com";
 
 export const askmeatsackToolActions = ["create", "status", "wait", "cancel", "edit"] as const;
 
@@ -19,6 +19,7 @@ export type AskmeatsackToolAction = (typeof askmeatsackToolActions)[number];
 
 export const askmeatsackToolInputShape = {
   action: z.enum(askmeatsackToolActions),
+  idempotencyKey: z.string().min(1).max(200).optional(),
   sessionId: z.string().min(1).optional(),
   seconds: z.number().int().positive().max(WAIT_MAX_SECONDS).optional(),
   title: z.string().min(1).optional(),
@@ -41,11 +42,15 @@ function invalidAction(message: string): SessionServiceError {
   };
 }
 
-export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
+export function createAskmeatsackTool(
+  sessions: AskmeatsackToolSessions,
+  authority?: { account: string },
+) {
   return {
     name: ASKMEATSACK_TOOL_NAME,
     async invoke(input: {
       action: AskmeatsackToolAction;
+      idempotencyKey?: string;
       sessionId?: string;
       seconds?: number;
       title?: string;
@@ -58,15 +63,18 @@ export function createAskmeatsackTool(sessions: AskmeatsackToolSessions) {
       questions?: unknown;
     }): Promise<unknown> {
       if (input.action === "create") {
-        return await sessions.create({
-          title: input.title,
-          context: input.context,
-          expiresInSeconds: input.expiresInSeconds,
-          metadata: input.metadata,
-          callbackUrl: input.callbackUrl,
-          appearance: input.appearance,
-          questions: input.questions,
-        });
+        return await sessions.create(
+          {
+            title: input.title,
+            context: input.context,
+            expiresInSeconds: input.expiresInSeconds,
+            metadata: input.metadata,
+            callbackUrl: input.callbackUrl,
+            appearance: input.appearance,
+            questions: input.questions,
+          },
+          authority ? { ...authority, idempotencyKey: input.idempotencyKey } : undefined,
+        );
       }
 
       if (!input.sessionId) {

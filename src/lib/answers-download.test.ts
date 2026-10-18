@@ -7,7 +7,7 @@ const questions: Question[] = [
     id: "Q1",
     prompt: "What should we call this?",
     options: [
-      { id: "1", label: "askmeatsack.com" },
+      { id: "1", label: "ask.imeatsack.com" },
       { id: "2", label: "Something else" },
     ],
     allowMultiple: false,
@@ -39,7 +39,7 @@ const download = {
       questionId: "Q1",
       prompt: "What should we call this?",
       selectedOptionIds: ["1"],
-      selectedLabels: ["askmeatsack.com"],
+      selectedLabels: ["ask.imeatsack.com"],
     },
     {
       questionId: "Q2",
@@ -55,9 +55,9 @@ describe("answersDownloadMarkdown", () => {
   it("writes a readable copy with labels and money", () => {
     const markdown = answersDownloadMarkdown(download, questions);
     expect(markdown).toContain("# Naming");
-    expect(markdown).toContain("Your answers from askmeatsack.com");
+    expect(markdown).toContain("Your answers from ask.imeatsack.com");
     expect(markdown).toContain("## What should we call this?");
-    expect(markdown).toContain("- askmeatsack.com");
+    expect(markdown).toContain("- ask.imeatsack.com");
     expect(markdown).toContain("- Rent: £6,500.00");
     expect(markdown).toContain("- Note: Paid");
     expect(markdown).not.toContain("agent-secret");
@@ -68,7 +68,7 @@ describe("wantsMarkdownDownload", () => {
   it("is true for format=md", () => {
     expect(
       wantsMarkdownDownload(
-        new Request("https://askmeatsack.com/api/v1/sessions/s/download?format=md"),
+        new Request("https://ask.imeatsack.com/api/v1/sessions/s/download?format=md"),
       ),
     ).toBe(true);
   });
@@ -76,7 +76,7 @@ describe("wantsMarkdownDownload", () => {
   it("is false for the ordinary JSON download", () => {
     expect(
       wantsMarkdownDownload(
-        new Request("https://askmeatsack.com/api/v1/sessions/s/download?t=public"),
+        new Request("https://ask.imeatsack.com/api/v1/sessions/s/download?t=public"),
       ),
     ).toBe(false);
   });

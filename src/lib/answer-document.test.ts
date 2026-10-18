@@ -18,4 +18,13 @@ describe("answer document negotiation", () => {
   it("keeps the public token on the .md path", () => {
     expect(machineQuestionnairePath("abc", "tok")).toBe("/s/abc.md?t=tok");
   });
+
+  it("B23 — honours media preferences and refuses disabled Markdown", () => {
+    expect(wantsAnswerMarkdown("text/markdown;q=0, text/html")).toBe(false);
+    expect(wantsAnswerMarkdown("text/plain;q=0, */*")).toBe(false);
+    expect(wantsAnswerMarkdown("text/markdown, text/html;q=0.5")).toBe(true);
+    expect(wantsAnswerMarkdown("text/markdown;q=0.5, text/html")).toBe(false);
+    expect(wantsAnswerMarkdown("text/plain, text/html;q=0")).toBe(true);
+    expect(wantsAnswerMarkdown("text/markdown, text/html")).toBe(false);
+  });
 });

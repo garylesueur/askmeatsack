@@ -1,5 +1,7 @@
 "use client";
 
+import { ownValue } from "@/lib/dictionary";
+
 import { useEffect, useRef, useState } from "react";
 import {
   ENTRY_ANSWER_MAX_CHARS,
@@ -31,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ThankYouScreen, ExpiredLinkScreen, CancelledScreen } from "./status-screens";
+import { RespondentDiscovery } from "@/components/respondent-discovery";
 
 type AnsweringFormProps = {
   sessionId: string;
@@ -69,7 +72,7 @@ function missingRequiredIds(
     if (!question.required) {
       continue;
     }
-    if (!hasUsableAnswer(question, answers[question.id])) {
+    if (!hasUsableAnswer(question, ownValue(answers, question.id))) {
       missing.push(question.id);
     }
   }
@@ -85,7 +88,7 @@ function firstOpenIndex(
     if (!question) {
       continue;
     }
-    if (!hasUsableAnswer(question, answers[question.id])) {
+    if (!hasUsableAnswer(question, ownValue(answers, question.id))) {
       return index;
     }
   }
@@ -137,7 +140,7 @@ function answerSummary(question: Question, answer: SessionAnswer | undefined): s
   if (answer?.entries) {
     const labelled: string[] = [];
     for (const row of questionEntries(question)) {
-      const value = answer.entries[row.id];
+      const value = ownValue(answer.entries, row.id);
       if (value) {
         labelled.push(`${row.label}: ${formatEntryValue(row, question, value)}`);
       }
@@ -168,7 +171,7 @@ function startsOnReview(
     return false;
   }
   for (const question of questions) {
-    if (hasUsableAnswer(question, answers[question.id])) {
+    if (hasUsableAnswer(question, ownValue(answers, question.id))) {
       return true;
     }
   }
@@ -200,7 +203,7 @@ export function AnsweringForm({
   const [expired, setExpired] = useState(() => Date.parse(expiresAt) <= Date.now());
   const [cancelled, setCancelled] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const textTimers = useRef<Record<string, number>>({});
+  const textTimers = useRef<Record<string, number>>(Object.create(null));
 
   useEffect(() => {
     void fetch(`/api/v1/sessions/${sessionId}/opened?t=${encodeURIComponent(publicToken)}`, {
@@ -235,7 +238,7 @@ export function AnsweringForm({
   const missing = missingRequiredIds(questions, answers);
   const canLeaveCurrent =
     question !== undefined &&
-    (!question.required || hasUsableAnswer(question, answers[question.id]));
+    (!question.required || hasUsableAnswer(question, ownValue(answers, question.id)));
   const canSubmit = missing.length === 0;
   const downloadQuery = `t=${encodeURIComponent(publicToken)}`;
   const downloadHref = `/api/v1/sessions/${sessionId}/download?${downloadQuery}`;
@@ -255,7 +258,7 @@ export function AnsweringForm({
   }
 
   async function chooseOption(currentQuestion: Question, optionId: string) {
-    const previous = answers[currentQuestion.id];
+    const previous = ownValue(answers, currentQuestion.id);
     const selectedOptionIds = nextSelectedIds(
       currentQuestion,
       previous?.selectedOptionIds ?? [],
@@ -387,7 +390,7 @@ export function AnsweringForm({
       progress: SessionProgress;
     };
     setAnswers((current) => {
-      const previous = current[currentQuestion.id];
+      const previous = ownValue(current, currentQuestion.id);
       const nextAnswer: SessionAnswer = {
         selectedOptionIds: previous?.selectedOptionIds ?? [],
         answeredAt: new Date().toISOString(),
@@ -406,7 +409,7 @@ export function AnsweringForm({
   }
 
   function addFiles(currentQuestion: Question, incoming: File[]): void {
-    const already = answers[currentQuestion.id]?.files?.length ?? 0;
+    const already = ownValue(answers, currentQuestion.id)?.files?.length ?? 0;
     const { accepted, error } = takeAttachableFiles({
       incoming,
       already,
@@ -456,7 +459,7 @@ export function AnsweringForm({
   }
 
   function onTextChange(currentQuestion: Question, text: string) {
-    const previous = answers[currentQuestion.id];
+    const previous = ownValue(answers, currentQuestion.id);
     const nextAnswer: SessionAnswer = {
       selectedOptionIds: previous?.selectedOptionIds ?? [],
       answeredAt: new Date().toISOString(),
@@ -483,7 +486,7 @@ export function AnsweringForm({
   }
 
   function onEntryChange(currentQuestion: Question, entryId: string, value: string) {
-    const previous = answers[currentQuestion.id];
+    const previous = ownValue(answers, currentQuestion.id);
     const entries = { ...previous?.entries, [entryId]: value };
     const nextAnswer: SessionAnswer = {
       selectedOptionIds: previous?.selectedOptionIds ?? [],
@@ -517,8 +520,8 @@ export function AnsweringForm({
     delete textTimers.current[currentQuestion.id];
     void saveText(
       currentQuestion,
-      answers[currentQuestion.id]?.text ?? "",
-      answers[currentQuestion.id],
+      ownValue(answers, currentQuestion.id)?.text ?? "",
+      ownValue(answers, currentQuestion.id),
     );
   }
 
@@ -532,8 +535,8 @@ export function AnsweringForm({
     delete textTimers.current[timerKey];
     void saveEntries(
       currentQuestion,
-      answers[currentQuestion.id]?.entries ?? {},
-      answers[currentQuestion.id],
+      ownValue(answers, currentQuestion.id)?.entries ?? {},
+      ownValue(answers, currentQuestion.id),
     );
   }
 
@@ -619,7 +622,9 @@ export function AnsweringForm({
             {questions.map((item) => (
               <li key={item.id} className="flex flex-col gap-1">
                 <p className="text-sm text-muted-foreground">{item.prompt}</p>
-                <p className="text-sm text-foreground">{answerSummary(item, answers[item.id])}</p>
+                <p className="text-sm text-foreground">
+                  {answerSummary(item, ownValue(answers, item.id))}
+                </p>
               </li>
             ))}
           </ul>
@@ -637,13 +642,13 @@ export function AnsweringForm({
     return null;
   }
 
-  const selected = answers[question.id]?.selectedOptionIds ?? [];
+  const selected = ownValue(answers, question.id)?.selectedOptionIds ?? [];
   const showContinue = isLast
-    ? !shouldAdvanceOnChoice(question) || hasUsableAnswer(question, answers[question.id])
+    ? !shouldAdvanceOnChoice(question) || hasUsableAnswer(question, ownValue(answers, question.id))
     : !shouldAdvanceOnChoice(question) || !question.required;
   const continueLabel = isLast
     ? "Review answers"
-    : !question.required && !hasUsableAnswer(question, answers[question.id])
+    : !question.required && !hasUsableAnswer(question, ownValue(answers, question.id))
       ? "Skip"
       : "Continue";
   const percent = reviewing ? 100 : Math.round(((stepIndex + 1) / questions.length) * 100);
@@ -661,7 +666,7 @@ export function AnsweringForm({
     >
       <div className="flex items-baseline justify-between gap-3">
         <h1 className="text-sm text-muted-foreground">
-          {title ?? (layout === "page" ? "askmeatsack.com" : "Questions")}
+          {title ?? (layout === "page" ? "ask.imeatsack.com" : "Questions")}
         </h1>
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {reviewing ? "Review" : `${stepIndex + 1} of ${questions.length}`}
@@ -686,7 +691,7 @@ export function AnsweringForm({
         <nav aria-label="Questions" className="mt-3 flex flex-wrap gap-1.5">
           {questions.map((item, index) => {
             const current = !reviewing && index === stepIndex;
-            const done = hasUsableAnswer(item, answers[item.id]);
+            const done = hasUsableAnswer(item, ownValue(answers, item.id));
             return (
               <button
                 key={item.id}
@@ -753,7 +758,9 @@ export function AnsweringForm({
                   >
                     {index + 1}. {item.prompt}
                   </button>
-                  <p className="text-sm text-foreground">{answerSummary(item, answers[item.id])}</p>
+                  <p className="text-sm text-foreground">
+                    {answerSummary(item, ownValue(answers, item.id))}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -787,7 +794,7 @@ export function AnsweringForm({
               <div className="flex flex-col gap-4 @4xl:col-start-1">
                 {questionKind(question) === "text" ? (
                   <Textarea
-                    value={answers[question.id]?.text ?? ""}
+                    value={ownValue(answers, question.id)?.text ?? ""}
                     maxLength={TEXT_ANSWER_MAX_CHARS}
                     onChange={(event) => {
                       onTextChange(question, event.target.value);
@@ -816,7 +823,9 @@ export function AnsweringForm({
                             <MoneyInput
                               currency={currency}
                               disabled={submitting}
-                              value={answers[question.id]?.entries?.[row.id] ?? ""}
+                              value={
+                                ownValue(ownValue(answers, question.id)?.entries, row.id) ?? ""
+                              }
                               onChange={(canonical) => {
                                 onEntryChange(question, row.id, canonical);
                               }}
@@ -824,7 +833,9 @@ export function AnsweringForm({
                           ) : (
                             <Input
                               disabled={submitting}
-                              value={answers[question.id]?.entries?.[row.id] ?? ""}
+                              value={
+                                ownValue(ownValue(answers, question.id)?.entries, row.id) ?? ""
+                              }
                               maxLength={ENTRY_ANSWER_MAX_CHARS}
                               onChange={(event) => {
                                 onEntryChange(question, row.id, event.target.value);
@@ -868,7 +879,7 @@ export function AnsweringForm({
                 )}
                 {question.allowComment ? (
                   <Textarea
-                    value={answers[question.id]?.text ?? ""}
+                    value={ownValue(answers, question.id)?.text ?? ""}
                     maxLength={TEXT_ANSWER_MAX_CHARS}
                     placeholder="Optional comment"
                     onChange={(event) => {
@@ -879,7 +890,7 @@ export function AnsweringForm({
                 ) : null}
                 {question.allowFiles ? (
                   <FileAttachField
-                    files={answers[question.id]?.files ?? []}
+                    files={ownValue(answers, question.id)?.files ?? []}
                     disabled={submitting || cancelling}
                     onAdd={(incoming) => {
                       addFiles(question, incoming);
@@ -941,12 +952,18 @@ export function AnsweringForm({
           </Button>
         ) : null}
       </form>
+      {layout === "page" ? (
+        <div className="mt-10 border-t border-border pt-6">
+          <RespondentDiscovery />
+        </div>
+      ) : null}
       {layout === "page" && machineHref ? (
-        <p className="mt-8 text-xs text-muted-foreground">
-          Machine-readable questionnaire:{" "}
-          <a href={machineHref} className="underline underline-offset-2">
-            {machineHref}
+        <p className="mt-8 text-sm text-muted-foreground">
+          Your agent can help answer. Give it this page's link, or the{" "}
+          <a href={machineHref} className="underline underline-offset-4">
+            Markdown questionnaire
           </a>
+          . It can read all the questions and submit your answers together.
         </p>
       ) : null}
     </main>

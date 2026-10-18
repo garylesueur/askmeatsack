@@ -9,7 +9,7 @@ const usableQuestions = [
     id: "Q1",
     prompt: "What should we call this?",
     options: [
-      { id: "1", label: "askmeatsack.com" },
+      { id: "1", label: "ask.imeatsack.com" },
       { id: "2", label: "Something else" },
     ],
   },
@@ -31,7 +31,7 @@ function toolWithStore() {
           : "agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
       };
     })(),
-    publicBaseUrl: "https://askmeatsack.com",
+    publicBaseUrl: "https://ask.imeatsack.com",
     sleep: async (ms: number) => {
       now = new Date(now.getTime() + ms);
     },
@@ -45,11 +45,11 @@ function toolWithStore() {
   };
 }
 
-describe("B20 — The agent tool is named askmeatsack.com", () => {
-  it("The tool name is askmeatsack.com", async () => {
+describe("B20 — The agent tool is named ask.imeatsack.com", () => {
+  it("The tool name is ask.imeatsack.com", async () => {
     const { tool } = toolWithStore();
     expect(tool.name).toBe(ASKMEATSACK_TOOL_NAME);
-    expect(tool.name).toBe("askmeatsack.com");
+    expect(tool.name).toBe("ask.imeatsack.com");
   });
 });
 
@@ -65,11 +65,12 @@ describe("B1 — Tool create matches HTTP", () => {
       sessionId: "session-1",
       status: "pending",
       expiresAt: "2026-08-17T20:00:00.000Z",
-      answerUrl: "https://askmeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      answerUrl:
+        "https://ask.imeatsack.com/s/session-1?t=public-token-aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       pollUrl:
-        "https://askmeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "https://ask.imeatsack.com/api/v1/sessions/session-1?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       manageUrl:
-        "https://askmeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "https://ask.imeatsack.com/s/session-1/manage?token=agent-token-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     });
   });
 

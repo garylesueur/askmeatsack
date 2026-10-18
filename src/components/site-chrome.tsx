@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteColorModeToggle } from "./site-color-mode-toggle";
 import type { ReactNode } from "react";
 
 /**
@@ -48,7 +49,7 @@ export function SiteNav({
   accountHref,
 }: Omit<SiteChromeProps, "docs">) {
   return (
-    <nav className="flex items-center gap-5 border-b border-border py-6">
+    <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border py-4">
       <Link
         href="/"
         className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground"
@@ -57,7 +58,7 @@ export function SiteNav({
         {wordmark}
       </Link>
 
-      <div className="ml-auto flex items-center gap-4 text-[13px] sm:gap-5">
+      <div className="order-last flex w-full flex-wrap items-center gap-4 text-[13px] sm:order-none sm:ml-auto sm:w-auto sm:gap-5">
         <a
           href={sibling.href}
           className="hidden rounded-full border border-border bg-card px-3 py-1 text-muted-foreground transition-colors hover:border-primary hover:text-foreground sm:inline-flex sm:items-center sm:gap-1.5"
@@ -91,6 +92,7 @@ export function SiteNav({
           </a>
         ) : null}
       </div>
+      <SiteColorModeToggle className="ml-auto sm:ml-0" />
     </nav>
   );
 }

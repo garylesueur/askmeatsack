@@ -91,8 +91,9 @@ if { [ "$ENV_FILTER" = "all" ] || [ "$ENV_FILTER" = "production" ]; } && [ ! -f 
   exit 1
 fi
 
-if ! command -v op >/dev/null 2>&1; then
-  echo "1Password CLI (op) is not on PATH." >&2
+op_agent="${OP_AGENT_BIN:-/Users/gaz/.local/bin/op-agent}"
+if [ ! -x "$op_agent" ]; then
+  echo "Registered 1Password helper is unavailable." >&2
   exit 1
 fi
 
@@ -101,9 +102,9 @@ if ! command -v vercel >/dev/null 2>&1; then
   exit 1
 fi
 
-# `op account list` succeeds without a session. Item reads need `op whoami`.
-if ! op whoami >/dev/null 2>&1; then
-  echo "1Password CLI has no active session. Run 'op signin' in this terminal, then retry." >&2
+# The registered service account does not request desktop or personal sign-in.
+if ! "$op_agent" meatsack whoami >/dev/null 2>&1; then
+  echo "Registered MEATSACK reader is unavailable; check op-agent meatsack access." >&2
   exit 1
 fi
 
@@ -143,49 +144,19 @@ variable_exists() {
   return "$exists"
 }
 
-remove_existing_variable() {
-  local key="$1"
-  local env_target="$2"
-  set +e
-  run_vercel env rm "$key" "$env_target" --yes </dev/null >/dev/null 2>&1
-  set -e
-}
-
 add_variable() {
   local key="$1"
   local env_target="$2"
   local secret_value="$3"
-  local is_sensitive="$4"
 
-  # Do not pipe the secret on stdin. Newer Vercel CLI prompts for a Preview
-  # git branch and will consume stdin as the answer, so the value never lands.
+  local args=(env add "$key" "$env_target")
+  # An explicit empty Preview branch prevents the CLI reading the value as a branch.
   if [ "$env_target" = "preview" ]; then
-    if [ "$is_sensitive" = true ]; then
-      run_vercel env add "$key" "$env_target" "" \
-        --value="$secret_value" \
-        --sensitive \
-        --yes \
-        --non-interactive </dev/null
-    else
-      run_vercel env add "$key" "$env_target" "" \
-        --value="$secret_value" \
-        --yes \
-        --non-interactive </dev/null
-    fi
-  else
-    if [ "$is_sensitive" = true ]; then
-      run_vercel env add "$key" "$env_target" \
-        --value="$secret_value" \
-        --sensitive \
-        --yes \
-        --non-interactive </dev/null
-    else
-      run_vercel env add "$key" "$env_target" \
-        --value="$secret_value" \
-        --yes \
-        --non-interactive </dev/null
-    fi
+    args+=("")
   fi
+  # The team requires Sensitive storage for all server-side hosted variables.
+  args+=(--sensitive)
+  printf '%s' "$secret_value" | run_vercel "${args[@]}" --force --yes --non-interactive >/dev/null 2>&1
 }
 
 process_template() {
@@ -209,27 +180,16 @@ process_template() {
     saw_var_in_this_template=1
 
     local secret_value=""
-    local is_sensitive=false
 
     if [[ "$value" == op://* ]]; then
-      local op_ref op_err
+      local op_ref
       op_ref="$(expand_op_ref "$value")"
-      op_err_file="$(mktemp)"
-      if ! secret_value="$(op read "$op_ref" 2>"$op_err_file")"; then
-        op_err="$(tr -d '\r' <"$op_err_file")"
-        rm -f "$op_err_file"
-        if [[ "$op_err" == *"not currently signed in"* || "$op_err" == *"no active session"* ]]; then
-          echo "1Password CLI has no active session. Run 'op signin' in this terminal, then retry." >&2
-          exit 1
-        fi
-        echo "skip ${key} (not in 1Password: ${op_ref})" >&2
+      if ! secret_value="$("$op_agent" meatsack read "$op_ref" </dev/null 2>/dev/null)"; then
+        echo "skip ${key} (unavailable in registered 1Password reader)" >&2
         continue
       fi
-      rm -f "$op_err_file"
-      is_sensitive=true
     else
       secret_value="$value"
-      is_sensitive=false
     fi
 
     local trimmed="${secret_value#"${secret_value%%[![:space:]]*}"}"
@@ -245,10 +205,9 @@ process_template() {
         echo "skip ${key} (already exists, --only-new)" >&2
         continue
       fi
-      remove_existing_variable "$key" "$environment"
     fi
 
-    if ! add_variable "$key" "$environment" "$secret_value" "$is_sensitive"; then
+    if ! add_variable "$key" "$environment" "$secret_value"; then
       echo "failed to set ${key} on Vercel ${environment}" >&2
       exit 1
     fi
@@ -260,6 +219,39 @@ process_template() {
     echo "No line for '${SINGLE_VAR}' in ${template_file} — nothing synced for ${environment}." >&2
   fi
 }
+
+# Validate every selected deployment before changing any hosted variable.
+validate_required() {
+  local template_file="$1"
+  local required_key reference resolved line
+  for required_key in LANYARD_URL ASK_METADATA_SECRET CLEANROOM_URL CLEANROOM_SERVICE_CREDENTIAL CLEANROOM_WEBHOOK_SECRET; do
+    reference=""
+    while IFS= read -r line || [ -n "$line" ]; do
+      if [[ "$line" == "$required_key="* ]]; then
+        reference="${line#*=}"
+        break
+      fi
+    done < "$template_file"
+    resolved="$reference"
+    if [[ "$reference" == op://* ]]; then
+      if ! resolved="$("$op_agent" meatsack read "$(expand_op_ref "$reference")" </dev/null 2>/dev/null)"; then
+        echo "Missing required ${required_key} for ${template_file}; nothing synced." >&2
+        exit 1
+      fi
+    fi
+    if [[ -z "${resolved//[[:space:]]/}" ]]; then
+      echo "Missing required ${required_key} for ${template_file}; nothing synced." >&2
+      exit 1
+    fi
+  done
+}
+
+if [ "$ENV_FILTER" = "all" ] || [ "$ENV_FILTER" = "preview" ]; then
+  validate_required "$PREVIEW_TEMPLATE"
+fi
+if [ "$ENV_FILTER" = "all" ] || [ "$ENV_FILTER" = "production" ]; then
+  validate_required "$PRODUCTION_TEMPLATE"
+fi
 
 if [ "$ENV_FILTER" = "all" ] || [ "$ENV_FILTER" = "preview" ]; then
   process_template "$PREVIEW_TEMPLATE" "preview"

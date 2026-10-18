@@ -8,15 +8,23 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  let response: NextResponse;
   if (wantsAnswerMarkdown(request.headers.get("accept"))) {
     const url = request.nextUrl.clone();
     url.pathname = `${pathname}/md`;
-    return NextResponse.rewrite(url);
+    response = NextResponse.rewrite(url);
+  } else {
+    response = NextResponse.next();
   }
 
   const markdownPath = `${pathname}.md${search}`;
-  const response = NextResponse.next();
-  response.headers.set("Link", `<${markdownPath}>; rel="alternate"; type="text/markdown"`);
+  response.headers.set(
+    "Link",
+    `<${markdownPath}>; rel="alternate"; type="text/markdown", </llms.txt>; rel="describedby"; type="text/plain"`,
+  );
+  response.headers.set("Vary", "Accept");
+  response.headers.set("Cache-Control", "private, no-store");
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
   return response;
 }
 

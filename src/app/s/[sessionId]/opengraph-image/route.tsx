@@ -7,7 +7,7 @@ import { expiryPhrase, previewSummary, type SessionPreview } from "@/lib/session
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const OPENGRAPH_SIZE = { width: 1200, height: 630 } as const;
+const OPENGRAPH_SIZE = { width: 1200, height: 630 } as const;
 
 const INK = "#141820";
 const PAPER = "#f4f1ea";

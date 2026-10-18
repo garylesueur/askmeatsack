@@ -1,0 +1,52 @@
+%% Generated from workspace-claim.flow.yaml. Do not edit directly.
+flowchart TD
+  subgraph F3["F3: Claim surviving anonymous Ask work"]
+    F3_paste["Enter private manage proof"]
+    F3_check{{"Check proof and current account"}}
+    F3_sign-in["Sign in to claim"]
+    F3_review["Review claim for this account"]
+    F3_claim{{"Retain this item and claim ownership"}}
+    F3_reconcile{{"Check the claim outcome"}}
+    F3_failure["Claim could not complete"]
+    F3_capacity["Allowance is full"]
+    F3_busy["The item is changing"]
+    F3_unavailable(["Item unavailable"])
+    F3_complete(["Open the claimed item"])
+    F3_cancelled(["Leave without a claim"])
+    F3_paste -->|"F3.T1: Review [A supported private manage proof is supplied.]"| F3_check
+    F3_paste -->|"F3.T2: Review [The input is missing, malformed or is only a public link.]"| F3_failure
+    F3_paste -->|"F3.T3: Cancel"| F3_cancelled
+    F3_check -->|"F3.T4: Check resolves [The portal session is missing or ended.]"| F3_sign-in
+    F3_check -->|"F3.T5: Check resolves [A live account and valid private proof confirm a surviving unowned eligible item.]"| F3_review
+    F3_check -->|"F3.T6: Check resolves [The same live account already completed this selected claim.]"| F3_complete
+    F3_check -->|"F3.T7: Check resolves [Proof is invalid, the source is missing/deleted/purged, or another account owns it.]"| F3_unavailable
+    F3_check -->|"F3.T8: Check resolves [Source uploads, replacement, deletion or an uncertain mutation prevent a stable eligible snapshot.]"| F3_busy
+    F3_check -->|"F3.T9: Check resolves [Any other eligibility or storage check fails.]"| F3_failure
+    F3_sign-in -->|"F3.T10: Sign-in completes [The bounded tab continuation remains available.]"| F3_check
+    F3_sign-in -->|"F3.T11: Sign-in completes [The continuation expired, was discarded or could not be stored.]"| F3_paste
+    F3_sign-in -->|"F3.T12: Cancel"| F3_cancelled
+    F3_review -->|"F3.T13: Claim [The reviewed live account is still the current account.]"| F3_claim
+    F3_review -->|"F3.T14: Claim [The account changed or the review is no longer current.]"| F3_check
+    F3_review -->|"F3.T15: Back"| F3_paste
+    F3_review -->|"F3.T16: Cancel"| F3_cancelled
+    F3_review -->|"F3.T17: Session ends"| F3_sign-in
+    F3_claim -->|"F3.T18: Operation resolves [Ownership committed with the complete eligible retained content.]"| F3_complete
+    F3_claim -->|"F3.T19: Operation resolves [Allowance admission refused before ownership commit.]"| F3_capacity
+    F3_claim -->|"F3.T20: Operation resolves [The source cannot be exclusively captured safely.]"| F3_busy
+    F3_claim -->|"F3.T21: Operation resolves [Definitive current proof/source eligibility is lost, or another account won.]"| F3_unavailable
+    F3_claim -->|"F3.T22: Operation resolves [A response was lost, the session changed/ended, or completion is uncertain.]"| F3_reconcile
+    F3_claim -->|"F3.T23: Operation resolves [The operation definitively failed without ownership commit.]"| F3_failure
+    F3_reconcile -->|"F3.T24: Outcome resolves [The selected account’s original attempt committed and remains eligible for its owner.]"| F3_complete
+    F3_reconcile -->|"F3.T25: Outcome resolves [The original attempt definitively aborted.]"| F3_failure
+    F3_reconcile -->|"F3.T26: Outcome resolves [The account session ended or changed before a usable owner result can be returned.]"| F3_sign-in
+    F3_reconcile -->|"F3.T27: Outcome resolves [Outcome cannot currently be confirmed.]"| F3_failure
+    F3_failure -->|"F3.T28: Retry or check again"| F3_check
+    F3_failure -->|"F3.T29: Back"| F3_paste
+    F3_failure -->|"F3.T30: Cancel"| F3_cancelled
+    F3_capacity -->|"F3.T31: Retry after freeing space"| F3_check
+    F3_capacity -->|"F3.T32: Back"| F3_paste
+    F3_capacity -->|"F3.T33: Cancel"| F3_cancelled
+    F3_busy -->|"F3.T34: Retry"| F3_check
+    F3_busy -->|"F3.T35: Back"| F3_paste
+    F3_busy -->|"F3.T36: Cancel"| F3_cancelled
+  end

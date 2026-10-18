@@ -1,3 +1,4 @@
+import { ownValue } from "@/lib/dictionary";
 import type { Metadata } from "next";
 import { AppearanceShell } from "@/components/appearance-shell";
 import { MarkdownBody } from "@/components/markdown-body";
@@ -35,7 +36,7 @@ function manageAnswerSummary(question: Question, answer: SessionAnswer): string 
   if (answer.entries) {
     const labelled: string[] = [];
     for (const row of questionEntries(question)) {
-      const value = answer.entries[row.id];
+      const value = ownValue(answer.entries, row.id);
       if (value) {
         labelled.push(`${row.label}: ${formatEntryValue(row, question, value)}`);
       }
@@ -93,14 +94,14 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
   return (
     <AppearanceShell className="px-4 py-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-        <p className="text-sm text-muted-foreground">askmeatsack.com · private</p>
+        <p className="text-sm text-muted-foreground">ask.imeatsack.com · private</p>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-heading text-2xl font-medium">{view.title ?? "Questionnaire"}</h1>
           <Badge variant="secondary">{view.status}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
           {canEdit
-            ? "Nobody has answered yet. You can still change the questions with the askmeatsack.com tool (action edit) or PATCH."
+            ? "Nobody has answered yet. You can still change the questions with the ask.imeatsack.com tool (action edit) or PATCH."
             : "Questions are frozen. Share the answer link, or wait for a result."}
         </p>
 
@@ -144,7 +145,7 @@ export default async function ManagePage({ params, searchParams }: PageProps) {
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
             {view.questions.map((question) => {
-              const answer = view.answers[question.id];
+              const answer = ownValue(view.answers, question.id);
               return (
                 <div key={question.id} className="flex flex-col gap-2">
                   <div className="flex flex-wrap items-center gap-2">

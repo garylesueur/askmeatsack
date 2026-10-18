@@ -1,4 +1,4 @@
-# askmeatsack.com
+# ask.imeatsack.com
 
 **An agent asks. A human answers.**
 
@@ -10,7 +10,7 @@ person answering never signs in.
 
 Posting the link to Slack, email, or anywhere else is the calling agent's job.
 
-Sibling project: [showmeatsack.com](https://github.com/garylesueur/showmeatsack) —
+Sibling project: [show.imeatsack.com](https://github.com/garylesueur/showmeatsack) —
 an agent posts a page, a person opens it.
 
 ## Quick start
@@ -46,8 +46,8 @@ are the merge gates — see `.engineering/config.yaml`, and
 
 ## Secrets
 
-Three 1Password items live in the **Agents** vault: `askmeatsack.com
-Development`, `askmeatsack.com Preview`, and `askmeatsack.com Production`. Same
+Three 1Password items live in the **Agents** vault: `ask.imeatsack.com
+Development`, `ask.imeatsack.com Preview`, and `ask.imeatsack.com Production`. Same
 field names, different values. Local work uses Development only; Preview and
 Production are pushed to Vercel and are not for a laptop.
 
@@ -74,12 +74,9 @@ Production are pushed to Vercel and are not for a laptop.
 ## calm-craft
 
 This repository is built with [calm-craft](https://github.com/calmtechltd/calm-craft),
-our own MIT-licensed [Agent Plugin](https://agent-plugins.org/). It is vendored
-as a submodule at `.agents/plugins/calm-craft`:
-
-```bash
-git submodule update --init --recursive
-```
+our own MIT-licensed [Agent Plugin](https://agent-plugins.org/), installed in the
+agent tooling. Use its `calm-craft:…` skills across repositories; this repository
+keeps its project settings in `.engineering/config.yaml`.
 
 **What it is.** Three things that make coding agents produce work you can trust:
 specs as an addressable source of truth, a delivery loop that plans and then
@@ -107,6 +104,41 @@ in config we own, so updating the plugin never clobbers our choices.
 > convention decisions, and `paths.conventions` points at a file that does not
 > exist.
 
+## Plugin marketplace
+
+The plugin ID is `askmeatsack`; its display name and MCP tool name are
+**ask.imeatsack.com**. The portable manifest includes OpenAI listing metadata and
+icons; `.claude-plugin/plugin.json` and `.cursor-plugin/plugin.json` provide
+client compatibility.
+
+The [Meatsack marketplace](https://github.com/garylesueur/meatsack-marketplace)
+packages all three products. It contains generated, minimal plugin copies;
+this repository remains the source for this product's manifest, skill, MCP
+connection, and logo. Run the marketplace sync after changing those files.
+
+Codex:
+
+```sh
+codex plugin marketplace add garylesueur/meatsack-marketplace
+```
+
+Then install **ask.imeatsack.com** from the Meatsack source in Plugins.
+
+Claude Code:
+
+```text
+/plugin marketplace add garylesueur/meatsack-marketplace
+/plugin install askmeatsack@meatsack
+```
+
+Cursor Teams/Enterprise: Dashboard → Plugins & MCPs → Add Marketplace →
+Import from Repo, using the marketplace repository URL. Install the product
+from Customize. For a personal account, copy the plugin package into `~/.cursor/plugins/local/`.
+See the [installation guide](https://ask.imeatsack.com/install) for commands.
+
+Marketplace publication must precede deploying these website install links.
+Public ChatGPT/Codex and Cursor directory listings require separate submissions.
+
 ## Install
 
 This repository is itself an [Agent Plugin](https://agent-plugins.org/) — the
@@ -117,10 +149,12 @@ exists for [cursor.directory](https://cursor.directory/plugins/new) detection.
 
 **Install in Cursor from this clone.** In Customize → Plugins, add an Open
 Plugin and choose this repository root (the folder that contains `plugin.json`).
-For local development you can also symlink it:
+For a local install, copy this product’s marketplace package into Cursor’s plugin folder:
 
 ```bash
-ln -s /path/to/askmeatsack ~/.cursor/plugins/local/askmeatsack.com
+git clone https://github.com/garylesueur/meatsack-marketplace.git
+mkdir -p ~/.cursor/plugins/local/askmeatsack
+cp -R meatsack-marketplace/plugins/askmeatsack/. ~/.cursor/plugins/local/askmeatsack/
 ```
 
 Then reload the window. The plugin carries the hosted MCP server and
@@ -132,7 +166,7 @@ Then reload the window. The plugin carries the hosted MCP server and
 https://github.com/garylesueur/askmeatsack
 ```
 
-**Or install the MCP server on its own** at `https://askmeatsack.com/mcp`. The
+**Or install the MCP server on its own** at `https://ask.imeatsack.com/mcp`. The
 tool works, and the server sends the same skill as its MCP `instructions`, so
 most clients still get the full brief. Clients that ignore `instructions` see
 only the tool description — prefer the plugin where you can.
@@ -142,3 +176,27 @@ only the tool description — prefer the plugin where you can.
 MIT — see [LICENSE](LICENSE).
 
 Built by [Gary Le Sueur](https://gaz.dev).
+
+### Site icons
+
+The browser favicon and Apple touch icon use the same character artwork as the
+plugin listing. Edit `public/plugin-icon.png`, then run `pnpm sync:icons` to
+regenerate `src/app/favicon.ico`, `src/app/icon.png`, and
+`src/app/apple-icon.png`. Do not edit those exports by hand. Builds regenerate
+them, and tests check that they match the source.
+
+### Account record authority
+
+New questionnaires created with a Lanyard bearer are associated with its verified
+account. Without an Authorization header, creation remains anonymous. Supplying an
+invalid bearer is refused; ownership is never accepted from input or metadata.
+`LANYARD_URL` optionally sets the verification origin; it defaults to
+`https://meatsack.puregaz.com` and is not a secret.
+
+The account foundation exposes `GET /api/v1/account/records` (bounded `cursor`/`limit`
+pages), `GET /api/v1/account/records/[recordId]`, and
+`POST /api/v1/account/records/[recordId]/cancel`. Each requires a live verified bearer.
+These routes preserve current expiry and terminal read windows. Attachment detail
+contains metadata only, without public or private access capabilities. Portal UI,
+durable response retention, attachment downloads and older-record claiming are later
+steps.

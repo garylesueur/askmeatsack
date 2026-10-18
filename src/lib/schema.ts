@@ -445,12 +445,27 @@ export const sessionStatusSchema = z.enum([
 
 export type SessionStatus = z.infer<typeof sessionStatusSchema>;
 
+/** z.record skips __proto__; ID dictionaries must preserve every validated own key. */
+function callerIdRecord<T extends z.ZodType>(valueSchema: T) {
+  return z
+    .preprocess(
+      (input) => {
+        if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+        const prototype = Object.getPrototypeOf(input);
+        if (prototype !== Object.prototype && prototype !== null) return undefined;
+        return new Map(Object.entries(input));
+      },
+      z.map(z.string().min(1), valueSchema),
+    )
+    .transform((value) => Object.fromEntries(value));
+}
+
 export const saveAnswerSchema = z
   .object({
     selectedOptionIds: z.array(z.string().min(1)).min(1).optional(),
     text: z.string().max(TEXT_ANSWER_MAX_CHARS).optional(),
     fileIds: z.array(z.string().min(1)).max(FILE_MAX_COUNT).optional(),
-    entries: z.record(z.string().min(1), z.string().max(ENTRY_ANSWER_MAX_CHARS)).optional(),
+    entries: callerIdRecord(z.string().max(ENTRY_ANSWER_MAX_CHARS)).optional(),
   })
   .superRefine((value, ctx) => {
     if (
@@ -467,7 +482,7 @@ export const saveAnswerSchema = z
   });
 
 export const bulkAnswersSchema = z.object({
-  answers: z.record(z.string(), saveAnswerSchema),
+  answers: callerIdRecord(saveAnswerSchema),
   submit: z.boolean().optional(),
 });
 

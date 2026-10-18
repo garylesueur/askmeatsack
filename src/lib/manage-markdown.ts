@@ -1,3 +1,4 @@
+import { ownValue } from "./dictionary";
 import { entryRowCaption, formatEntryValue } from "./money";
 import { questionEntries, questionKind } from "./question-presentation";
 import type { Question } from "./schema";
@@ -31,7 +32,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
   lines.push(`# ${input.title ?? "Questionnaire"}`);
   lines.push(
     "",
-    "Private owner summary for askmeatsack.com. Do not give this link to the person answering.",
+    "Private owner summary for ask.imeatsack.com. Do not give this link to the person answering.",
     "",
     `- Status: \`${input.status}\``,
     `- Expires: ${input.expiresAt}`,
@@ -65,7 +66,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
     if (question.allowFiles) {
       flags.push("files");
     }
-    const answer = input.answers[question.id];
+    const answer = ownValue(input.answers, question.id);
     lines.push("", `### ${question.id}`, "", question.prompt);
     if (question.detail) {
       lines.push("", question.detail);
@@ -93,7 +94,7 @@ export function manageMarkdown(input: ManageMarkdownInput): string {
       if (answer.entries) {
         const labelled: string[] = [];
         for (const row of rows) {
-          const value = answer.entries[row.id];
+          const value = ownValue(answer.entries, row.id);
           if (value) {
             labelled.push(`${row.label}: ${formatEntryValue(row, question, value)}`);
           }

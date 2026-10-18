@@ -8,6 +8,7 @@ function syncSystemDark(): void {
     return;
   }
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  root.style.colorScheme = systemDark ? "dark" : "light";
   root.classList.toggle("dark", systemDark);
   root.classList.remove("light");
 }

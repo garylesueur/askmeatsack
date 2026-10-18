@@ -29,7 +29,12 @@ export function readStoredColorMode(): "light" | "dark" | null {
   if (typeof window === "undefined") {
     return null;
   }
-  const value = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+  let value: string | null = null;
+  try {
+    value = window.localStorage.getItem(COLOR_MODE_STORAGE_KEY);
+  } catch {
+    value = document.documentElement.dataset.colorMode ?? null;
+  }
   if (value === "light" || value === "dark") {
     return value;
   }
@@ -50,7 +55,12 @@ export function subscribeColorMode(listener: () => void): () => void {
 }
 
 export function storeColorMode(mode: "light" | "dark"): void {
-  window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+  applyHtmlMode(mode);
+  try {
+    window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, mode);
+  } catch {
+    // The current page still switches when storage is unavailable.
+  }
   for (const listener of colorModeListeners) {
     listener();
   }
@@ -130,4 +140,27 @@ export function appearanceStyle(appearance?: Appearance): CSSProperties | undefi
     "--sidebar-primary": accent,
     "--sidebar-primary-foreground": foreground,
   } as CSSProperties;
+}
+
+export function applyHtmlMode(mode: "system" | "light" | "dark"): void {
+  const root = document.documentElement;
+  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  if (mode === "system") {
+    delete root.dataset.colorMode;
+  } else {
+    root.dataset.colorMode = mode;
+  }
+  root.style.colorScheme = mode === "system" ? (systemDark ? "dark" : "light") : mode;
+  if (mode === "light") {
+    root.classList.add("light");
+    root.classList.remove("dark");
+    return;
+  }
+  if (mode === "dark") {
+    root.classList.add("dark");
+    root.classList.remove("light");
+    return;
+  }
+  root.classList.remove("light");
+  root.classList.toggle("dark", systemDark);
 }

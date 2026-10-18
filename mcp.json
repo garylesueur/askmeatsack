@@ -1,9 +1,9 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
-    "askmeatsack.com": {
+    "ask.imeatsack.com": {
       "type": "streamable-http",
-      "url": "https://askmeatsack.com/mcp"
+      "url": "https://ask.imeatsack.com/mcp"
     }
   }
 }

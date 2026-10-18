@@ -1,0 +1,144 @@
+version: 1
+flows:
+  - id: F1
+    name: Keep an attachment
+    start: inspect
+    states:
+      - { id: inspect, kind: screen, label: Request attachment }
+      - { id: reserve, kind: action, label: Check access and reserve copy }
+      - { id: copy, kind: action, label: Copy eligible contents }
+      - { id: commit, kind: action, label: Confirm copied contents and access }
+      - { id: recovery, kind: screen, label: Copy needs recovery }
+      - id: kept
+        kind: terminal
+        label: Kept in Ask
+        outcome: An independent retained copy is available in Ask and counted once. The original keeps its own expiry.
+      - id: unavailable
+        kind: terminal
+        label: Attachment unavailable
+        outcome: No copy is made available. Reserved or uncertain bytes are removed safely before release.
+      - id: leave
+        kind: terminal
+        label: Back to requests
+        outcome: The owner leaves without starting another copy. Tracked recovery still follows its lifecycle.
+    transitions:
+      - { id: F1.T1, from: inspect, event: Keep attachment, to: reserve, covers: [B2, B5] }
+      - { id: F1.T2, from: inspect, event: Back, to: leave, covers: [B5] }
+      - id: F1.T3
+        from: reserve
+        event: Check complete
+        to: kept
+        guard: This source already has an available independent copy for this account.
+        covers: [B2, B5]
+      - id: F1.T4
+        from: reserve
+        event: Check complete
+        to: copy
+        guard: No available copy exists, the source is eligible and allowance is reserved for this attempt.
+        covers: [B2, B4, B5]
+      - id: F1.T5
+        from: reserve
+        event: Check complete
+        to: inspect
+        guard: No available copy exists and capacity is insufficient or scanning is incomplete.
+        outcome: The reason and permitted recovery are shown. No new copy is made available.
+        covers: [B2, B4, B5]
+      - id: F1.T6
+        from: reserve
+        event: Check complete
+        to: unavailable
+        guard: The source is no longer accessible, the request is deleted or the account is closed.
+        covers: [B3, B5, B9]
+      - id: F1.T7
+        from: reserve
+        event: Check interrupted
+        to: recovery
+        outcome: Check the existing reservation with the same copy identity without assuming another charge.
+        covers: [B2, B5, B9]
+      - { id: F1.T8, from: copy, event: Storage confirms copy, to: commit, covers: [B5, B9] }
+      - id: F1.T9
+        from: copy
+        event: Storage fails or request is interrupted
+        to: recovery
+        outcome: The copy remains unavailable. Uncertain bytes stay tracked for recovery or cleanup.
+        covers: [B5, B9]
+      - id: F1.T10
+        from: commit
+        event: Commit complete
+        to: kept
+        guard: The source is still eligible and storage confirmed the expected independent contents.
+        covers: [B3, B4, B5, B9]
+      - id: F1.T11
+        from: commit
+        event: Commit complete
+        to: unavailable
+        guard: Source access or account authority ended before commit, or contents were not confirmed.
+        covers: [B5, B9]
+      - id: F1.T12
+        from: commit
+        event: Commit interrupted
+        to: recovery
+        outcome: Retry checks the recorded result and cannot charge or publish a duplicate copy.
+        covers: [B2, B5, B9]
+      - { id: F1.T13, from: recovery, event: Retry, to: reserve, covers: [B2, B5, B9] }
+      - id: F1.T14
+        from: recovery
+        event: Back
+        to: inspect
+        outcome: The reservation remains tracked; leaving never releases unsafe capacity.
+        covers: [B5, B9]
+  - id: F2
+    name: Delete a retained request
+    start: inspect
+    states:
+      - { id: inspect, kind: screen, label: Retained request }
+      - { id: confirm, kind: screen, label: Confirm request deletion }
+      - { id: remove, kind: action, label: Retire request and queue originals }
+      - { id: recovery, kind: screen, label: Deletion needs recovery }
+      - id: removed
+        kind: terminal
+        label: Request removed
+        outcome: Request links, text and tokens are gone. Original cleanup holds capacity until safe; independent kept copies remain.
+      - id: unavailable
+        kind: terminal
+        label: Request unavailable
+        outcome: No other account's content is shown or changed. A deleted account cannot start another operation.
+      - id: leave
+        kind: terminal
+        label: Back to requests
+        outcome: The owner leaves without deleting this request.
+    transitions:
+      - { id: F2.T1, from: inspect, event: Delete request, to: confirm, covers: [B6] }
+      - { id: F2.T2, from: inspect, event: Back, to: leave, covers: [B6] }
+      - id: F2.T3
+        from: confirm
+        event: Cancel
+        to: inspect
+        outcome: No content is deleted and no capacity is released.
+        covers: [B6]
+      - { id: F2.T4, from: confirm, event: Confirm delete, to: remove, covers: [B6, B9] }
+      - id: F2.T5
+        from: remove
+        event: Removal complete
+        to: removed
+        guard: The same owner's request was retired or an earlier attempt already retired it.
+        covers: [B6, B7, B9]
+      - id: F2.T6
+        from: remove
+        event: Removal complete
+        to: unavailable
+        guard: Ownership does not match or account authority has ended.
+        covers: [B6, B7, B8]
+      - id: F2.T7
+        from: remove
+        event: Removal interrupted
+        to: recovery
+        outcome: Retry learns the recorded result. Cleanup and reservations are never reset by a timeout.
+        covers: [B6, B9]
+      - { id: F2.T8, from: recovery, event: Retry, to: remove, covers: [B6, B9] }
+      - id: F2.T9
+        from: recovery
+        event: Back
+        to: inspect
+        outcome: Reload reflects whether removal committed; scheduled cleanup does not depend on this screen.
+        covers: [B6, B7, B9]

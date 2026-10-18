@@ -1,3 +1,4 @@
+import { ownValue } from "./dictionary";
 import { parseMoney, resolveEntryCurrency } from "./money";
 import type { Question } from "./schema";
 
@@ -50,7 +51,7 @@ export function entriesAreComplete(
     return false;
   }
   for (const row of rows) {
-    const raw = (entries?.[row.id] ?? "").trim();
+    const raw = (ownValue(entries, row.id) ?? "").trim();
     if (row.input === "money") {
       const currency = resolveEntryCurrency(row, question);
       if (!currency || !parseMoney(raw, currency)) {

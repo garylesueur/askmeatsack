@@ -6,7 +6,7 @@ import { publicOrigin } from "@/lib/public-origin";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
-const SYSTEM_DARK_SCRIPT = `(function(){try{if(window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark');}}catch(e){}})();`;
+const SYSTEM_DARK_SCRIPT = `(function(){var mode;try{mode=localStorage.getItem("askmeatsack:color-mode");}catch(e){}var dark=mode==="dark"||(mode!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);var root=document.documentElement;if(mode==="light"||mode==="dark")root.dataset.colorMode=mode;root.classList.toggle("dark",dark);root.style.colorScheme=dark?"dark":"light";})();`;
 
 const geist = Geist({
   subsets: ["latin"],
@@ -23,17 +23,24 @@ const origin = publicOrigin();
 export const metadata: Metadata = {
   metadataBase: new URL(origin),
   title: {
-    default: SITE_TITLE,
-    template: `%s · ${SITE_TITLE}`,
+    default: `${SITE_TITLE} · I, Meatsack`,
+    template: `%s · ${SITE_TITLE} · I, Meatsack`,
   },
   description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   applicationName: SITE_TITLE,
-  keywords: ["askmeatsack.com", "MCP", "questionnaire", "agent", "human in the loop"],
-  authors: [{ name: SITE_TITLE, url: origin }],
+  keywords: [
+    "I, Meatsack",
+    "ask.imeatsack.com",
+    "MCP",
+    "questionnaire",
+    "agent",
+    "human in the loop",
+  ],
+  authors: [{ name: "Gary Le Sueur", url: "https://gaz.dev" }],
   alternates: {
     canonical: "/",
     types: {
-      "text/markdown": "/mcp.md",
+      "text/markdown": "/index.md",
       "text/plain": "/llms.txt",
     },
   },
@@ -41,18 +48,19 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_GB",
     url: origin,
-    siteName: SITE_TITLE,
-    title: SITE_TITLE,
+    siteName: "I, Meatsack",
+    title: `${SITE_TITLE} · I, Meatsack`,
     description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
+    title: `${SITE_TITLE} · I, Meatsack`,
     description: `${SITE_TAGLINE} ${SITE_DESCRIPTION}`,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
 };
 

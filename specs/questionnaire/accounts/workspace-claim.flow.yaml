@@ -1,0 +1,336 @@
+version: 1
+flows:
+  - id: F3
+    name: Claim surviving anonymous Ask work
+    start: paste
+    states:
+      - id: paste
+        kind: screen
+        label: Enter private manage proof
+      - id: check
+        kind: action
+        label: Check proof and current account
+      - id: sign-in
+        kind: screen
+        label: Sign in to claim
+      - id: review
+        kind: screen
+        label: Review claim for this account
+      - id: claim
+        kind: action
+        label: Retain this item and claim ownership
+      - id: reconcile
+        kind: action
+        label: Check the claim outcome
+      - id: failure
+        kind: screen
+        label: Claim could not complete
+      - id: capacity
+        kind: screen
+        label: Allowance is full
+      - id: busy
+        kind: screen
+        label: The item is changing
+      - id: unavailable
+        kind: terminal
+        label: Item unavailable
+        outcome: No private content or owner identity is disclosed. No item is claimed.
+      - id: complete
+        kind: terminal
+        label: Open the claimed item
+        outcome: The retained item opens in its product workspace. One owner, allowance
+          charge and claim event are recorded; the original public identity and
+          absolute expiry remain unchanged.
+      - id: cancelled
+        kind: terminal
+        label: Leave without a claim
+        outcome: No new claim is started. Any already committed outcome is reconciled
+          rather than reported as undone.
+    transitions:
+      - id: F3.T1
+        from: paste
+        event: Review
+        to: check
+        guard: A supported private manage proof is supplied.
+        outcome: Proof travels only in a no-store request body, never public sharing or
+          sign-in URLs. A Show manage URL alone is insufficient; its separate
+          manage token is required.
+        covers:
+          - B7
+      - id: F3.T2
+        from: paste
+        event: Review
+        to: failure
+        guard: The input is missing, malformed or is only a public link.
+        outcome: Explain the required private proof without disclosing another person’s
+          record.
+        covers:
+          - B7
+      - id: F3.T3
+        from: paste
+        event: Cancel
+        to: cancelled
+        covers:
+          - B7
+      - id: F3.T4
+        from: check
+        event: Check resolves
+        to: sign-in
+        guard: The portal session is missing or ended.
+        outcome: Keep at most a short-lived, tab-local continuation when available. The
+          sign-in URL contains product context only.
+        covers:
+          - B7
+      - id: F3.T5
+        from: check
+        event: Check resolves
+        to: review
+        guard: A live account and valid private proof confirm a surviving unowned
+          eligible item.
+        outcome: Show the destination account, original availability/expiry and
+          retention consequences. Review grants no ownership.
+        covers:
+          - B7
+      - id: F3.T6
+        from: check
+        event: Check resolves
+        to: complete
+        guard: The same live account already completed this selected claim.
+        outcome: Resolve the committed result without another charge or event; never
+          revive a deleted result.
+        covers:
+          - B7
+      - id: F3.T7
+        from: check
+        event: Check resolves
+        to: unavailable
+        guard: Proof is invalid, the source is missing/deleted/purged, or another
+          account owns it.
+        outcome: Use the same refusal without another owner’s identity.
+        covers:
+          - B7
+      - id: F3.T8
+        from: check
+        event: Check resolves
+        to: busy
+        guard: Source uploads, replacement, deletion or an uncertain mutation prevent a
+          stable eligible snapshot.
+        covers:
+          - B7
+      - id: F3.T9
+        from: check
+        event: Check resolves
+        to: failure
+        guard: Any other eligibility or storage check fails.
+        outcome: No ownership changes. Required provenance or safe retained content
+          cannot be guessed.
+        covers:
+          - B7
+      - id: F3.T10
+        from: sign-in
+        event: Sign-in completes
+        to: check
+        guard: The bounded tab continuation remains available.
+        outcome: Fresh account/proof eligibility is checked; signing in never
+          auto-claims.
+        covers:
+          - B7
+      - id: F3.T11
+        from: sign-in
+        event: Sign-in completes
+        to: paste
+        guard: The continuation expired, was discarded or could not be stored.
+        outcome: Ask for the private proof again without placing it in an authentication
+          URL.
+        covers:
+          - B7
+      - id: F3.T12
+        from: sign-in
+        event: Cancel
+        to: cancelled
+        covers:
+          - B7
+      - id: F3.T13
+        from: review
+        event: Claim
+        to: claim
+        guard: The reviewed live account is still the current account.
+        outcome: An explicit action selects this account as claimant; atomically reserve
+          the relevant record and file allowance before writable retained
+          storage.
+        covers:
+          - B7
+      - id: F3.T14
+        from: review
+        event: Claim
+        to: check
+        guard: The account changed or the review is no longer current.
+        outcome: Discard the stale review and require a fresh account review and
+          explicit confirmation.
+        covers:
+          - B7
+      - id: F3.T15
+        from: review
+        event: Back
+        to: paste
+        covers:
+          - B7
+      - id: F3.T16
+        from: review
+        event: Cancel
+        to: cancelled
+        covers:
+          - B7
+      - id: F3.T17
+        from: review
+        event: Session ends
+        to: sign-in
+        covers:
+          - B7
+      - id: F3.T18
+        from: claim
+        event: Operation resolves
+        to: complete
+        guard: Ownership committed with the complete eligible retained content.
+        outcome: Preserve all original link powers and expiry, received-upload
+          provenance and known file deadlines. Copied mutable sources require
+          their own frozen-content eligibility; failed or partial copies stay
+          unavailable.
+        covers:
+          - B7
+      - id: F3.T19
+        from: claim
+        event: Operation resolves
+        to: capacity
+        guard: Allowance admission refused before ownership commit.
+        outcome: The source owner and public lifecycle remain unchanged; no partial
+          retained content is exposed.
+        covers:
+          - B7
+      - id: F3.T20
+        from: claim
+        event: Operation resolves
+        to: busy
+        guard: The source cannot be exclusively captured safely.
+        outcome: No ownership is attached; retry only after checking the source again.
+        covers:
+          - B7
+      - id: F3.T21
+        from: claim
+        event: Operation resolves
+        to: unavailable
+        guard: Definitive current proof/source eligibility is lost, or another account
+          won.
+        covers:
+          - B7
+      - id: F3.T22
+        from: claim
+        event: Operation resolves
+        to: reconcile
+        guard: A response was lost, the session changed/ended, or completion is
+          uncertain.
+        outcome: Determine the original attempt’s durable outcome before unlocking
+          source authority or claiming cancellation/failure.
+        covers:
+          - B7
+      - id: F3.T23
+        from: claim
+        event: Operation resolves
+        to: failure
+        guard: The operation definitively failed without ownership commit.
+        outcome: Queue hidden retained-copy cleanup, holding reservations until absence
+          and outstanding write bounds are confirmed. Recovery does not depend
+          on the browser returning.
+        covers:
+          - B7
+      - id: F3.T24
+        from: reconcile
+        event: Outcome resolves
+        to: complete
+        guard: The selected account’s original attempt committed and remains eligible
+          for its owner.
+        outcome: No duplicate owner, charge or event is created.
+        covers:
+          - B7
+      - id: F3.T25
+        from: reconcile
+        event: Outcome resolves
+        to: failure
+        guard: The original attempt definitively aborted.
+        outcome: Explain cleanup pending if appropriate; never unlock an uncertain
+          source from a timeout alone.
+        covers:
+          - B7
+      - id: F3.T26
+        from: reconcile
+        event: Outcome resolves
+        to: sign-in
+        guard: The account session ended or changed before a usable owner result can be
+          returned.
+        outcome: The backend still reconciles/cleans up; further private UI requires
+          sign-in and a fresh current-account check.
+        covers:
+          - B7
+      - id: F3.T27
+        from: reconcile
+        event: Outcome resolves
+        to: failure
+        guard: Outcome cannot currently be confirmed.
+        outcome: Say completion is unknown and offer Check again; do not invent failure,
+          release storage or unlock the source.
+        covers:
+          - B7
+      - id: F3.T28
+        from: failure
+        event: Retry or check again
+        to: check
+        covers:
+          - B7
+      - id: F3.T29
+        from: failure
+        event: Back
+        to: paste
+        covers:
+          - B7
+      - id: F3.T30
+        from: failure
+        event: Cancel
+        to: cancelled
+        covers:
+          - B7
+      - id: F3.T31
+        from: capacity
+        event: Retry after freeing space
+        to: check
+        covers:
+          - B7
+      - id: F3.T32
+        from: capacity
+        event: Back
+        to: paste
+        covers:
+          - B7
+      - id: F3.T33
+        from: capacity
+        event: Cancel
+        to: cancelled
+        covers:
+          - B7
+      - id: F3.T34
+        from: busy
+        event: Retry
+        to: check
+        covers:
+          - B7
+      - id: F3.T35
+        from: busy
+        event: Back
+        to: paste
+        covers:
+          - B7
+      - id: F3.T36
+        from: busy
+        event: Cancel
+        to: cancelled
+        covers:
+          - B7

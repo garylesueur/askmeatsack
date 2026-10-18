@@ -1,0 +1,253 @@
+version: 1
+flows:
+  - id: F1
+    name: Respondent discovers how to ask someone else
+    start: respondent
+    states:
+      - id: respondent
+        kind: screen
+        label: Answering or completion screen
+      - id: guidance
+        kind: screen
+        label: Ask someone else guidance
+      - id: install
+        kind: terminal
+        label: Connect an existing agent
+        outcome: The installation guide opens separately without questionnaire data. The person connects ask.imeatsack.com to their existing agent and uses their own account to create a new questionnaire for each intended respondent. Nothing is created or sent automatically.
+      - id: product
+        kind: terminal
+        label: Discover ask.imeatsack.com
+        outcome: The product home opens separately without questionnaire data. The current questionnaire remains available in its original tab.
+      - id: continue
+        kind: terminal
+        label: Continue the current questionnaire
+        outcome: The person keeps answering, reviewing or using permitted completion downloads without taking the onward action. Existing submission and expiry rules still apply.
+    transitions:
+      - id: F1.T1
+        from: respondent
+        event: Ask someone else
+        to: guidance
+        outcome: Inline guidance explains connecting an existing agent and creating an independent request under the person's own account. No answers, attachments, private context or current answer link are copied.
+        covers: [B5, B6]
+      - id: F1.T2
+        from: respondent
+        event: About ask.imeatsack.com
+        to: product
+        covers: [B6]
+      - id: F1.T3
+        from: respondent
+        event: Continue the current task
+        to: continue
+        covers: [B5, B6]
+      - id: F1.T4
+        from: guidance
+        event: Close guidance
+        to: respondent
+        outcome: The guidance closes without changing answers or starting another questionnaire.
+        covers: [B5, B6]
+      - id: F1.T5
+        from: guidance
+        event: Connect your agent
+        to: install
+        covers: [B5, B6]
+      - id: F1.T6
+        from: guidance
+        event: Continue the current task
+        to: continue
+        covers: [B5, B6]
+  - id: F2
+    name: Owner shares the current answer link
+    start: load
+    states:
+      - { id: load, kind: action, label: Load the owner's current public link }
+      - { id: ready, kind: screen, label: Current answer link }
+      - { id: copy, kind: action, label: Copy the answer link }
+      - { id: native_share, kind: action, label: Open device sharing }
+      - { id: record_copy, kind: action, label: Record the observed copy }
+      - { id: record_share, kind: action, label: Record the observed sharing result }
+      - { id: failed, kind: screen, label: Sharing could not be completed }
+      - { id: load_failed, kind: screen, label: Current link could not be checked }
+      - { id: copy_record_retry, kind: screen, label: Copy observed but activity needs recovery }
+      - {
+          id: share_record_retry,
+          kind: screen,
+          label: Sharing observed but activity needs recovery,
+        }
+      - id: copied
+        kind: terminal
+        label: Link copied
+        outcome: The clipboard reported success and one owner-scoped copied event is recorded. This makes no claim that a respondent received the link.
+      - id: shared
+        kind: terminal
+        label: Device sharing completed
+        outcome: Device sharing reported completion and one owner-scoped shared event is recorded. This makes no claim about delivery or recipient identity.
+      - id: unavailable
+        kind: terminal
+        label: Answer link unavailable
+        outcome: The request is unowned, removed, cancelled or expired, its public identity changed, or the owner session ended. No new sharing event is accepted for it.
+      - id: leave
+        kind: terminal
+        label: Return to the request
+        outcome: The owner leaves the controls. No unobserved copy, delivery or sharing event is invented.
+    transitions:
+      - id: F2.T1
+        from: load
+        event: Current link checked
+        to: ready
+        guard: Verified owner authority can access the request and its current public answer link is shareable.
+        outcome: Copy is available. Device Share is offered only when the browser supports sharing the public link.
+        covers: [B5]
+      - id: F2.T2
+        from: load
+        event: Current link checked
+        to: unavailable
+        guard: Verified owner authority is refused or this request has no shareable current public link.
+        covers: [B5]
+      - { id: F2.T3, from: load, event: Check interrupted, to: load_failed, covers: [B5] }
+      - { id: F2.T4, from: load_failed, event: Retry, to: load, covers: [B5] }
+      - { id: F2.T5, from: load_failed, event: Back, to: leave, covers: [B5] }
+      - id: F2.T6
+        from: ready
+        event: Copy link
+        to: copy
+        outcome: The owner starts a distinct identified attempt to copy only the current public answer URL.
+        covers: [B5]
+      - id: F2.T7
+        from: ready
+        event: Share link
+        to: native_share
+        guard: The browser supports sharing this public link.
+        outcome: The owner starts a distinct identified attempt using their device's native share controls.
+        covers: [B5]
+      - { id: F2.T8, from: ready, event: Back, to: leave, covers: [B5] }
+      - {
+          id: F2.T9,
+          from: ready,
+          event: Link or owner authority ends,
+          to: unavailable,
+          covers: [B5],
+        }
+      - {
+          id: F2.T10,
+          from: copy,
+          event: Clipboard reports success,
+          to: record_copy,
+          covers: [B4, B5],
+        }
+      - id: F2.T11
+        from: copy
+        event: Clipboard refuses or is unavailable
+        to: failed
+        outcome: Failure is reported honestly. The public URL remains selectable for manual use; no copied event is recorded for an unobserved manual copy.
+        covers: [B4, B5]
+      - {
+          id: F2.T12,
+          from: native_share,
+          event: Device sharing completes,
+          to: record_share,
+          covers: [B4, B5],
+        }
+      - id: F2.T13
+        from: native_share
+        event: Owner cancels device sharing
+        to: ready
+        outcome: Cancellation is shown without claiming a successful share or recording a shared event.
+        covers: [B4, B5]
+      - id: F2.T14
+        from: native_share
+        event: Device sharing fails
+        to: failed
+        outcome: Failure is shown and the public URL remains selectable. No shared event is recorded.
+        covers: [B4, B5]
+      - { id: F2.T15, from: failed, event: Retry controls, to: load, covers: [B5] }
+      - { id: F2.T16, from: failed, event: Back, to: leave, covers: [B5] }
+      - id: F2.T17
+        from: record_copy
+        event: Recording succeeds
+        to: copied
+        guard: Fresh verified owner authority and the same active public identity accept this attempt. Repeating this attempt records no duplicate event.
+        covers: [B4, B5]
+      - id: F2.T18
+        from: record_share
+        event: Recording succeeds
+        to: shared
+        guard: Fresh verified owner authority and the same active public identity accept this attempt. Repeating this attempt records no duplicate event.
+        covers: [B4, B5]
+      - {
+          id: F2.T19,
+          from: record_copy,
+          event: Recording interrupted,
+          to: copy_record_retry,
+          covers: [B4, B5],
+        }
+      - {
+          id: F2.T20,
+          from: record_share,
+          event: Recording interrupted,
+          to: share_record_retry,
+          covers: [B4, B5],
+        }
+      - id: F2.T21
+        from: copy_record_retry
+        event: Retry recording
+        to: record_copy
+        outcome: Retry uses the same observed copy and attempt identity without repeating the clipboard operation or inventing another event.
+        covers: [B4, B5]
+      - id: F2.T22
+        from: share_record_retry
+        event: Retry recording
+        to: record_share
+        outcome: Retry uses the same observed sharing result and attempt identity without reopening device sharing or inventing another event.
+        covers: [B4, B5]
+      - { id: F2.T23, from: copy_record_retry, event: Back, to: leave, covers: [B4, B5] }
+      - { id: F2.T24, from: share_record_retry, event: Back, to: leave, covers: [B4, B5] }
+      - {
+          id: F2.T25,
+          from: record_copy,
+          event: Owner authority or current public identity refused,
+          to: unavailable,
+          covers: [B4, B5],
+        }
+      - {
+          id: F2.T26,
+          from: record_share,
+          event: Owner authority or current public identity refused,
+          to: unavailable,
+          covers: [B4, B5],
+        }
+      - id: F2.T27
+        from: copy
+        event: Navigate away
+        to: leave
+        outcome: The started clipboard operation may settle. Only an actual successful observation may be recorded for the captured request and attempt under verified owner authority. Late results never update, refresh or redirect the new screen, and make no delivery claim.
+        covers: [B4, B5]
+      - id: F2.T28
+        from: native_share
+        event: Navigate away
+        to: leave
+        outcome: The started device operation may settle. Only an actual completed sharing result may be recorded for the captured request and attempt under verified owner authority; cancellation and failure record nothing. Late results never update, refresh or redirect the new screen, and make no delivery claim.
+        covers: [B4, B5]
+      - id: F2.T29
+        from: record_copy
+        event: Navigate away
+        to: leave
+        outcome: Recording the already observed copy may complete with the same attempt identity and verified owner/current public identity. Its late success or failure never changes the new screen or claims delivery.
+        covers: [B4, B5]
+      - id: F2.T30
+        from: record_share
+        event: Navigate away
+        to: leave
+        outcome: Recording the already observed sharing result may complete with the same attempt identity and verified owner/current public identity. Its late success or failure never changes the new screen or claims delivery.
+        covers: [B4, B5]
+      - id: F2.T31
+        from: copy_record_retry
+        event: Navigate away
+        to: leave
+        outcome: Leaving recovery does not repeat the clipboard operation or invent success. Any recording already in progress remains bound to the original observed attempt, without new-screen feedback or navigation.
+        covers: [B4, B5]
+      - id: F2.T32
+        from: share_record_retry
+        event: Navigate away
+        to: leave
+        outcome: Leaving recovery does not reopen device sharing or invent success. Any recording already in progress remains bound to the original observed attempt, without new-screen feedback or navigation.
+        covers: [B4, B5]

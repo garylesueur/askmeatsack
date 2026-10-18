@@ -74,3 +74,24 @@ describe("questionHasEvidence", () => {
     expect(questionHasEvidence({})).toBe(false);
   });
 });
+
+it("counts only supplied own entry IDs, including constructor and __proto__", () => {
+  const question = {
+    options: [],
+    fields: [
+      { id: "constructor", label: "Constructor" },
+      { id: "__proto__", label: "Prototype" },
+    ],
+  };
+  expect(entriesAreComplete(question, {})).toBe(false);
+  expect(entriesAreComplete(question, { constructor: "first" })).toBe(false);
+  expect(
+    entriesAreComplete(question, JSON.parse('{"constructor":"first","__proto__":"second"}')),
+  ).toBe(true);
+  expect(
+    entriesAreComplete(
+      question,
+      Object.create({ constructor: "inherited", __proto__: "inherited" }),
+    ),
+  ).toBe(false);
+});

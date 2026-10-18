@@ -1,5 +1,7 @@
-import { randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { ownValue } from "./dictionary";
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { ZodError } from "zod";
+import { defaultOwnedAnswerFiles } from "./owned-answer-files";
 import {
   SESSION_DEFAULT_TTL_SECONDS,
   SESSION_READ_WINDOW_SECONDS,
@@ -24,6 +26,15 @@ import { manageMarkdown } from "./manage-markdown";
 import { questionnaireMarkdown } from "./questionnaire-markdown";
 import { parseMoney, resolveEntryCurrency } from "./money";
 import { entriesAreComplete, questionEntries, questionKind } from "./question-presentation";
+import { ownedSessionFits } from "./owned-session-capacity";
+import {
+  OwnedSessionError,
+  defaultAskMetadata,
+  askUsage,
+  type AskMetadata,
+  type AskAllowance,
+  type AskFileAccess,
+} from "./owned-session-metadata";
 import type { Session, SessionAnswer, SessionFile, SessionStore } from "./session-store";
 
 export type SessionServiceError = {
@@ -42,6 +53,7 @@ export type SessionServiceDeps = {
   sleep: (ms: number) => Promise<void>;
   postCallback: (url: string, body: unknown) => Promise<void>;
   waitPollMs?: number;
+  metadata?: AskMetadata | null;
 };
 
 export type CreateSessionResult = {
@@ -109,6 +121,48 @@ export type AgentSessionView = {
   manageUrl: string;
 };
 
+export type AccountSessionSummary = {
+  id: string;
+  title?: string;
+  createdAt: string;
+  expiresAt: string;
+  status: Session["status"];
+  submittedAt: string | null;
+  openedAt: string | null;
+  progress: SessionProgress;
+};
+
+function accountSummary(session: Session): AccountSessionSummary {
+  return {
+    id: session.id,
+    title: session.title,
+    createdAt: session.createdAt,
+    expiresAt: session.expiresAt,
+    status: session.status,
+    submittedAt: session.submittedAt ?? null,
+    openedAt: session.openedAt ?? null,
+    progress: progressFor(session),
+  };
+}
+
+function accountAnswers(session: Session) {
+  return Object.fromEntries(
+    Object.entries(session.answers).map(([answerQuestionId, answer]) => [
+      answerQuestionId,
+      {
+        ...answer,
+        files: answer.files?.map(({ id, questionId, filename, contentType, size }) => ({
+          id,
+          questionId,
+          filename,
+          contentType,
+          size,
+        })),
+      },
+    ]),
+  );
+}
+
 export type PublicSessionView = {
   sessionId: string;
   status: Session["status"];
@@ -165,7 +219,7 @@ function progressFor(session: Session): SessionProgress {
   let requiredCount = 0;
   let requiredAnsweredCount = 0;
   for (const question of session.questions) {
-    const answered = questionIsAnswered(question, session.answers[question.id]);
+    const answered = questionIsAnswered(question, ownValue(session.answers, question.id));
     if (answered) {
       questionIdsAnswered.push(question.id);
     }
@@ -219,6 +273,19 @@ function questionIsAnswered(
   return answer.selectedOptionIds.length > 0;
 }
 
+function outwardAnswers(session: Session): Session["answers"] {
+  if (session.storageRevision === undefined) return session.answers;
+  return Object.fromEntries(
+    Object.entries(session.answers).map(([id, answer]) => [
+      id,
+      {
+        ...answer,
+        files: answer.files?.map(({ key: _key, ...file }) => file),
+      },
+    ]),
+  );
+}
+
 function agentView(
   session: Session,
   urls: { answerUrl: string; manageUrl: string },
@@ -233,7 +300,7 @@ function agentView(
     context: session.context,
     metadata: session.metadata,
     progress: progressFor(session),
-    answers: session.answers,
+    answers: outwardAnswers(session),
     questions: session.questions,
     answerUrl: urls.answerUrl,
     manageUrl: urls.manageUrl,
@@ -249,7 +316,7 @@ function publicView(session: Session): PublicSessionView {
     context: session.context,
     appearance: session.appearance,
     questions: session.questions,
-    answers: session.answers,
+    answers: outwardAnswers(session),
     progress: progressFor(session),
   };
 }
@@ -305,7 +372,7 @@ function expiredError(): SessionServiceError {
 function downloadAnswersFrom(session: Session): DownloadAnswers {
   const answers: DownloadAnswers["answers"] = [];
   for (const question of session.questions) {
-    const answer = session.answers[question.id];
+    const answer = ownValue(session.answers, question.id);
     const selectedOptionIds = answer?.selectedOptionIds ?? [];
     const selectedLabels: string[] = [];
     for (const optionId of selectedOptionIds) {
@@ -329,7 +396,10 @@ function downloadAnswersFrom(session: Session): DownloadAnswers {
       row.entries = answer.entries;
     }
     if (answer?.files && answer.files.length > 0) {
-      row.files = answer.files;
+      row.files =
+        session.storageRevision === undefined
+          ? answer.files
+          : answer.files.map(({ key: _key, ...file }) => file);
     }
     answers.push(row);
   }
@@ -364,7 +434,7 @@ function fileGuard(session: Session, questionId: string): SessionServiceError | 
       status: 400,
     };
   }
-  const existing = session.answers[questionId]?.files ?? [];
+  const existing = ownValue(session.answers, questionId)?.files ?? [];
   if (existing.length >= FILE_MAX_COUNT) {
     return {
       code: "invalid_answer",
@@ -424,7 +494,10 @@ export function createSessionService(deps: SessionServiceDeps) {
     return `${baseUrl}/api/v1/sessions/${session.id}/files/${encodeURIComponent(fileId)}?t=${encodeURIComponent(session.publicToken)}`;
   }
 
-  async function hydrate(session: Session): Promise<Session | SessionServiceError> {
+  async function hydrate(
+    session: Session,
+    retainOwned = false,
+  ): Promise<Session | SessionServiceError> {
     const nowMs = deps.now().getTime();
     let status = session.status;
     if (status === "pending" || status === "in_progress") {
@@ -434,8 +507,12 @@ export function createSessionService(deps: SessionServiceDeps) {
     }
 
     const readUntil = readWindowEndsAtMs(session, status);
-    if (readUntil !== null && nowMs >= readUntil) {
-      await deps.store.delete(session.id);
+    if (
+      readUntil !== null &&
+      nowMs >= readUntil &&
+      !(retainOwned && session.storageRevision !== undefined)
+    ) {
+      if (session.storageRevision === undefined) await deps.store.delete(session.id);
       return unknownSessionError();
     }
 
@@ -447,6 +524,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
       return next;
     }
+    if (isTerminalStatus(session.status)) await notifyTerminal(session);
     return session;
   }
 
@@ -458,14 +536,31 @@ export function createSessionService(deps: SessionServiceDeps) {
     return hydrate(session);
   }
 
+  async function loadForOwner(
+    account: string,
+    sessionId: string,
+  ): Promise<Session | SessionServiceError> {
+    // Check ownership before hydration so another account cannot cause lifecycle writes.
+    const session = await deps.store.getById(sessionId);
+    if (!session || session.ownerAccountId !== account) return unknownSessionError();
+    return hydrate(session, true);
+  }
+
   async function loadForPublic(
     sessionId: string,
     publicToken: string | undefined,
   ): Promise<Session | SessionServiceError> {
-    const session = await loadById(sessionId);
-    if (isServiceError(session)) {
-      return session;
-    }
+    const stored = await deps.store.getById(sessionId);
+    if (!stored || !publicToken || !tokensMatch(publicToken, stored.publicToken))
+      return unknownSessionError();
+    if (
+      stored.storageRevision !== undefined &&
+      stored.status === "submitted" &&
+      deps.now().getTime() >= Date.parse(stored.expiresAt)
+    )
+      return unknownSessionError();
+    const session = await hydrate(stored, stored.status === "submitted");
+    if (isServiceError(session)) return session;
     if (!publicToken || !tokensMatch(publicToken, session.publicToken)) {
       return unknownSessionError();
     }
@@ -522,20 +617,75 @@ export function createSessionService(deps: SessionServiceDeps) {
     if (!session.callbackUrl || session.callbackSent) {
       return;
     }
-    await deps.store.save({ ...session, callbackSent: true });
+    const claimed = { ...session, callbackSent: true };
+    await deps.store.save(claimed);
+    session.callbackSent = true;
+    session.storageRevision = claimed.storageRevision;
     try {
       await deps.postCallback(session.callbackUrl, {
         sessionId: session.id,
         status: session.status,
-        answers: session.answers,
+        answers: outwardAnswers(session),
       });
     } catch {
       return;
     }
   }
 
+  function metadata(): AskMetadata {
+    if (!deps.metadata) throw new OwnedSessionError("storage_unavailable");
+    return deps.metadata;
+  }
+  function safeFile(file: SessionFile, access: AskFileAccess | null) {
+    const permission = access?.files[file.id];
+    const live =
+      access?.fileIds.includes(file.id) &&
+      permission?.state === "sealed" &&
+      permission.scanStatus === "clean" &&
+      (!permission.retainedUntil || deps.now().getTime() < Date.parse(permission.retainedUntil));
+    return {
+      id: file.id,
+      questionId: file.questionId,
+      name: file.filename,
+      size: file.size,
+      type: file.contentType,
+      scanStatus: permission?.scanStatus ?? "unknown",
+      canRead: Boolean(live),
+      canRetryScan: Boolean(
+        access?.fileIds.includes(file.id) &&
+        permission?.state === "sealed" &&
+        ["failed", "scanning", "pending"].includes(permission.scanStatus) &&
+        (!permission.retainedUntil || deps.now().getTime() < Date.parse(permission.retainedUntil)),
+      ),
+      canKeep: Boolean(live) && !access?.keptFiles[file.id],
+      uploadedAt: permission?.uploadedAt ?? file.uploadedAt ?? null,
+      retainedUntil: permission?.retainedUntil ?? file.retainedUntil ?? null,
+      ...(access?.keptFiles[file.id] ? { keptFileId: access.keptFiles[file.id] } : {}),
+    };
+  }
+  async function requireReadableFile(
+    session: Session,
+    fileId: string,
+  ): Promise<SessionFile | SessionServiceError> {
+    const file = ownValue(session.uploads, fileId);
+    if (!file) return { code: "not_found", message: "File was not found", status: 404 };
+    if (session.storageRevision !== undefined) {
+      const access = await metadata().call<AskFileAccess>("fileAccess", { id: session.id });
+      if (!safeFile(file, access).canRead)
+        return {
+          code: "file_unavailable",
+          message: "This file is unavailable or has not passed its scan",
+          status: 409,
+        };
+    }
+    return file;
+  }
+
   const service = {
-    async create(body: unknown): Promise<CreateSessionResult | SessionServiceError> {
+    async create(
+      body: unknown,
+      authority?: { account: string; idempotencyKey?: string },
+    ): Promise<CreateSessionResult | SessionServiceError> {
       const parsed = createSessionSchema.safeParse(body);
       if (!parsed.success) {
         const appearanceIssue = parsed.error.issues.some((issue) => issue.path[0] === "appearance");
@@ -553,8 +703,24 @@ export function createSessionService(deps: SessionServiceDeps) {
       const createdAt = deps.now();
       const ttlSeconds = input.expiresInSeconds ?? SESSION_DEFAULT_TTL_SECONDS;
       const expiresAt = new Date(createdAt.getTime() + ttlSeconds * 1000);
-      const session: Session = {
-        id: deps.createId(),
+      const idempotencyKey = authority?.idempotencyKey;
+      if (idempotencyKey !== undefined && (!idempotencyKey.length || idempotencyKey.length > 200))
+        return {
+          code: "invalid_idempotency_key",
+          message: "Idempotency-Key must contain 1 to 200 characters",
+          status: 400,
+        };
+      const digest =
+        authority && idempotencyKey
+          ? createHash("sha256")
+              .update(JSON.stringify([authority.account, idempotencyKey]))
+              .digest("hex")
+          : null;
+      let session: Session = {
+        id: digest
+          ? `${digest.slice(0, 8)}-${digest.slice(8, 12)}-${digest.slice(12, 16)}-${digest.slice(16, 20)}-${digest.slice(20, 32)}`
+          : deps.createId(),
+        ...(authority ? { ownerAccountId: authority.account } : {}),
         createdAt: createdAt.toISOString(),
         expiresAt: expiresAt.toISOString(),
         status: "pending",
@@ -568,7 +734,19 @@ export function createSessionService(deps: SessionServiceDeps) {
         metadata: input.metadata,
         callbackUrl: input.callbackUrl,
       };
-      await deps.store.save(session);
+      if (authority && !ownedSessionFits(session))
+        return {
+          code: "canonical_too_large",
+          message:
+            "This questionnaire and its permitted answers exceed 4 MiB. Reduce its content before creating it.",
+          status: 413,
+        };
+      if (deps.store.create)
+        session = await deps.store.create(
+          session,
+          createHash("sha256").update(JSON.stringify(input)).digest("hex"),
+        );
+      else await deps.store.save(session);
       const urls = urlsFor(session);
       const created: CreateSessionResult = {
         sessionId: session.id,
@@ -580,6 +758,226 @@ export function createSessionService(deps: SessionServiceDeps) {
         status: "pending",
       };
       return created;
+    },
+
+    async listForOwner(input: {
+      account: string;
+      cursor?: string;
+      limit?: number;
+      search?: string;
+      status?: string;
+    }) {
+      if (deps.store.listOwnedSummaries && !input.cursor?.startsWith("legacy:")) {
+        const { account: _account, ...options } = input;
+        const page = await deps.store.listOwnedSummaries(input.account, options);
+        const old =
+          page.nextCursor === null
+            ? await deps.store.listByOwner(input.account, { limit: 1 })
+            : null;
+        return {
+          ...page,
+          nextCursor:
+            page.nextCursor ?? (old?.sessions.length || old?.nextCursor ? "legacy:0" : null),
+          usage: askUsage(
+            await metadata().call<AskAllowance>("allowance", { accountId: input.account }),
+          ),
+        };
+      }
+      if (input.cursor?.startsWith("legacy:")) input = { ...input, cursor: input.cursor.slice(7) };
+      const page = await deps.store.listByOwner(input.account, input);
+      const hydrated = await Promise.all(
+        page.sessions.map((row) => loadForOwner(input.account, row.id)),
+      );
+      const records: AccountSessionSummary[] = [];
+      let purged = 0;
+      for (const session of hydrated) {
+        if (!isServiceError(session)) records.push(accountSummary(session));
+        else purged += 1;
+      }
+      return {
+        records: records.filter(
+          (row) =>
+            (!input.search || row.title?.toLowerCase().includes(input.search.toLowerCase())) &&
+            (!input.status ||
+              row.status === input.status ||
+              (input.status === "opened" && row.openedAt !== null)),
+        ),
+        usage: askUsage(
+          deps.metadata
+            ? await deps.metadata.call<AskAllowance>("allowance", { accountId: input.account })
+            : { requests: 0, requestLimit: 500, bytes: 0, byteLimit: 1000000000 },
+        ),
+        nextCursor:
+          page.nextCursor === null
+            ? null
+            : `${deps.store.listOwnedSummaries ? "legacy:" : ""}${Math.max(0, Number(page.nextCursor) - purged)}`,
+      };
+    },
+
+    async getForOwner(input: { account: string; sessionId: string }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      if (isServiceError(session)) return session;
+      const access =
+        session.storageRevision !== undefined
+          ? await metadata().call<AskFileAccess>("fileAccess", { id: session.id })
+          : null;
+      return {
+        ...accountSummary(session),
+        context: session.context,
+        questions: session.questions,
+        answers: accountAnswers(session),
+        canCancel: session.status === "pending" || session.status === "in_progress",
+        files: Object.values(session.uploads ?? {}).map((file) => safeFile(file, access)),
+        actions: {
+          edit: session.status === "pending",
+          cancel: session.status === "pending" || session.status === "in_progress",
+          delete: session.storageRevision !== undefined,
+          export: session.status === "submitted",
+          share:
+            (session.status === "pending" ||
+              session.status === "in_progress" ||
+              session.status === "submitted") &&
+            deps.now().getTime() < Date.parse(session.expiresAt),
+        },
+        answerUrl:
+          session.storageRevision !== undefined &&
+          ["pending", "in_progress", "submitted"].includes(session.status) &&
+          deps.now().getTime() < Date.parse(session.expiresAt)
+            ? urlsFor(session).answerUrl
+            : undefined,
+      };
+    },
+
+    async recordSharingForOwner(input: {
+      account: string;
+      sessionId: string;
+      attemptId: string;
+      answerUrl: string;
+      kind: "copied" | "shared";
+    }) {
+      let publicToken: string | null = null;
+      try {
+        const url = new URL(input.answerUrl);
+        publicToken = url.searchParams.get("t");
+        if (
+          !publicToken ||
+          publicToken.length > 256 ||
+          input.answerUrl !== `${baseUrl}/s/${input.sessionId}?t=${publicToken}`
+        )
+          publicToken = null;
+      } catch {
+        /* Only the canonical public answer URL is accepted. */
+      }
+      if (!publicToken)
+        return {
+          status: 409,
+          code: "conflict",
+          message: "This answer link changed or closed. Refresh before sharing again.",
+        };
+      // Native authority validates a first observation against the live owned request.
+      // A consumed server receipt can acknowledge a retry after the source has closed.
+      const result = await metadata().call<{ recorded: true } | null>("recordShare", {
+        id: input.sessionId,
+        accountId: input.account,
+        publicToken,
+        attemptId: input.attemptId,
+        kind: input.kind,
+      });
+      return result ?? { status: 404, code: "not_found", message: "Request was not found" };
+    },
+
+    async cancelForOwner(input: { account: string; sessionId: string }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      if (isServiceError(session)) return session;
+      const result = await service.cancel({
+        sessionId: session.id,
+        agentToken: session.agentToken,
+        hasCreateCredential: false,
+      });
+      return isServiceError(result) ? result : service.getForOwner(input);
+    },
+
+    async updateForOwner(input: { account: string; sessionId: string; body: unknown }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      if (isServiceError(session)) return session;
+      const result = await service.update({
+        sessionId: session.id,
+        agentToken: session.agentToken,
+        hasCreateCredential: false,
+        body: input.body,
+      });
+      return isServiceError(result) ? result : service.getForOwner(input);
+    },
+    async removeForOwner(input: { account: string; sessionId: string }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      if (isServiceError(session)) return session;
+      if (session.storageRevision === undefined)
+        return {
+          code: "legacy_request",
+          message: "This earlier request is still managed by its existing link",
+          status: 409,
+        };
+      const result = await metadata().call<{ removed: true; cleanupPending: boolean } | null>(
+        "delete",
+        { id: session.id, accountId: input.account },
+      );
+      return result
+        ? { removed: true, pendingCleanup: result.cleanupPending }
+        : unknownSessionError();
+    },
+    async readFileForOwner(input: { account: string; sessionId: string; fileId: string }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      return isServiceError(session) ? session : requireReadableFile(session, input.fileId);
+    },
+    async retryFileScanForOwner(input: { account: string; sessionId: string; fileId: string }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      if (isServiceError(session)) return session;
+      if (session.storageRevision === undefined)
+        return {
+          code: "legacy_request",
+          message: "This earlier attachment uses its existing link",
+          status: 409,
+        };
+      const file = ownValue(session.uploads, input.fileId);
+      const access = await metadata().call<AskFileAccess>("fileAccess", { id: session.id });
+      if (!file || !access.fileIds.includes(file.id))
+        return { code: "file_unavailable", message: "File is no longer available", status: 409 };
+      const files = defaultOwnedAnswerFiles();
+      if (!files) throw new OwnedSessionError("storage_unavailable");
+      const accepted = await files.scan(file.id, file.size);
+      return accepted
+        ? { accepted: true }
+        : {
+            code: "scan_pending",
+            message: "A scan is already in progress. Try again shortly.",
+            status: 409,
+          };
+    },
+
+    async downloadForOwner(input: {
+      account: string;
+      sessionId: string;
+      format: "json" | "markdown";
+    }) {
+      const session = await loadForOwner(input.account, input.sessionId);
+      if (isServiceError(session)) return session;
+      if (session.status !== "submitted")
+        return {
+          code: "not_available",
+          message: "Export is available after submission",
+          status: 409,
+        };
+      const download = downloadAnswersFrom(session);
+      download.answers = download.answers.map((answer) => ({
+        ...answer,
+        files: answer.files?.map(({ key: _key, url: _url, ...file }) => ({
+          ...file,
+          url: `${(process.env.LANYARD_URL ?? "https://meatsack.puregaz.com").replace(/\/$/, "")}/api/portal/askmeatsack/records/${session.id}/files/${encodeURIComponent(file.id)}`,
+        })),
+      }));
+      return input.format === "markdown"
+        ? answersDownloadMarkdown(download, session.questions)
+        : download;
     },
 
     async getForAgent(input: {
@@ -611,7 +1009,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         expiresAt: session.expiresAt,
         openedAt: session.openedAt ?? null,
         questions: session.questions,
-        answers: session.answers,
+        answers: outwardAnswers(session),
         progress: progressFor(session),
         answerUrl: urls.answerUrl,
         machineUrl: urls.machineUrl,
@@ -679,6 +1077,13 @@ export function createSessionService(deps: SessionServiceDeps) {
           expiresAt: new Date(deps.now().getTime() + patch.expiresInSeconds * 1000).toISOString(),
         };
       }
+      if (next.storageRevision !== undefined && !ownedSessionFits(next))
+        return {
+          code: "canonical_too_large",
+          message:
+            "This questionnaire and its permitted answers exceed 4 MiB. Reduce its content before saving it.",
+          status: 413,
+        };
       await deps.store.save(next);
       return agentView(next, urlsFor(next));
     },
@@ -735,6 +1140,9 @@ export function createSessionService(deps: SessionServiceDeps) {
         answersUrl: urls.answersUrl,
         submitUrl: urls.submitUrl,
         filesUrl: urls.filesUrl,
+        status: session.status,
+        expiresAt: session.expiresAt,
+        answers: outwardAnswers(session),
       });
     },
 
@@ -809,7 +1217,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         };
       }
 
-      const previous = session.answers[input.questionId];
+      const previous = ownValue(session.answers, input.questionId);
       const selected = parsed.data.selectedOptionIds ?? previous?.selectedOptionIds ?? [];
       const text = parsed.data.text !== undefined ? parsed.data.text : previous?.text;
       let entries = parsed.data.entries !== undefined ? parsed.data.entries : previous?.entries;
@@ -817,9 +1225,19 @@ export function createSessionService(deps: SessionServiceDeps) {
       let files = previous?.files;
       if (parsed.data.fileIds !== undefined) {
         const resolved: SessionFile[] = [];
-        for (const fileId of parsed.data.fileIds) {
-          const uploaded = session.uploads?.[fileId];
-          if (!uploaded || uploaded.questionId !== input.questionId) {
+        const access =
+          session.storageRevision !== undefined
+            ? await metadata().call<AskFileAccess>("fileAccess", { id: session.id })
+            : null;
+        for (const fileId of session.storageRevision !== undefined
+          ? [...new Set(parsed.data.fileIds)]
+          : parsed.data.fileIds) {
+          const uploaded = ownValue(session.uploads, fileId);
+          if (
+            !uploaded ||
+            uploaded.questionId !== input.questionId ||
+            (access && !access.fileIds.includes(fileId))
+          ) {
             return {
               code: "invalid_answer",
               message: "File is not on this question",
@@ -851,7 +1269,7 @@ export function createSessionService(deps: SessionServiceDeps) {
           for (const row of questionEntries(question)) {
             allowed.add(row.id);
           }
-          const normalised: Record<string, string> = {};
+          const normalised: Record<string, string> = Object.create(null);
           for (const entryId of Object.keys(parsed.data.entries)) {
             if (!allowed.has(entryId)) {
               return {
@@ -949,7 +1367,12 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
 
       const nextAnswer: SessionAnswer = {
-        selectedOptionIds: isTextQuestion(question) || isEntryQuestion(question) ? [] : selected,
+        selectedOptionIds:
+          isTextQuestion(question) || isEntryQuestion(question)
+            ? []
+            : session.storageRevision !== undefined
+              ? [...new Set(selected)]
+              : selected,
         answeredAt: deps.now().toISOString(),
       };
       if (text !== undefined && text.length > 0) {
@@ -1039,6 +1462,28 @@ export function createSessionService(deps: SessionServiceDeps) {
       return fileGuard(session, input.questionId);
     },
 
+    async ownedUploadContext(input: {
+      sessionId: string;
+      publicToken?: string;
+      questionId: string;
+    }) {
+      const session = await loadForPublic(input.sessionId, input.publicToken);
+      if (isServiceError(session)) return session;
+      const refused = fileGuard(session, input.questionId);
+      if (refused) return refused;
+      return { owned: session.storageRevision !== undefined };
+    },
+    async ownedUploadResult(input: { sessionId: string; publicToken?: string; fileId: string }) {
+      const session = await loadForPublic(input.sessionId, input.publicToken);
+      if (isServiceError(session)) return session;
+      const file = ownValue(session.uploads, input.fileId);
+      if (!file) return unknownSessionError();
+      return {
+        file: { ...file, key: undefined, url: fileUrlFor(session, file.id) },
+        progress: progressFor(session),
+      };
+    },
+
     async attachFile(input: {
       sessionId: string;
       publicToken?: string;
@@ -1056,7 +1501,13 @@ export function createSessionService(deps: SessionServiceDeps) {
       if (refused) {
         return refused;
       }
-      const existing = session.answers[input.questionId]?.files ?? [];
+      if (session.storageRevision !== undefined)
+        return {
+          code: "invalid_upload",
+          message: "Owned attachments must use the verified storage operation",
+          status: 409,
+        };
+      const existing = ownValue(session.answers, input.questionId)?.files ?? [];
       const fileId = deps.createToken();
       const file: SessionFile = {
         id: fileId,
@@ -1066,8 +1517,10 @@ export function createSessionService(deps: SessionServiceDeps) {
         size: input.size,
         key: input.storageKey,
         url: fileUrlFor(session, fileId),
+        // Record the actual first attachment receipt; claims must never invent this later.
+        uploadedAt: deps.now().toISOString(),
       };
-      const previous = session.answers[input.questionId];
+      const previous = ownValue(session.answers, input.questionId);
       const nextAnswer: SessionAnswer = {
         selectedOptionIds: previous?.selectedOptionIds ?? [],
         answeredAt: deps.now().toISOString(),
@@ -1101,7 +1554,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       if (isServiceError(session)) {
         return session;
       }
-      const file = session.uploads?.[input.fileId];
+      const file = ownValue(session.uploads, input.fileId);
       if (!file) {
         return {
           code: "not_found",
@@ -1109,10 +1562,9 @@ export function createSessionService(deps: SessionServiceDeps) {
           status: 404,
         };
       }
-      return {
-        ...file,
-        url: fileUrlFor(session, file.id),
-      };
+      const readable = await requireReadableFile(session, input.fileId);
+      if (isServiceError(readable)) return readable;
+      return { ...readable, url: fileUrlFor(session, readable.id) };
     },
 
     async submit(input: {
@@ -1127,7 +1579,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         return {
           status: "submitted",
           submittedAt: session.submittedAt,
-          answers: session.answers,
+          answers: outwardAnswers(session),
         };
       }
       if (session.status === "expired") {
@@ -1142,7 +1594,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         if (!question.required) {
           continue;
         }
-        if (!questionIsAnswered(question, session.answers[question.id])) {
+        if (!questionIsAnswered(question, ownValue(session.answers, question.id))) {
           missing.push(question.id);
         }
       }
@@ -1165,7 +1617,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       return {
         status: "submitted",
         submittedAt,
-        answers: next.answers,
+        answers: outwardAnswers(next),
       };
     },
 
@@ -1189,7 +1641,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       if (session.status === "cancelled") {
         return {
           status: "cancelled",
-          answers: session.answers,
+          answers: outwardAnswers(session),
         };
       }
       if (session.status === "submitted" || session.status === "expired") {
@@ -1205,7 +1657,7 @@ export function createSessionService(deps: SessionServiceDeps) {
       await notifyTerminal(next);
       return {
         status: "cancelled",
-        answers: next.answers,
+        answers: outwardAnswers(next),
       };
     },
 
@@ -1268,7 +1720,26 @@ export function createSessionService(deps: SessionServiceDeps) {
       }
     },
   };
-  return service;
+  type SafeService = {
+    [K in keyof typeof service]: (
+      ...args: Parameters<(typeof service)[K]>
+    ) => Promise<Awaited<ReturnType<(typeof service)[K]>> | SessionServiceError>;
+  };
+  return new Proxy(service, {
+    get(target, property, receiver) {
+      const value: unknown = Reflect.get(target, property, receiver);
+      if (typeof value !== "function") return value;
+      return async (...args: unknown[]) => {
+        try {
+          return await Reflect.apply(value, target, args);
+        } catch (error) {
+          if (error instanceof OwnedSessionError)
+            return { code: error.code, message: error.message, status: error.status };
+          throw error;
+        }
+      };
+    },
+  }) as SafeService;
 }
 
 export async function postCallbackJson(url: string, body: unknown): Promise<void> {
@@ -1313,6 +1784,7 @@ export function isSessionServiceError(value: unknown): value is SessionServiceEr
 export function defaultSessionServiceDeps(store: SessionStore): SessionServiceDeps {
   return {
     store,
+    metadata: defaultAskMetadata(),
     now: () => new Date(),
     createId: () => randomUUID(),
     createToken,

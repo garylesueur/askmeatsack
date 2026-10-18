@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useSyncExternalStore, type ReactNode } from "react";
 import {
+  applyHtmlMode,
   appearanceClassName,
   appearanceStyle,
   readStoredColorMode,
@@ -21,28 +22,6 @@ type AppearanceShellProps = {
   className?: string;
   showModeToggle?: boolean;
 };
-
-function applyHtmlMode(mode: "system" | "light" | "dark"): void {
-  const root = document.documentElement;
-  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  if (mode === "system") {
-    delete root.dataset.colorMode;
-  } else {
-    root.dataset.colorMode = mode;
-  }
-  if (mode === "light") {
-    root.classList.add("light");
-    root.classList.remove("dark");
-    return;
-  }
-  if (mode === "dark") {
-    root.classList.add("dark");
-    root.classList.remove("light");
-    return;
-  }
-  root.classList.remove("light");
-  root.classList.toggle("dark", systemDark);
-}
 
 function modeIsDark(mode: "system" | "light" | "dark", systemDark: boolean): boolean {
   if (mode === "light") {
@@ -68,7 +47,7 @@ export function AppearanceShell({
   useLayoutEffect(() => {
     applyHtmlMode(mode);
     return () => {
-      applyHtmlMode("system");
+      applyHtmlMode(readStoredColorMode() ?? "system");
     };
   }, [mode]);
 

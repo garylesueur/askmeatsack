@@ -154,7 +154,7 @@ describe("stored file keys", () => {
     expect(
       storageKeyFromFile({
         key: "askmeatsack/sess/photo/ab12-desk.jpg",
-        url: "https://askmeatsack.com/api/v1/sessions/sess/files/file-1?t=tok",
+        url: "https://ask.imeatsack.com/api/v1/sessions/sess/files/file-1?t=tok",
       }),
     ).toBe("askmeatsack/sess/photo/ab12-desk.jpg");
     expect(

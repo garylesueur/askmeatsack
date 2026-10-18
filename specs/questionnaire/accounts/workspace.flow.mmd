@@ -1,0 +1,63 @@
+%% Generated from workspace.flow.yaml. Do not edit directly.
+flowchart TD
+  subgraph F1["F1: Respondent discovers how to ask someone else"]
+    F1_respondent["Answering or completion screen"]
+    F1_guidance["Ask someone else guidance"]
+    F1_install(["Connect an existing agent"])
+    F1_product(["Discover ask.imeatsack.com"])
+    F1_continue(["Continue the current questionnaire"])
+    F1_respondent -->|"F1.T1: Ask someone else"| F1_guidance
+    F1_respondent -->|"F1.T2: About ask.imeatsack.com"| F1_product
+    F1_respondent -->|"F1.T3: Continue the current task"| F1_continue
+    F1_guidance -->|"F1.T4: Close guidance"| F1_respondent
+    F1_guidance -->|"F1.T5: Connect your agent"| F1_install
+    F1_guidance -->|"F1.T6: Continue the current task"| F1_continue
+  end
+  subgraph F2["F2: Owner shares the current answer link"]
+    F2_load{{"Load the owner's current public link"}}
+    F2_ready["Current answer link"]
+    F2_copy{{"Copy the answer link"}}
+    F2_native_share{{"Open device sharing"}}
+    F2_record_copy{{"Record the observed copy"}}
+    F2_record_share{{"Record the observed sharing result"}}
+    F2_failed["Sharing could not be completed"]
+    F2_load_failed["Current link could not be checked"]
+    F2_copy_record_retry["Copy observed but activity needs recovery"]
+    F2_share_record_retry["Sharing observed but activity needs recovery"]
+    F2_copied(["Link copied"])
+    F2_shared(["Device sharing completed"])
+    F2_unavailable(["Answer link unavailable"])
+    F2_leave(["Return to the request"])
+    F2_load -->|"F2.T1: Current link checked [Verified owner authority can access the request and its current public answer link is shareable.]"| F2_ready
+    F2_load -->|"F2.T2: Current link checked [Verified owner authority is refused or this request has no shareable current public link.]"| F2_unavailable
+    F2_load -->|"F2.T3: Check interrupted"| F2_load_failed
+    F2_load_failed -->|"F2.T4: Retry"| F2_load
+    F2_load_failed -->|"F2.T5: Back"| F2_leave
+    F2_ready -->|"F2.T6: Copy link"| F2_copy
+    F2_ready -->|"F2.T7: Share link [The browser supports sharing this public link.]"| F2_native_share
+    F2_ready -->|"F2.T8: Back"| F2_leave
+    F2_ready -->|"F2.T9: Link or owner authority ends"| F2_unavailable
+    F2_copy -->|"F2.T10: Clipboard reports success"| F2_record_copy
+    F2_copy -->|"F2.T11: Clipboard refuses or is unavailable"| F2_failed
+    F2_native_share -->|"F2.T12: Device sharing completes"| F2_record_share
+    F2_native_share -->|"F2.T13: Owner cancels device sharing"| F2_ready
+    F2_native_share -->|"F2.T14: Device sharing fails"| F2_failed
+    F2_failed -->|"F2.T15: Retry controls"| F2_load
+    F2_failed -->|"F2.T16: Back"| F2_leave
+    F2_record_copy -->|"F2.T17: Recording succeeds [Fresh verified owner authority and the same active public identity accept this attempt. Repeating this attempt records no duplicate event.]"| F2_copied
+    F2_record_share -->|"F2.T18: Recording succeeds [Fresh verified owner authority and the same active public identity accept this attempt. Repeating this attempt records no duplicate event.]"| F2_shared
+    F2_record_copy -->|"F2.T19: Recording interrupted"| F2_copy_record_retry
+    F2_record_share -->|"F2.T20: Recording interrupted"| F2_share_record_retry
+    F2_copy_record_retry -->|"F2.T21: Retry recording"| F2_record_copy
+    F2_share_record_retry -->|"F2.T22: Retry recording"| F2_record_share
+    F2_copy_record_retry -->|"F2.T23: Back"| F2_leave
+    F2_share_record_retry -->|"F2.T24: Back"| F2_leave
+    F2_record_copy -->|"F2.T25: Owner authority or current public identity refused"| F2_unavailable
+    F2_record_share -->|"F2.T26: Owner authority or current public identity refused"| F2_unavailable
+    F2_copy -->|"F2.T27: Navigate away"| F2_leave
+    F2_native_share -->|"F2.T28: Navigate away"| F2_leave
+    F2_record_copy -->|"F2.T29: Navigate away"| F2_leave
+    F2_record_share -->|"F2.T30: Navigate away"| F2_leave
+    F2_copy_record_retry -->|"F2.T31: Navigate away"| F2_leave
+    F2_share_record_retry -->|"F2.T32: Navigate away"| F2_leave
+  end

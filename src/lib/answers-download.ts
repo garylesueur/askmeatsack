@@ -1,3 +1,4 @@
+import { ownValue } from "./dictionary";
 import { formatEntryValue } from "./money";
 import { questionEntries } from "./question-presentation";
 import type { Question } from "./schema";
@@ -26,7 +27,7 @@ function questionFor(questions: Question[], questionId: string): Question | unde
 
 export function answersDownloadMarkdown(download: AnswersDownload, questions: Question[]): string {
   const title = download.title?.trim() || "Questionnaire";
-  const lines: string[] = [`# ${title}`, "", "Your answers from askmeatsack.com", ""];
+  const lines: string[] = [`# ${title}`, "", "Your answers from ask.imeatsack.com", ""];
 
   for (const row of download.answers) {
     lines.push(`## ${row.prompt}`);
@@ -44,7 +45,7 @@ export function answersDownloadMarkdown(download: AnswersDownload, questions: Qu
     if (row.entries) {
       if (question) {
         for (const entry of questionEntries(question)) {
-          const value = row.entries[entry.id];
+          const value = ownValue(row.entries, entry.id);
           if (value) {
             lines.push(`- ${entry.label}: ${formatEntryValue(entry, question, value)}`);
             wrote = true;

@@ -1,12 +1,12 @@
 ---
 id: site-home
 area: Site / Home
-status: future
+status: partial
 ---
 
 # The home page
 
-What a person sees when they arrive at askmeatsack.com without knowing what it is. Its job is
+What a person sees when they arrive at ask.imeatsack.com without knowing what it is. Its job is
 to explain the product, prove it, and get an agent connected. `site/discoverability.md` covers
 what machines read; this covers what people read.
 
@@ -44,17 +44,20 @@ the agent would have received. It needs no account — see the trial behaviour i
 
 ### B6 — The page links to its sibling, its source, and its author 🔵 future
 
-showmeatsack.com, the GitHub repository, and gaz.dev are each reachable from the page. Someone
+show.imeatsack.com, the GitHub repository, and gaz.dev are each reachable from the page. Someone
 who arrives at one product can find the other.
 
-### B7 — Signing in is reachable, and obviously not required to look 🔵 future
+### B7 — Signing in is reachable, and obviously not required to look 🟢 implemented
 
 A person can get to their account from the page. Nothing about the page suggests they need an
 account to read it or to try it.
 
+Sign in opens lanyard at meatsack.puregaz.com. A returning signed-in visitor
+reaches the same account. The account provides a link back to ask.imeatsack.com.
+
 ### B8 — The two products look like siblings 🔵 future
 
-askmeatsack.com and showmeatsack.com share a layout, a type treatment, and a structure. They
+ask.imeatsack.com and show.imeatsack.com share a layout, a type treatment, and a structure. They
 are told apart by one accent colour and their words, not by looking like different companies.
 
 ### B9 — It works on a phone 🔵 future
@@ -78,7 +81,7 @@ page loses nothing they needed. Nothing important is only visible mid-animation.
 - The account area lives on lanyard. The home page links to it and never reproduces it.
 - Trying it uses the product's own trial path and creates a real questionnaire. It is never a
   mock-up or a video.
-- Copy calls the product **askmeatsack.com**.
+- Copy calls the product **ask.imeatsack.com**.
 - Every animation respects a reduced-motion preference.
 - The page is readable and usable in both light and dark, following the person's own setting.
 
@@ -91,7 +94,7 @@ page loses nothing they needed. Nothing important is only visible mid-animation.
 | Ready to connect an agent | Get the MCP URL, or one-click install |
 | Prefers the raw API | Copy a working `curl` |
 | Wants the code | Reach the repository |
-| Wants the other product | Reach showmeatsack.com |
+| Wants the other product | Reach show.imeatsack.com |
 | Already has an account | Reach their account area on lanyard |
 
 | Client | Connecting |
@@ -114,6 +117,10 @@ hands over to the answering journey, which has its own contract.
 
 ## Future Considerations
 
+- When the [Ask workspace](../questionnaire/accounts/workspace.md) ships, the existing
+  central sign-in entry opens its Requests area at https://meatsack.puregaz.com. The
+  same portal session and picker reach Share and Show; the public site keeps its role
+  as the product introduction and agent-connection guide.
 - A gallery of real questionnaires people have published, if anyone ever wants theirs shown.
 - Showing the same page in more than one language.
 - A short recording of the handoff, for people who will not click the demo.
