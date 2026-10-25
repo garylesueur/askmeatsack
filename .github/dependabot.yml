@@ -31,7 +31,6 @@ updates:
       timezone: Europe/London
     cooldown:
       default-days: 3
-      semver-major-days: 7
     groups:
       security:
         applies-to: security-updates
