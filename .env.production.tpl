@@ -3,6 +3,8 @@
 
 AGENT_API_KEY=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/fgps4a7gwmzfbl7vrn2lk6oela/AGENT_API_KEY
 PUBLIC_BASE_URL=https://ask.imeatsack.com
+# lanyard origin (not a secret). Empty keeps sign-in off: no Sign in link, no token checks.
+LANYARD_URL=
 KV_REST_API_URL=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/fgps4a7gwmzfbl7vrn2lk6oela/KV_REST_API_URL
 KV_REST_API_TOKEN=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/fgps4a7gwmzfbl7vrn2lk6oela/KV_REST_API_TOKEN
 R2_ACCOUNT_ID=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/fgps4a7gwmzfbl7vrn2lk6oela/R2_ACCOUNT_ID

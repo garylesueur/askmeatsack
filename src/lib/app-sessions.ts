@@ -4,6 +4,7 @@ import {
   type SessionStore,
 } from "./session-store";
 import { createUpstashKvFromEnv } from "./upstash-kv";
+import { lanyardOrigin, lanyardSignInHref, verifyLanyardToken } from "./lanyard";
 import {
   createSessionService,
   defaultSessionServiceDeps,
@@ -47,6 +48,46 @@ export function readCreateCredential(request: Request): {
     hasCreateCredential: tokensMatch(offered, expected),
     missing: false,
   };
+}
+
+export type Creator =
+  /** No bearer, or one this product does not send to lanyard. Create as today. */
+  | { readonly kind: "anonymous" }
+  /** lanyard accepted the bearer. Identity only; it grants no extra access. */
+  | { readonly kind: "account"; readonly account: string }
+  /** lanyard was asked and did not accept the bearer. */
+  | { readonly kind: "refused" };
+
+/**
+ * Who is creating. Only a bearer is ever sent to lanyard, and only when
+ * LANYARD_URL is set and the bearer is not the operator's AGENT_API_KEY — that
+ * key keeps meaning exactly what it meant before and never leaves this service.
+ */
+export async function identifyCreator(request: Request): Promise<Creator> {
+  const header = request.headers.get("authorization");
+  if (!header?.startsWith("Bearer ")) {
+    return { kind: "anonymous" };
+  }
+  if (readCreateCredential(request).hasCreateCredential) {
+    return { kind: "anonymous" };
+  }
+  const origin = lanyardOrigin();
+  if (!origin) {
+    return { kind: "anonymous" };
+  }
+  const outcome = await verifyLanyardToken(origin, header.slice("Bearer ".length));
+  return outcome.outcome === "accepted"
+    ? { kind: "account", account: outcome.account }
+    : { kind: "refused" };
+}
+
+export function refusedLanyardTokenResponse(): Response {
+  const signIn = lanyardSignInHref();
+  return jsonError(
+    401,
+    "unauthorized",
+    `lanyard did not accept that token. Sign in again${signIn ? ` at ${signIn}` : ""}, or create without an Authorization header.`,
+  );
 }
 
 export function readPublicToken(request: Request): string | undefined {

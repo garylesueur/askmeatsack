@@ -1,4 +1,10 @@
-import { getDefaultSessionService, jsonError, jsonServiceError } from "@/lib/app-sessions";
+import {
+  getDefaultSessionService,
+  identifyCreator,
+  jsonError,
+  jsonServiceError,
+  refusedLanyardTokenResponse,
+} from "@/lib/app-sessions";
 import { limitCreateFromRequest } from "@/lib/create-rate-limit";
 import { isSessionServiceError } from "@/lib/sessions";
 
@@ -12,6 +18,11 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  const creator = await identifyCreator(request);
+  if (creator.kind === "refused") {
+    return refusedLanyardTokenResponse();
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -19,7 +30,10 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError(400, "invalid_json", "Body must be JSON");
   }
 
-  const result = await getDefaultSessionService().create(body);
+  const result = await getDefaultSessionService().create(
+    body,
+    creator.kind === "account" ? { account: creator.account } : undefined,
+  );
   if (isSessionServiceError(result)) {
     return jsonServiceError(result);
   }

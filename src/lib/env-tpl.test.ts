@@ -36,6 +36,12 @@ describe("1Password env templates", () => {
     expect(envKeys(envTemplateFiles.production)).toEqual(example);
   });
 
+  it("keeps LANYARD_URL a plain, non-secret value", () => {
+    for (const name of [".env.example", ...Object.values(envTemplateFiles)]) {
+      expect(readFileSync(join(root, name), "utf8")).toMatch(/^LANYARD_URL=(?!op:\/\/)/m);
+    }
+  });
+
   it("points each template at its own 1Password item", () => {
     const development = readFileSync(join(root, envTemplateFiles.development), "utf8");
     expect(development).toContain("PUBLIC_BASE_URL=http://localhost:3000");

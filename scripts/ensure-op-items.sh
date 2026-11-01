@@ -15,6 +15,8 @@ if ! op whoami >/dev/null 2>&1; then
   exit 1
 fi
 
+# Secrets only. Literals such as PUBLIC_BASE_URL and LANYARD_URL live in the
+# .env.*.tpl files, not in 1Password.
 fields=(
   AGENT_API_KEY
   KV_REST_API_URL

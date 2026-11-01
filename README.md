@@ -54,6 +54,25 @@ Production are pushed to Vercel and are not for a laptop.
 `op://` references only. `.env.example` is the empty placeholder. Never print
 `.env` contents and never commit secrets.
 
+## Sign-in (lanyard)
+
+Accounts live in [lanyard](https://github.com/garylesueur/lanyard); this product
+never runs a sign-in screen. `LANYARD_URL` is lanyard's origin. It is not a
+secret, so it is a plain value in the `.env.*.tpl` files, not a 1Password field.
+Leave it empty and nothing changes: no Sign in link, no calls to lanyard. Set it
+and:
+
+- The home and install pages show **Sign in**, linking to
+  `${LANYARD_URL}/sign-in?product=askmeatsack`.
+- `POST /api/v1/sessions` with `Authorization: Bearer <lanyard token>` is
+  verified with lanyard. Accepted, the questionnaire records the account;
+  refused, create answers `401 unauthorized`. A bearer equal to `AGENT_API_KEY`
+  is never sent to lanyard and behaves as before. No bearer still creates
+  anonymously, whether lanyard is up or not.
+
+The verifier is `src/lib/product-verifier.ts`, copied verbatim from lanyard.
+Change it there and copy it again.
+
 ## Where things live
 
 | Path | What |
@@ -63,6 +82,7 @@ Production are pushed to Vercel and are not for a laptop.
 | `src/app/mcp/` | The MCP server |
 | `src/app/s/[sessionId]/` | The page a person actually answers on |
 | `src/lib/sessions.ts` | Session service — creation, answering, submission |
+| `src/lib/lanyard.ts` | lanyard sign-in: `LANYARD_URL`, Sign in link, token checks |
 | `.engineering/config.yaml` | Toolchain contract that calm-craft skills read |
 | `skills/askmeatsack/` | The skill — **the source of truth**, edit this one |
 | `.cursor/skills/askmeatsack/` | Generated copy for Cursor (`pnpm sync:skill`) |

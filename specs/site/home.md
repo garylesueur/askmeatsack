@@ -49,7 +49,8 @@ Show at their canonical subdomains on desktop and mobile. The current product is
 underlined and identified with `aria-current`. GitHub, the author and the agent
 documents are in the footer.
 
-### B7 — Signing in is reachable, and obviously not required to look 🔵 future
+### B7 — Signing in is reachable, and obviously not required to look 🟡 partial
+> The header shows Sign in only where lanyard is configured; it leads to lanyard's sign-in, not an account area
 
 A person can get to their account from the page. Nothing about the page suggests they need an
 account to read it or to try it.

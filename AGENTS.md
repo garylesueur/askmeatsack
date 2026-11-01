@@ -23,6 +23,8 @@ pnpm build       # Production build
 
 On Vercel, Preview and Production already have Upstash. `AGENT_API_KEY` and R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`) belong in the matching 1Password items and are pushed with `pnpm env:vercel`. Preview and Production should each have their own R2 bucket.
 
+`LANYARD_URL` is lanyard's origin — a plain, non-secret value in the `.env.*.tpl` files, not in 1Password. Empty means sign-in is off: no Sign in link and no calls to lanyard. When set, a Bearer on create that is not `AGENT_API_KEY` is verified with lanyard via `src/lib/product-verifier.ts` (a verbatim copy from lanyard main — do not edit it here). Never hard-code a lanyard domain in code.
+
 ## What this is
 
 An agent asks a human questions. Create returns an ask.imeatsack.com link for the conversation (skill does that inline). Humans answer in the browser. Posting that same link to Slack, email, or anywhere else is the calling agent’s job.
