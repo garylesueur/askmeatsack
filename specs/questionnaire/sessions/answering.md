@@ -50,7 +50,7 @@ A choice that is not one of that question’s options is refused. Several option
 
 ### B10 — The two links have different powers 🟢
 
-The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. Creating a questionnaire needs a lanyard token — see B35.
+The human’s link can only load that questionnaire, save its answers, submit it, cancel it, mark it opened, and download its own answers after submit. It cannot start a new questionnaire, open the manage page, or use the agent’s status. The answering page never shows the agent’s secret. Someone without that questionnaire’s agent token cannot check status as the agent, cancel as the agent, wait as the agent, inspect the manage page, or edit the questions. Creating a questionnaire will need a lanyard token — see B35.
 
 ### B11 — After submit, the human can close the tab 🟢
 
@@ -150,12 +150,21 @@ A question may ask for something the device can capture besides a file: the pers
 
 The skill tells an agent that is filling records or chasing missing facts — HR fields, identity documents, files, an ID — to create one questionnaire per person. Each ask is unique to what is still missing for that person. Opaque metadata holds the record key so answers can be matched when they come back; the human does not see it. The agent puts `answerUrl` wherever it already reaches them, then waits via callback, poll, or a later bounded wait — not only by pasting into the current chat. Two people never share one answer link. The product is the same as the live-chat path; the agent does not invent a second form because the run is automated.
 
-### B35 — Starting a questionnaire needs an account 🔵 future
+### B35 — Starting a questionnaire needs an account 🟡 partial
+> A call without a token is still served; only the HTTP create reads a token, and the MCP tool does not
 
 An agent must present a lanyard token to create a questionnaire. A call without one is refused
 and told where to authorise, so an agent that can complete that journey recovers on its own.
 The token identifies the account the questionnaire belongs to; it does not appear in the answer
 link and the human answering never needs one.
+
+What holds today, once lanyard is configured: a token presented on create is checked with
+lanyard. An accepted token records the account on the new questionnaire and changes nothing
+else — it opens no other questionnaire and replaces no agent token. A token lanyard refuses is
+refused, and the refusal names where to sign in. While lanyard cannot be reached, a token it
+accepted in the last five minutes is still accepted; one it never accepted is not. The
+operator's shared key is never sent to lanyard and keeps its old meaning. With lanyard not
+configured, a token is ignored, as before.
 
 ### B36 — Trying it on the home page needs no account 🔵 future
 
@@ -224,10 +233,12 @@ When creating a sketch question, the agent may give a background picture for the
 - Text answers are at most 2000 characters. Question `detail` is at most 8000 characters. A
   title is at most 200 characters, `context` at most 4000, and a prompt at most 1000. Metadata
   holds at most 20 keys, each key and value at most 200 characters.
-- Creating needs a lanyard token. Answering never does — the human is not asked to sign in, and
-  the answer link works for someone with no account.
-- A questionnaire belongs to the account that created it. Deleting that account does not reach
-  back into questionnaires already answered.
+- Creating will need a lanyard token (B35); until then a call with none is still served.
+  Answering never does — the human is not asked to sign in, and the answer link works for
+  someone with no account.
+- A questionnaire created with an accepted lanyard token records that account. Recording it
+  grants nobody access. Deleting that account does not reach back into questionnaires already
+  answered.
 - Rate limits count against the account. The home-page trial has no account, so it counts
   against the calling address instead, and only ever creates questionnaires this service
   already holds.
@@ -269,6 +280,9 @@ When creating a sketch question, the agent may give a background picture for the
 | Bounded wait | No | Yes, that questionnaire only | Yes, that questionnaire |
 | Download answers (Markdown or JSON) | Yes, after submit, that questionnaire only | No | No |
 | See the agent status secret | No | It *is* the secret | Not via the answering page |
+
+The lanyard token column is B35's intent. Today a lanyard token only identifies who created a
+questionnaire; every “Yes, that questionnaire” in that column still needs the agent token.
 
 ### Saving an answer
 
@@ -373,6 +387,7 @@ When creating a sketch question, the agent may give a background picture for the
 - **Withdrawn:** Email from this service (B21). Giving `answerUrl` is the calling agent’s job; this service does not send mail.
 - **Settled:** The skill is also for unattended jobs (a Grok bot filling HR, a sweep that cannot find a file). One person, one questionnaire, personalised to what is missing, metadata to match answers, send and wait via callback or poll. Recorded as B34.
 - **Reversed:** Create was public, with no shared bearer to hand out. It now needs a lanyard token. Open create had no benefit to us and let anyone put their own words on an ask.imeatsack.com link. Agent status still needs that questionnaire’s own agent token (the `pollUrl`) — a lanyard token does not replace it. Recorded as B10 and B35.
+- **Settled:** Accounts arrive identity first. A lanyard token on create is checked and its account recorded; refusing anonymous create comes later, so nothing that works today breaks before lanyard is live. Recorded as B35 (partial).
 - **Settled:** The answering page uses a named theme (`ask`, `paper`, `grove`, `ember`). Default is `ask` in the person’s system light or dark. Each theme has both sides. `mode` forces one side. The human can still switch light and dark on the page. Recorded as B22.
 - **Settled:** Agents can read `.md` and answer with JSON using the public token. Files are optional per question, same token. Recorded as B23–B25.
 - **Settled:** A question may carry markdown `detail` (including mermaid) for the human. The product does not score quizzes. Recorded as B26.

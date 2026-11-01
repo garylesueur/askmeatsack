@@ -38,6 +38,12 @@ export type Session = {
   publicToken: string;
   agentToken: string;
   metadata?: Record<string, string>;
+  /**
+   * The lanyard account that created this, when create presented an accepted
+   * lanyard token. A record only: it grants nobody access. Absent on anonymous
+   * creates and on everything created before it existed.
+   */
+  account?: string;
   callbackUrl?: string;
   /** Set once delivery has been attempted, so it is never attempted twice. */
   callbackSent?: boolean;

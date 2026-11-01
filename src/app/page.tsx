@@ -4,6 +4,7 @@ import { HeroScene, SectionLabel, Seam, Steps, UseCases } from "@/components/hom
 import { SiteShell } from "@/components/site-chrome";
 import { SITE_DESCRIPTION, SITE_TAGLINE } from "@/lib/agent-docs";
 import { CURSOR_PLUGIN_HREF, cursorInstallPageHref } from "@/lib/cursor-install";
+import { lanyardSignInHref } from "@/lib/lanyard";
 import { publicOrigin } from "@/lib/public-origin";
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
     <SiteShell
       product="ask"
       repoHref={CURSOR_PLUGIN_HREF}
+      accountHref={lanyardSignInHref()}
       docs={[
         { label: "Install plugin", href: "/install" },
         { label: "skill.md", href: `${origin}/skill.md` },

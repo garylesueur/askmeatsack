@@ -8,6 +8,8 @@
 
 AGENT_API_KEY=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/MEATSACK lanyard Development/AGENT_API_KEY
 PUBLIC_BASE_URL=http://localhost:3000
+# lanyard origin (not a secret). Empty keeps sign-in off: no Sign in link, no token checks.
+LANYARD_URL=
 KV_REST_API_URL=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/MEATSACK lanyard Development/KV_REST_API_URL
 KV_REST_API_TOKEN=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/MEATSACK lanyard Development/KV_REST_API_TOKEN
 R2_ACCOUNT_ID=op://${OP_VAULT:-mep374l3cpdtzwibf5fswsimbi}/MEATSACK lanyard Development/R2_ACCOUNT_ID

@@ -698,7 +698,10 @@ export function createSessionService(deps: SessionServiceDeps) {
   }
 
   const service = {
-    async create(body: unknown): Promise<CreateSessionResult | SessionServiceError> {
+    async create(
+      body: unknown,
+      creator?: { readonly account: string },
+    ): Promise<CreateSessionResult | SessionServiceError> {
       const parsed = createSessionSchema.safeParse(body);
       if (!parsed.success) {
         const appearanceIssue = parsed.error.issues.some((issue) => issue.path[0] === "appearance");
@@ -729,6 +732,7 @@ export function createSessionService(deps: SessionServiceDeps) {
         publicToken: deps.createToken(),
         agentToken: deps.createToken(),
         metadata: input.metadata,
+        ...(creator ? { account: creator.account } : {}),
         callbackUrl: input.callbackUrl,
       };
       const withBackgrounds = applySketchBackgrounds(input.questions, session);

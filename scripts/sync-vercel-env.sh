@@ -3,6 +3,8 @@
 # Same idea as calm-app/devops/vercel-secrets-sync.sh: templates are the
 # source of truth; op:// lines become sensitive vars; literals do not.
 # Development stays in 1Password and is loaded with pnpm env / pnpm dev:op.
+# Empty literals are skipped, so LANYARD_URL stays unset on Vercel (sign-in
+# off) until a template gives it a value.
 #
 # Usage: pnpm env:vercel [preview|production|all] [--only-new] [--var NAME] [--env preview|production|all]
 set -euo pipefail
